@@ -1,3 +1,5 @@
+/* --- Базовые стили (Mobile First) --- */
+
 .app {
   display: flex;
   flex-direction: column;
@@ -14,15 +16,8 @@
   align-items: stretch;
   min-height: 100vh;
   gap: 30px;
-  padding: 15px;
+  padding: 10px;
   border-bottom: 1px dashed var(--border-global);
-}
-
-@media (min-width: 1024px) {
-  .page {
-    gap: 40px;
-    padding: 20px;
-  }
 }
 
 .header {
@@ -31,15 +26,6 @@
   align-items: flex-start;
   gap: 20px;
   padding: 15px 0;
-}
-
-@media (min-width: 768px) {
-  .header {
-    flex-direction: row;
-    justify-content: flex-start;
-    padding: 20px 0;
-    gap: 25px;
-  }
 }
 
 .button {
@@ -56,13 +42,6 @@
   transition: border-color 0.3s ease;
 }
 
-@media (min-width: 480px) {
-  .button {
-    width: auto;
-    min-width: 160px;
-  }
-}
-
 .button:disabled {
   opacity: 0.7;
   cursor: default;
@@ -77,8 +56,40 @@
   border: 1px solid rgb(98, 98, 235);
 }
 
+@media (min-width: 480px) {
+  .button {
+    width: auto;
+    min-width: 160px;
+  }
+}
+
+@media (min-width: 768px) {
+  .header {
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 20px 0;
+    gap: 25px;
+  }
+}
+
 @media (min-width: 1024px) {
+  .page {
+    gap: 40px;
+    padding: 20px;
+  }
+
   .component {
     padding: 40px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .header {
+    flex-direction: row;
+    padding: 5px 0;
+  }
+
+  .page {
+    gap: 10px;
   }
 }

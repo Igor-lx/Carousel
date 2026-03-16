@@ -98,6 +98,7 @@ function App() {
             visibleSlides={visibleSlides}
             slides={carouselImgMock}
             isAuto={isAutoOn}
+            isPaginated={false}
             isPaginationDynamic={true}
             isInteractive={isInteractive}
             speedAutoBase={4000}
