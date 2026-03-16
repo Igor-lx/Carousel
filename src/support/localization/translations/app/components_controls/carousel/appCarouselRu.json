@@ -1,0 +1,21 @@
+{
+  "autoscroll_on": "Автопрокрутка Вкл",
+  "autoscroll_off": "Автопрокрутка Выкл",
+
+  "pagination_on": "Пагинация Вкл",
+  "pagination_off": "Пагинация Выкл",
+
+  "interactive_on": "Интерактив Вкл",
+  "interactive_off": "Интерактив Выкл",
+
+  "dataType_img": "Данные: изображение",
+  "dataType_text": "Данные: текст",
+
+  "slideNr": "Слайдов:",
+
+  "infiniteStatus": "Зациклено: {{val}}",
+  "red.motion": "Без анимаций: {{val}}",
+
+  "yes": "Да",
+  "no": "Нет"
+}

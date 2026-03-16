@@ -1,0 +1,21 @@
+{
+  "autoscroll_on": "AutoScroll On",
+  "autoscroll_off": "AutoScroll Off",
+
+  "pagination_on": "Pagination On",
+  "pagination_off": "Pagination Off",
+
+  "interactive_on": "Interactive On",
+  "interactive_off": "Interactive Off",
+
+  "dataType_img": "Data type: Image",
+  "dataType_text": "Data type: Text",
+
+  "slideNr": "nr of Slides:",
+
+  "infiniteStatus": "Infinite: {{val}}",
+  "red.motion": "Reduced Motion: {{val}}",
+
+  "yes": "Yes",
+  "no": "No"
+}

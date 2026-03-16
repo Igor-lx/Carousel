@@ -1,0 +1,24 @@
+{
+  "сhange_theme": "Сменить тему",
+  "сhange_lang": "Сменить язык",
+
+  "validation_valid": "Данные валидны",
+  "validation_invalid": "Данные не валидны",
+
+  "theme_label": "Тема: {{val}}",
+  "themes": {
+    "light": "Светлая",
+    "dark": "Темная",
+    "auto": "Авто"
+  },
+
+  "lang_label": "Язык: {{val}}",
+  "lang": {
+    "en": "English",
+    "ru": "Русский"
+  },
+
+  "pointer_label": "Управление: {{val}}",
+  "mouse": "мышь",
+  "touch": "тач"
+}

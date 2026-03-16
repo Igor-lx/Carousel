@@ -1,0 +1,24 @@
+{
+  "сhange_theme": "Change theme",
+  "сhange_lang": "Change language",
+
+  "validation_valid": "Data is Valid",
+  "validation_invalid": "Data is Invalid",
+
+  "theme_label": "Theme: {{val}}",
+  "themes": {
+    "light": "Light",
+    "dark": "Dark",
+    "auto": "Auto"
+  },
+
+  "lang_label": "Language: {{val}}",
+  "lang": {
+    "en": "English",
+    "ru": "Русский"
+  },
+
+  "pointer_label": "Pointer: {{val}}",
+  "mouse": "mouse",
+  "touch": "touch"
+}
