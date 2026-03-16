@@ -20,6 +20,12 @@
   user-select: none;
 }
 
+@media (max-width: 1024px) {
+  .outerContainer {
+    --nav-size: 56px;
+  }
+}
+
 .innerContainer {
   position: relative;
   border-radius: 12px;
@@ -227,9 +233,9 @@
   }
 
   .dot {
-    width: 35px;
-    height: 10px;
-    border-radius: 4px;
+    width: 45px;
+    height: 15px;
+    border-radius: 6px;
   }
 }
 

@@ -1,14 +1,9 @@
-:root {
-  --gap: 25px;
-}
-
 .app {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   width: 100%;
-  min-width: 1024px;
-  flex-shrink: 0;
+  min-width: 0;
   background-color: var(--bg-global);
   transition: background-color var(--transition-bg);
 }
@@ -18,44 +13,42 @@
   flex-direction: column;
   align-items: stretch;
   min-height: 100vh;
-  flex-shrink: 0;
-  gap: 40px;
-  padding: 20px;
+  gap: 30px;
+  padding: 15px;
   border-bottom: 1px dashed var(--border-global);
+}
+
+@media (min-width: 1024px) {
+  .page {
+    gap: 40px;
+    padding: 20px;
+  }
 }
 
 .header {
   display: flex;
-  padding: 20px 0;
-  gap: var(--gap);
-  //border: 1px solid rgb(152, 152, 248);
-}
-
-.settings {
-  display: flex;
   flex-direction: column;
-  gap: var(--gap);
+  align-items: flex-start;
+  gap: 20px;
+  padding: 15px 0;
 }
 
-.controls {
-  display: flex;
-  gap: var(--gap);
-  align-items: start;
-  justify-content: start;
-}
-
-.status {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap);
-  margin-left: auto;
+@media (min-width: 768px) {
+  .header {
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 20px 0;
+    gap: 25px;
+  }
 }
 
 .button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 210px;
+  width: 100%;
+  max-width: 210px;
+  min-height: 44px;
   text-align: center;
   border: 1px solid gray;
   padding: 10px;
@@ -63,30 +56,29 @@
   transition: border-color 0.3s ease;
 }
 
+@media (min-width: 480px) {
+  .button {
+    width: auto;
+    min-width: 160px;
+  }
+}
+
 .button:disabled {
   opacity: 0.7;
   cursor: default;
-}
-
-.statusSection {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid gray;
-  width: 300px;
-  padding: 10px;
-  user-select: none;
-}
-
-.error {
-  color: red;
 }
 
 .component {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px;
+  padding: 20px;
+  width: 100%;
   border: 1px solid rgb(98, 98, 235);
+}
+
+@media (min-width: 1024px) {
+  .component {
+    padding: 40px;
+  }
 }

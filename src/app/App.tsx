@@ -55,7 +55,7 @@ function App() {
   const { toggleTheme } = useTheme();
 
   const isTouch = useIsTouchScreen();
-  const [isAutoOn, setIsAutoOn] = useState(false);
+  const [isAutoOn, setIsAutoOn] = useState(true);
   const [isInteractive, setIsInteractive] = useState(true);
 
   const CAROUSEL_VIS = useMemo(
@@ -74,26 +74,23 @@ function App() {
     <main className={appStyles.app}>
       <section className={appStyles.page}>
         <div className={appStyles.header}>
-          <div className={appStyles.settings}>
-            <button className={appStyles.button} onClick={toggleTheme}>
-              {"Сменить тему"}
-            </button>
-          </div>
-          <div className={appStyles.controls}>
-            <button
-              className={appStyles.button}
-              onClick={() => setIsAutoOn((prev) => !prev)}
-            >
-              {isAutoOn ? "Авто: вкл" : "Авто: выкл"}
-            </button>
+          <button className={appStyles.button} onClick={toggleTheme}>
+            {"Сменить тему"}
+          </button>
 
-            <button
-              className={appStyles.button}
-              onClick={() => setIsInteractive((prev) => !prev)}
-            >
-              {isInteractive ? "Интерактив: вкл" : "Интерактив: выкл"}
-            </button>
-          </div>
+          <button
+            className={appStyles.button}
+            onClick={() => setIsAutoOn((prev) => !prev)}
+          >
+            {isAutoOn ? "Авто: вкл" : "Авто: выкл"}
+          </button>
+
+          <button
+            className={appStyles.button}
+            onClick={() => setIsInteractive((prev) => !prev)}
+          >
+            {isInteractive ? "Интерактив: вкл" : "Интерактив: выкл"}
+          </button>
         </div>
 
         <div className={appStyles.component}>
