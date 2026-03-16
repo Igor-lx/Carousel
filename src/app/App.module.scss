@@ -38,9 +38,7 @@
 }
 
 .controls {
-  display: grid;
-  grid-template-rows: repeat(3, auto);
-  grid-auto-flow: column;
+  display: flex;
   gap: var(--gap);
   align-items: start;
   justify-content: start;
