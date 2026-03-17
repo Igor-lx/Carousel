@@ -52,11 +52,10 @@ const carouselImgMock: Slide[] = [
 ];
 
 function App() {
-  const { toggleTheme } = useTheme();
+  const { toggleTheme, theme } = useTheme();
 
   const isTouch = useIsTouchScreen();
   const [isAutoOn, setIsAutoOn] = useState(false);
-  const [isInteractive, setIsInteractive] = useState(true);
 
   const CAROUSEL_VIS = useMemo(
     () => ({
@@ -74,22 +73,14 @@ function App() {
     <main className={appStyles.app}>
       <section className={appStyles.page}>
         <div className={appStyles.header}>
-          <button className={appStyles.button} onClick={toggleTheme}>
-            {"Сменить тему"}
-          </button>
-
           <button
             className={appStyles.button}
             onClick={() => setIsAutoOn((prev) => !prev)}
           >
-            {isAutoOn ? "Авто: вкл" : "Авто: выкл"}
+            {isAutoOn ? "⏩" : "⏸️"}
           </button>
-
-          <button
-            className={appStyles.button}
-            onClick={() => setIsInteractive((prev) => !prev)}
-          >
-            {isInteractive ? "Интерактив: вкл" : "Интерактив: выкл"}
+          <button className={appStyles.button} onClick={toggleTheme}>
+            {theme === "light" ? "☀️" : "🌙"}
           </button>
         </div>
 
@@ -98,9 +89,9 @@ function App() {
             visibleSlides={visibleSlides}
             slides={carouselImgMock}
             isAuto={isAutoOn}
-            isPaginated={true}
+            isPaginated={false}
             isPaginationDynamic={true}
-            isInteractive={isInteractive}
+            isInteractive={true}
             speedAutoBase={4000}
             speedManualStep={2000}
             speedManualJump={800}

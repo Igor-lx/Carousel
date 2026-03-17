@@ -163,7 +163,6 @@
   width: 100%;
   height: auto;
   pointer-events: none;
-
   padding: 20px 15px 0;
 }
 
@@ -176,6 +175,7 @@
   border: none;
   border-radius: 2px;
   background-color: var(--color);
+  -webkit-tap-highlight-color: transparent;
   opacity: 0.2;
   transition:
     opacity 0.4s,
@@ -188,14 +188,12 @@
   cursor: default;
 }
 
-/* --- Desktop First Queries --- */
-
 @media (max-width: 1024px) {
   .outerContainer {
-    --nav-size-w: 35px;
-    --nav-size-h: 100px;
-    --nav-radius: 7%;
-    --nav-offset: 5px;
+    --nav-size-w: 30px;
+    --nav-size-h: 115px;
+    --nav-radius: 8%;
+    --nav-offset: 4px;
   }
   .navButton {
     background-color: rgba(0, 0, 0, 0.2);
@@ -207,13 +205,10 @@
 
 @media (max-height: 500px) and (orientation: landscape) {
   .innerContainer {
-    /* На лэндскейпе чуть поджимаем контент */
     flex-grow: 0;
     height: 60vh;
   }
 }
-
-/* --- Touch & State Selectors (No Nesting) --- */
 
 .outerContainer[data-touch="false"]
   .innerContainer:has(.slide:hover, .navZone:hover, .navZone:focus-visible)

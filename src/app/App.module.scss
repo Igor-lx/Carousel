@@ -22,9 +22,8 @@
 
 .header {
   display: flex;
-  flex-direction: row;
   align-items: flex-start;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 25px;
 }
 
@@ -33,10 +32,11 @@
   align-items: center;
   justify-content: center;
   width: auto;
-  min-width: 210px;
+  min-width: 110px;
   padding: 10px;
-  min-height: 44px;
+  min-height: 40px;
   border: 1px solid gray;
+  border-radius: 3px;
   cursor: pointer;
   transition: border-color 0.3s ease;
 }
@@ -59,30 +59,23 @@
     gap: 15px;
   }
 
-  .component {
-    padding: 10px;
-  }
-
   .button {
-    min-width: 150px;
+    min-width: 50px;
+    min-height: 0;
     padding: 7px;
   }
 }
 
 @media (max-width: 767px) {
   .page {
-    gap: 5px;
+    gap: 15px;
     padding: 10px;
   }
 
   .header {
-    flex-direction: column;
     padding: 5px 0;
     gap: 10px;
   }
-}
-
-@media (max-width: 479px) {
   .button {
     padding: 5px;
   }
