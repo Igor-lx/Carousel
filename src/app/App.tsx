@@ -55,7 +55,7 @@ function App() {
   const { toggleTheme } = useTheme();
 
   const isTouch = useIsTouchScreen();
-  const [isAutoOn, setIsAutoOn] = useState(true);
+  const [isAutoOn, setIsAutoOn] = useState(false);
   const [isInteractive, setIsInteractive] = useState(true);
 
   const CAROUSEL_VIS = useMemo(

@@ -11,6 +11,7 @@ import {
   type OnScreenThemeMode,
   ON_SCREEN_MODES,
   THEME_MODES,
+  BROWSER_THEME_COLORS,
 } from "./types";
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -53,6 +54,19 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   }, [theme]);
 
   useEffect(() => {
+    const targetColor = BROWSER_THEME_COLORS[onScreenTheme];
+    let meta = document.querySelector('meta[name="theme-color"]');
+
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.setAttribute("name", "theme-color");
+      document.head.appendChild(meta);
+    }
+
+    meta.setAttribute("content", targetColor);
+  }, [onScreenTheme]);
+
+  useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY) {
         const newMode = (e.newValue as ThemeMode) ?? THEME_MODES.AUTO;
@@ -86,7 +100,6 @@ export const useTheme = () => {
   if (!context) throw new Error("useTheme must be used within ThemeProvider");
   return context;
 };
-
 
 /* 
 

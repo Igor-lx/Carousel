@@ -9,6 +9,11 @@ export const ON_SCREEN_MODES = {
   DARK: "dark",
 } as const;
 
+export const BROWSER_THEME_COLORS = {
+  [ON_SCREEN_MODES.LIGHT]: "#96bdf8",
+  [ON_SCREEN_MODES.DARK]: "#000000",
+} as const;
+
 export type ThemeMode = (typeof THEME_MODES)[keyof typeof THEME_MODES];
 export type OnScreenThemeMode =
   (typeof ON_SCREEN_MODES)[keyof typeof ON_SCREEN_MODES];

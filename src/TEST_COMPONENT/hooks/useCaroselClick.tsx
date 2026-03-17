@@ -8,7 +8,6 @@ interface ClickProps {
   readonly offset: number;
   readonly stepSize: number;
   readonly onClick?: (slide: Slide) => void;
-  readonly filter: (callback?: () => void) => void;
 }
 
 interface ClickResult {
@@ -23,13 +22,12 @@ export function useCarouselClick({
   offset,
   stepSize,
   onClick,
-  filter,
 }: ClickProps): ClickResult {
   const handleMove = useCallback(
     (step: number) => {
-      filter(() => onMove(step, "click"));
+      onMove(step, "click");
     },
-    [onMove, filter],
+    [onMove],
   );
 
   const handleDot = useCallback(
@@ -40,10 +38,8 @@ export function useCarouselClick({
   );
 
   const handleSlide = useCallback(
-    (slide: Slide) => {
-      filter(() => onClick?.(slide));
-    },
-    [onClick, filter],
+    (slide: Slide) => onClick?.(slide),
+    [onClick],
   );
 
   return {

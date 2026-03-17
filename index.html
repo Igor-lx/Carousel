@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="theme-color" content="" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
@@ -9,11 +10,13 @@
     <link rel="icon" type="image/svg+xml" href="./src/images/favicon.png" />
     <title>CAROUSEL</title>
     <script>
-      (function () {
+      (() => {
+        const BROWSER_THEME_COLORS = { light: "#ffffff", dark: "#000000" };
+        const STORAGE_KEY = "theme-mode";
+
         try {
-          var STORAGE_KEY = "theme-mode";
-          var mode = localStorage.getItem(STORAGE_KEY) || "auto";
-          var theme = mode;
+          const mode = localStorage.getItem(STORAGE_KEY) || "auto";
+          let theme = mode;
 
           if (mode === "auto") {
             theme = window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -22,12 +25,20 @@
           }
 
           document.documentElement.setAttribute("data-theme", theme);
+
+          const meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) {
+            meta.setAttribute("content", BROWSER_THEME_COLORS[theme]);
+          }
         } catch (e) {
-          var fallback = window.matchMedia("(prefers-color-scheme: dark)")
+          const fallback = window.matchMedia("(prefers-color-scheme: dark)")
             .matches
             ? "dark"
             : "light";
           document.documentElement.setAttribute("data-theme", fallback);
+          document
+            .querySelector('meta[name="theme-color"]')
+            ?.setAttribute("content", BROWSER_THEME_COLORS[fallback]);
         }
       })();
     </script>

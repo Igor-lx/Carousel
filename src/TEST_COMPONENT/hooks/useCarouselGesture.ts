@@ -16,7 +16,6 @@ interface GestureResult {
   readonly velocity: number;
   readonly dragListeners: DragListeners;
   readonly getDragOffset: () => number;
-  readonly getClickFilter: (callback?: () => void) => void;
 }
 
 export function useCarouselGesture({
@@ -26,7 +25,7 @@ export function useCarouselGesture({
   enabled,
   measureRef,
 }: GestureProps): GestureResult {
-  const { isDragging, velocity, dragListeners, getDragOffset, getClickFilter } =
+  const { isDragging, velocity, dragListeners, getDragOffset } =
     useDragTouchHoriz({
       enabled,
       measureRef,
@@ -45,5 +44,5 @@ export function useCarouselGesture({
       },
     });
 
-  return { isDragging, velocity, dragListeners, getDragOffset, getClickFilter };
+  return { isDragging, velocity, dragListeners, getDragOffset };
 }

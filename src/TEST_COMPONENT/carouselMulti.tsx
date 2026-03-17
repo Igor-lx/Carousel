@@ -161,7 +161,6 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
     velocity: velocity,
     dragListeners: bindDragListeners,
     getDragOffset: getDragOffset,
-    getClickFilter: executeIfWasntDragged,
   } = useCarouselGesture({
     onDragStart: executeDragStart,
     onDragSnap: executeDragSnap,
@@ -180,7 +179,7 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
     offset: cloneCount,
     stepSize: clampedVisible,
     onClick: onSlideClick,
-    filter: executeIfWasntDragged,
+ 
   });
 
   const isPaused = !isVisible || isDragging || isMoving;
