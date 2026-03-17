@@ -2,9 +2,10 @@
   --color: var(--color-component, var(--color-global));
   --bg: var(--bg-component, var(--bg-global));
   --gap: 50px;
-  --nav-size: 40px;
+  --nav-size-w: 45px;
+  --nav-size-h: 45px;
   --nav-radius: 50%;
-  --nav-offset: clamp(10px, 2vw, 40px);
+  --nav-offset: 20px;
 
   position: relative;
   display: flex;
@@ -20,12 +21,6 @@
   user-select: none;
 }
 
-@media (max-width: 1024px) {
-  .outerContainer {
-    --nav-size: 50px;
-  }
-}
-
 .innerContainer {
   position: relative;
   border-radius: 12px;
@@ -34,12 +29,6 @@
   overflow: hidden;
   touch-action: pan-y;
   user-select: none;
-}
-
-@media (max-height: 500px) and (orientation: landscape) {
-  .innerContainer {
-    height: 60vh;
-  }
 }
 
 .innerContainer:focus-visible {
@@ -139,8 +128,8 @@
 }
 
 .navButton {
-  width: var(--nav-size);
-  height: var(--nav-size);
+  width: var(--nav-size-w);
+  height: var(--nav-size-h);
   border-radius: var(--nav-radius);
   background-color: rgba(0, 0, 0, 0.45);
   color: rgba(245, 245, 245, 0.807);
@@ -154,9 +143,12 @@
 
 .navZoneL .navButton svg {
   margin-right: 2px;
+  opacity: 0.8;
 }
+
 .navZoneR .navButton svg {
   margin-left: 2px;
+  opacity: 0.8;
 }
 
 .innerContainer .navZone:focus-visible {
@@ -200,6 +192,29 @@
   opacity: 0.8;
   transform: scaleX(1.4);
   cursor: default;
+}
+
+// ------------------------------------------------------------------------------------------------------
+
+@media (max-width: 1024px) {
+  .outerContainer {
+    --nav-size-w: 35px;
+    --nav-size-h: 100px;
+    --nav-radius: 7%;
+    --nav-offset: 5px;
+  }
+  .navButton {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+  .navButton svg {
+    opacity: 0.6;
+  }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .innerContainer {
+    height: 60vh;
+  }
 }
 
 // ------------------------------------------------------------------------------------------------------

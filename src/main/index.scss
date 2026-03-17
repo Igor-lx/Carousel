@@ -1,6 +1,5 @@
 :root {
   --theme-marker: light;
-  --bg-main: ghostwhite;
 
   // Transitions
   --transition-color: 0.25s ease;
@@ -10,7 +9,7 @@
 
   //global
   --color-global: #1e2a3b;
-  --bg-global: #96bdf8;
+  --bg-global: #d1e2fb;
   --border-global: #66686b;
 
   //hover
@@ -45,8 +44,6 @@
 
 [data-theme="dark"] {
   --theme-marker: dark;
-
-  --bg-main: black;
 
   //global
   --color-global: #e5e9f0;
@@ -91,7 +88,7 @@ body {
 }
 
 body {
-  background-color: var(--bg-main);
+  background-color: var(--bg-global);
   color: var(--color-global);
   font-family: system-ui, Arial, sans-serif;
   overflow-x: hidden;
