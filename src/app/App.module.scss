@@ -16,9 +16,8 @@
   flex-direction: column;
   align-items: stretch;
   min-height: 100vh;
-  gap: 40px;
-  padding: 20px;
-  border-bottom: 1px dashed var(--border-global);
+  gap: 90px;
+  padding: 40px 20px 0;
 }
 
 .header {
@@ -27,7 +26,6 @@
   align-items: flex-start;
   justify-content: flex-start;
   gap: 25px;
-  padding: 20px 0;
 }
 
 .button {
@@ -47,13 +45,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px;
   width: 100%;
 }
 
 @media (max-width: 1023px) {
   .page {
-    gap: 30px;
+    gap: 20px;
+    padding: 10px;
+  }
+
+  .header {
+    padding: 10px 0;
+    gap: 15px;
+  }
+
+  .component {
     padding: 10px;
   }
 
@@ -61,17 +67,18 @@
     min-width: 150px;
     padding: 7px;
   }
-
-  .component {
-    padding: 20px;
-  }
 }
 
 @media (max-width: 767px) {
+  .page {
+    gap: 5px;
+    padding: 10px;
+  }
+
   .header {
     flex-direction: column;
-    padding: 15px 0;
-    gap: 20px;
+    padding: 5px 0;
+    gap: 10px;
   }
 }
 
