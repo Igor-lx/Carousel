@@ -81,7 +81,7 @@ function App() {
           </button>
           <button
             className={appStyles.button}
-            style={{ paddingBottom: 3 }}
+            style={{ paddingBottom: 2 }}
             onClick={toggleTheme}
           >
             {theme === "light" ? "☀️" : "🌙"}
