@@ -79,7 +79,11 @@ function App() {
           >
             {isAutoOn ? "⏩" : "⏸️"}
           </button>
-          <button className={appStyles.button} onClick={toggleTheme}>
+          <button
+            className={appStyles.button}
+            style={{ paddingBottom: 3 }}
+            onClick={toggleTheme}
+          >
             {theme === "light" ? "☀️" : "🌙"}
           </button>
         </div>
