@@ -101,7 +101,6 @@ function App() {
           />
         </div>
       </section>
-      <section className={appStyles.page}></section>
     </main>
   );
 }
