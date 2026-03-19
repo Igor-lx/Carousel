@@ -1,0 +1,34 @@
+.paginationWrapper {
+  --color: var(--color-component, var(--color-global));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 35px;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+  padding: 20px 15px 0;
+}
+
+.dot {
+  flex-shrink: 0;
+  pointer-events: auto;
+  width: 25px;
+  height: 6px;
+  cursor: pointer;
+  border: none;
+  border-radius: 2px;
+  background-color: var(--color);
+  -webkit-tap-highlight-color: transparent;
+  opacity: 0.2;
+  transition:
+    opacity 0.4s,
+    transform 0.5s;
+}
+
+.dotActive {
+  opacity: 0.8;
+  transform: scaleX(1.4);
+  cursor: default;
+}

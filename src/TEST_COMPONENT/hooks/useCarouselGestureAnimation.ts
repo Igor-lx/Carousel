@@ -1,5 +1,5 @@
 import { type RefObject } from "react";
-import { useIsomorphicLayoutEffect } from "./useIsomorphicLayoutEffect";
+import { useIsomorphicLayoutEffect } from ".";
 
 interface GestureAnimationProps {
   readonly targetRef: RefObject<HTMLElement | null>;

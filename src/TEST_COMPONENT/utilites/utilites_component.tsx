@@ -1,5 +1,4 @@
-import type { CarouselLayout, SlideA11yProps } from "../types/data.types";
-import type { Slide } from "../types/types";
+import type { Slide, CarouselLayout, SlideA11yProps } from "../types";
 
 export const getCarouselLayout = (
   slides: Slide[],

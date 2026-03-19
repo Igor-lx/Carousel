@@ -1,12 +1,8 @@
 import { useMemo } from "react";
-import {
-  getSafeIndexMap,
-  getSlideMetadata,
-  getSlideVisibility,
-  getSlideA11y,
-} from "../utilites/utilites_component";
-import type { CarouselLayout, VirtualSlide } from "../types/data.types";
-import type { Slide } from "../types/types";
+
+import type { CarouselLayout, Slide, VirtualSlide } from "../types";
+import { getSafeIndexMap, getSlideA11y, getSlideMetadata, getSlideVisibility } from "../utilites";
+
 
 interface SlidesProps {
   readonly current: number;

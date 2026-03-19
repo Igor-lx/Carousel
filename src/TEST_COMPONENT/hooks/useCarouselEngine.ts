@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef } from "react";
+import type { Action, CarouselLayout } from "../types";
+import { useIsomorphicLayoutEffect } from ".";
 
-import { useIsomorphicLayoutEffect } from "./useIsomorphicLayoutEffect";
-import type { CarouselLayout } from "../types/data.types";
-import type { Action } from "../types/reducer.types";
+
 
 interface EngineProps {
   readonly dispatch: React.Dispatch<Action>;

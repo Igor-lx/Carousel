@@ -1,24 +1,5 @@
-import type { MoveReason } from "./reducer.types";
 import type { ClassNameMap, Slide } from "./types";
 
-export type PaginationProps = {
-  pageCount: number;
-  activeDotIndex: number;
-  onDotClick: (idx: number) => void;
-  className: ClassNameMap;
-  isDynamic: boolean;
-  isMoving: boolean;
-  isJump: boolean;
-  moveReason: MoveReason;
-  speed: number;
-};
-
-export type PaginationDotProps = {
-  idx: number;
-  visualIndex: number;
-  className: ClassNameMap;
-  onDotClick: (idx: number) => void;
-};
 
 export interface NavZoneProps {
   direction: "left" | "right";

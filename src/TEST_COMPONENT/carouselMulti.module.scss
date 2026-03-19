@@ -2,6 +2,7 @@
   --color: var(--color-component, var(--color-global));
   --bg: var(--bg-component, var(--bg-global));
   --gap: 50px;
+  --pagination-height: 60px;
   --nav-size-w: 45px;
   --nav-size-h: 45px;
   --nav-radius: 50%;
@@ -26,7 +27,7 @@
   position: relative;
   border-radius: 12px;
   width: 100%;
-  flex-grow: 1;
+  flex: 1;
   overflow: hidden;
   user-select: none;
 }
@@ -153,7 +154,7 @@
 .innerContainer .navZone:focus-visible {
   background-color: rgba(0, 0, 0, 0.5);
 }
-
+/*
 .paginationWrapper {
   display: flex;
   justify-content: center;
@@ -187,6 +188,7 @@
   transform: scaleX(1.4);
   cursor: default;
 }
+*/
 
 @media (max-width: 1024px) {
   .outerContainer {
@@ -220,10 +222,11 @@
   cursor: pointer;
   border-color: rgb(139, 139, 241);
 }
-
+/*
 .outerContainer[data-touch="false"] .dot:not(.dotActive):hover {
   opacity: 0.6;
 }
+*/
 
 .outerContainer[data-touch="true"] .navZone {
   opacity: 1;
@@ -243,14 +246,15 @@
   right: var(--nav-offset);
 }
 
+/*
 .outerContainer[data-touch="true"] .dot {
   width: 45px;
   height: 15px;
   border-radius: 6px;
 }
+*/
 
 .outerContainer[data-reduced-motion="true"] .navZone,
-.outerContainer[data-reduced-motion="true"] .dot,
 .outerContainer[data-reduced-motion="true"] .interactive {
   transition: none !important;
 }

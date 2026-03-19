@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { memo, useState, useEffect } from "react";
-import type { SlideItemProps } from "../types/subComponents.types";
+import type { SlideItemProps } from "../types";
+
 
 export const SlideItem = memo(
   ({

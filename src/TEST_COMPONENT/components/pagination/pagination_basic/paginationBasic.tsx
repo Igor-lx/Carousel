@@ -1,13 +1,9 @@
 import clsx from "clsx";
 import { memo, useMemo, useCallback } from "react";
+import { usePaginationSync } from "../../../hooks";
+import type { PaginationBasicDotProps, PaginationBasicProps } from "./types";
 
-import { usePaginationSync } from "../hooks";
-import type {
-  PaginationProps,
-  PaginationDotProps,
-} from "../types/subComponents.types";
-
-export const Pagination = memo(
+export const PaginationBasic = memo(
   ({
     pageCount,
     activeDotIndex,
@@ -18,7 +14,7 @@ export const Pagination = memo(
     isJump,
     moveReason,
     speed,
-  }: PaginationProps) => {
+  }: PaginationBasicProps) => {
     if (pageCount <= 1) return null;
 
     const isInstantSync =
@@ -39,7 +35,7 @@ export const Pagination = memo(
     return (
       <div className={className.paginationWrapper} aria-hidden="true">
         {dots.map((idx) => (
-          <PaginationDot
+          <Dot
             key={idx}
             idx={idx}
             visualIndex={visualIndex}
@@ -52,14 +48,8 @@ export const Pagination = memo(
   },
 );
 
-const PaginationDot = memo(
-  ({
-    idx,
-    visualIndex,
-    className,
-
-    onDotClick,
-  }: PaginationDotProps) => {
+const Dot = memo(
+  ({ idx, visualIndex, className, onDotClick }: PaginationBasicDotProps) => {
     const handleClick = useCallback(() => onDotClick(idx), [idx, onDotClick]);
     const handleMouseDown = useCallback(
       (e: React.MouseEvent) => e.preventDefault(),

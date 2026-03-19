@@ -2,7 +2,8 @@ import clsx from "clsx";
 import { memo } from "react";
 
 import { ChevronIcon } from "../../utilites_global";
-import type { NavZoneProps } from "../types/subComponents.types";
+import type { NavZoneProps } from "../types";
+
 
 export const NavZone = memo(
   ({ direction, onClick, className }: NavZoneProps) => {

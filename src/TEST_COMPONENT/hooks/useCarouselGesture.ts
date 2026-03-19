@@ -1,7 +1,8 @@
 import { type RefObject } from "react";
 
 import { useDragTouchHoriz, type DragListeners } from "../../utilites_global";
-import type { MoveReason } from "../types/reducer.types";
+import type { MoveReason } from "../types";
+
 
 interface GestureProps {
   readonly onMove: (step: number, reason: MoveReason) => void;

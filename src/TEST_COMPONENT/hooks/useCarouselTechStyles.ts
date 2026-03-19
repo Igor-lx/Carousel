@@ -1,8 +1,5 @@
 import { useMemo } from "react";
-import {
-  getCarouselTransform,
-  getSlideFlexStyle,
-} from "../utilites/utilites_component";
+
 import {
   JUMP_BEZIER,
   MOVE_CLICK_BEZIER,
@@ -11,8 +8,8 @@ import {
   SNAP_BACK_BEZIER,
   SNAP_BACK_TIME,
 } from "../const";
-import type { AnimationMode, MoveReason } from "../types/reducer.types";
-
+import type { AnimationMode, MoveReason } from "../types";
+import { getCarouselTransform, getSlideFlexStyle } from "../utilites";
 
 interface TechStylesProps {
   readonly current: number;

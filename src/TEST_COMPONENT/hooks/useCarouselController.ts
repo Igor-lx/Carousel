@@ -1,5 +1,7 @@
 import { useCallback } from "react";
-import type { Action, MoveReason } from "../types/reducer.types";
+
+import type { PaginationWidgetHandler } from "../components";
+import type { Action, MoveReason } from "../types";
 
 
 interface ControllerProps {
@@ -7,6 +9,7 @@ interface ControllerProps {
   readonly finalize: () => void;
   readonly onReset: () => void;
   readonly enabled: boolean;
+  readonly widgetControls?: React.RefObject<PaginationWidgetHandler | null>;
 }
 
 interface ControllerResult {
@@ -22,6 +25,7 @@ export function useCarouselController({
   finalize,
   onReset,
   enabled,
+  widgetControls,
 }: ControllerProps): ControllerResult {
   const action = useCallback(
     (actionFn: () => void) => {
@@ -34,9 +38,13 @@ export function useCarouselController({
   const move = useCallback(
     (step: number, moveReason: MoveReason = "unknown") => {
       if (!enabled) return;
+
+      if (step > 0) widgetControls?.current?.moveRight();
+      else if (step < 0) widgetControls?.current?.moveLeft();
+
       action(() => dispatch({ type: "MOVE", step, moveReason }));
     },
-    [enabled, action, dispatch],
+    [enabled, action, dispatch, widgetControls],
   );
 
   const goTo = useCallback(

@@ -1,6 +1,5 @@
 import { useCallback } from "react";
-import type { MoveReason } from "../types/reducer.types";
-import type { Slide } from "../types/types";
+import type { MoveReason, Slide } from "../types";
 
 interface ClickProps {
   readonly onMove: (step: number, reason: MoveReason) => void;

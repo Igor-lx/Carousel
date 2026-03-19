@@ -1,5 +1,4 @@
-import type { CarouselLayout } from "../types/data.types";
-import type { StepAction } from "../types/reducer.types";
+import type { StepAction, CarouselLayout } from "../types";
 import { getSafeIndexMap } from "./utilites_component";
 
 export const clamp = (v: number, min: number, max: number) =>

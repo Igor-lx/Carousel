@@ -1,12 +1,18 @@
 export const mergeBaseStyles = <T extends Record<string, string>>(
-  defaultStyles: T,
-  className?: Partial<T>,
+  ...styles: (T | Partial<T> | undefined)[]
 ): T => {
-  const base = {} as T;
+  const result = {} as T;
 
-  (Object.keys(defaultStyles) as (keyof T)[]).forEach((key) => {
-    base[key] = className?.[key] ?? defaultStyles[key];
+  styles.forEach((styleObj) => {
+    if (!styleObj) return;
+
+    (Object.keys(styleObj) as (keyof T)[]).forEach((key) => {
+      const value = styleObj[key];
+      if (value) {
+        result[key] = value as T[keyof T];
+      }
+    });
   });
 
-  return base;
+  return result;
 };

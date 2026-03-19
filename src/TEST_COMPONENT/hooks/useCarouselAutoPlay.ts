@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { HOVER_TRESHOLD } from "../const";
-import type { MoveReason } from "../types/reducer.types";
+
+import type { PaginationWidgetHandler } from "../components";
+import type { MoveReason } from "../types";
 
 interface AutoPlayProps {
   readonly enabled: boolean;
@@ -8,6 +10,7 @@ interface AutoPlayProps {
   readonly isPaused: boolean;
   readonly ignoreHover: boolean;
   readonly isAtEnd: boolean;
+  readonly widgetControls?: React.RefObject<PaginationWidgetHandler | null>;
   readonly onGoTo: (target: number, reason: MoveReason) => void;
   readonly onMove: (step: number, reason: MoveReason) => void;
 }
@@ -23,6 +26,7 @@ export function useCarouselAutoPlay({
   isPaused,
   ignoreHover,
   isAtEnd,
+  widgetControls,
   onGoTo,
   onMove,
 }: AutoPlayProps): AutoPlayResult {
@@ -57,9 +61,13 @@ export function useCarouselAutoPlay({
     if (!enabled || isPaused || isInternalPaused) return;
 
     const timeout = setTimeout(() => {
-      isAtEnd ? onGoTo(0, "autoplay") : onMove(1, "autoplay");
+      if (isAtEnd) {
+        onGoTo(0, "autoplay");
+        widgetControls?.current?.moveLeft();
+      } else {
+        onMove(1, "autoplay");
+      }
     }, delay);
-
     return () => clearTimeout(timeout);
   }, [enabled, isPaused, isInternalPaused, isAtEnd, delay, onGoTo, onMove]);
 

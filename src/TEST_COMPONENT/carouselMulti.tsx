@@ -8,9 +8,17 @@ import {
 } from "react";
 
 import defaultStyles from "./carouselMulti.module.scss";
+import pagWStyles from "./components/pagination/pagination_widget/paginationWidget.module.scss";
+import pagBstyles from "./components/pagination/pagination_basic/paginationBasic.module.scss";
 
 import { reducer, initialState, getAnimStatus } from "./reducer";
-import { NavZone, Pagination, SlideItem } from "./components";
+import {
+  NavZone,
+  PaginationBasic,
+  PaginationWidget,
+  SlideItem,
+  type PaginationWidgetHandler,
+} from "./components";
 import {
   useCarouselAutoPlay,
   useCarouselClick,
@@ -29,8 +37,6 @@ import {
 
 import { ANIMATION_SAFETY_MARGIN, VISIBILITY_THRESHOLD } from "./const";
 
-import { getCarouselLayout } from "./utilites/utilites_component";
-
 import {
   manageFocusShift,
   mergeBaseStyles,
@@ -40,8 +46,8 @@ import {
 } from "../utilites_global";
 
 import { DEFAULT_SETTINGS } from "./default_settings";
-import type { CarouselLayout } from "./types/data.types";
-import type { CarouselMultiProps } from "./types/types";
+import type { CarouselLayout, CarouselMultiProps } from "./types";
+import { getCarouselLayout } from "./utilites";
 
 const CarouselMulti = memo((props: CarouselMultiProps) => {
   const {
@@ -69,6 +75,7 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
 
   const animatedTrackRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const paginationWidgetHandler = useRef<PaginationWidgetHandler>(null);
   const timer = useCarouselTimer();
 
   const isReducedMotion = isReducedMotionProp ?? useReducedMotion();
@@ -153,6 +160,7 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
     finalize: componentFinalize,
     onReset: timer.clear,
     enabled: canSlide,
+    widgetControls: paginationWidgetHandler,
   });
 
   const enabled = canSlide && !isMoving;
@@ -179,7 +187,6 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
     offset: cloneCount,
     stepSize: clampedVisible,
     onClick: onSlideClick,
- 
   });
 
   const isPaused = !isVisible || isDragging || isMoving;
@@ -189,6 +196,7 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
     delay: safeDelayAuto,
     isPaused: isPaused,
     isAtEnd: isFiniteAndAtEnd,
+    widgetControls: paginationWidgetHandler,
     onGoTo: executeGoTo,
     onMove: executeMove,
   });
@@ -214,7 +222,7 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
   });
 
   const baseMergedStyles = useMemo(
-    () => mergeBaseStyles(defaultStyles, className),
+    () => mergeBaseStyles(defaultStyles, pagBstyles, pagWStyles, className),
     [className],
   );
 
@@ -326,17 +334,27 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
         )}
       </div>
       {isPaginated && canSlide && (
-        <Pagination
-          pageCount={pageCount}
-          activeDotIndex={activeDotIndex}
-          onDotClick={handleDotClick}
-          className={baseMergedStyles}
-          isMoving={isMoving}
-          isDynamic={isPaginationDynamic}
-          isJump={isJumping}
-          moveReason={moveReason}
-          speed={actualSpeed}
-        />
+        <>
+          {isTouch ? (
+            <PaginationWidget
+              ref={paginationWidgetHandler}
+              className={pagWStyles}
+              visibleDots={5}
+            />
+          ) : (
+            <PaginationBasic
+              pageCount={pageCount}
+              activeDotIndex={activeDotIndex}
+              onDotClick={handleDotClick}
+              className={baseMergedStyles}
+              isMoving={isMoving}
+              isDynamic={isPaginationDynamic}
+              isJump={isJumping}
+              moveReason={moveReason}
+              speed={actualSpeed}
+            />
+          )}
+        </>
       )}
     </div>
   );

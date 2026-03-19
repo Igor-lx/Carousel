@@ -1,8 +1,8 @@
 import { useMemo, type RefObject } from "react";
 
-import { useCarouselGestureSpeed } from "./useCarouselGestureSpeed";
 import { SNAP_BACK_TIME } from "../const";
-import type { AnimationMode, MoveReason } from "../types/reducer.types";
+import type { AnimationMode, MoveReason } from "../types";
+import { useCarouselGestureSpeed } from ".";
 
 interface SpeedProps {
   readonly reason: MoveReason;

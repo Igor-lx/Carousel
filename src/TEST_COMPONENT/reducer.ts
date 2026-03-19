@@ -1,7 +1,5 @@
-import type { CarouselLayout } from "./types/data.types";
-import type { State, AnimationMode, Action } from "./types/reducer.types";
-import { getSafeIndexMap } from "./utilites/utilites_component";
-import { getNextIndex, getReconciledIndex } from "./utilites/utilites_reducer";
+import type { CarouselLayout, State, AnimationMode, Action } from "./types";
+import { getNextIndex, getReconciledIndex, getSafeIndexMap } from "./utilites";
 
 export const initialState = (currentLayout: CarouselLayout): State => ({
   currentLayout,

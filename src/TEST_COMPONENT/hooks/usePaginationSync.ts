@@ -4,7 +4,7 @@ import {
   PAGINATION_DYNAMIC_DELAY_auto,
   PAGINATION_DYNAMIC_DELAY_step,
 } from "../const";
-import type { MoveReason } from "../types/reducer.types";
+import type { MoveReason } from "../types";
 
 interface UsePaginationSyncProps {
   targetIndex: number;
