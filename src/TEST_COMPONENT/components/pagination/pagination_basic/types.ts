@@ -1,10 +1,16 @@
-import type { ClassNameMap, MoveReason } from "../../../types";
+import type { MoveReason } from "../../../types";
+
+export interface PaginationBasicClassMap {
+  readonly paginationWrapper?: string;
+  readonly dot?: string;
+  readonly dotActive?: string;
+}
 
 export type PaginationBasicProps = {
   pageCount: number;
   activeDotIndex: number;
   onDotClick: (idx: number) => void;
-  className: ClassNameMap;
+  className: PaginationBasicClassMap;
   isDynamic: boolean;
   isMoving: boolean;
   isJump: boolean;
@@ -15,6 +21,6 @@ export type PaginationBasicProps = {
 export type PaginationBasicDotProps = {
   idx: number;
   visualIndex: number;
-  className: ClassNameMap;
+  className: PaginationBasicClassMap;
   onDotClick: (idx: number) => void;
 };
