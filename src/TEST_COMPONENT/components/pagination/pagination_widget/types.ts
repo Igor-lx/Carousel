@@ -21,9 +21,9 @@ export type PaginationAction =
   | { type: "END_STEP" };
 
 export interface PaginationWidgetClassMap {
-  readonly container_PW: string;
-  readonly dot_PW: string;
-  readonly dotActive_PW: string;
+  readonly container_PW?: string;
+  readonly dot_PW?: string;
+  readonly dotActive_PW?: string;
   readonly freezed?: string;
 }
 
