@@ -8,19 +8,18 @@ export const initialState: PaginationState = {
   activeDuration: 0,
 };
 
-const getNextStep = (current: number, dir: "next" | "prev") =>
-  dir === "next" ? current + 1 : current - 1;
-
 export function paginationReducer(
   state: PaginationState,
   action: PaginationAction,
 ): PaginationState {
+  const getNext = (dir: "next" | "prev") =>
+    dir === "next" ? state.step + 1 : state.step - 1;
   switch (action.type) {
     case "CLICK":
       if (state.animMode === "moving") {
         return {
           ...state,
-          step: getNextStep(state.step, action.direction),
+          step: getNext(action.direction),
           activeDuration: Math.max(
             state.activeDuration * VELOCITY_COEFFICIENT,
             MIN_DURATION,
@@ -34,22 +33,10 @@ export function paginationReducer(
         activeDuration: action.configDuration,
         activeDelay: state.animMode === "none" ? action.configDelay : 0,
       };
-
     case "START_ANIMATION":
-      return {
-        ...state,
-        animMode: "moving",
-        step: getNextStep(state.step, action.direction),
-      };
-
+      return { ...state, animMode: "moving", step: getNext(action.direction) };
     case "END_STEP":
-      return {
-        ...state,
-        animMode: "none",
-        activeDelay: 0,
-        activeDuration: 0,
-      };
-
+      return { ...state, animMode: "none", activeDelay: 0, activeDuration: 0 };
     default:
       return state;
   }

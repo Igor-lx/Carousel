@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
 import { useTimer } from "./useTimer";
-import { ANIMATION_END_BUFFER } from "./const";
 import type { PaginationAction, AnimationMode } from "./types";
 
 interface EngineProps {
@@ -23,19 +22,13 @@ export function usePaginationEngine({
   const waitTimer = useTimer();
   const moveTimer = useTimer();
 
-  // Используем ref для актуального состояния в колбэках, чтобы не пересоздавать action
-  const modeRef = useRef(mode);
-  useEffect(() => {
-    modeRef.current = mode;
-  }, [mode]);
-
   const action = useCallback(
     (direction: "next" | "prev") => {
       waitTimer.clear();
       dispatch({ type: "CLICK", direction, configDelay, configDuration });
 
-      if (modeRef.current !== "moving") {
-        const d = modeRef.current === "none" ? configDelay : 0;
+      if (mode !== "moving") {
+        const d = mode === "none" ? configDelay : 0;
         if (d > 0) {
           waitTimer.set(
             () => dispatch({ type: "START_ANIMATION", direction }),
@@ -46,15 +39,12 @@ export function usePaginationEngine({
         }
       }
     },
-    [configDelay, configDuration, dispatch, waitTimer],
+    [mode, configDelay, configDuration, dispatch, waitTimer],
   );
 
   useEffect(() => {
     if (mode === "moving") {
-      moveTimer.set(
-        () => dispatch({ type: "END_STEP" }),
-        duration + ANIMATION_END_BUFFER,
-      );
+      moveTimer.set(() => dispatch({ type: "END_STEP" }), duration + 50);
     }
   }, [step, mode, duration, dispatch, moveTimer]);
 

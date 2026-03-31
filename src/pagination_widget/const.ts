@@ -9,4 +9,3 @@ export const WIDGET_DEFAULTS = {
 export const EDGE_DRIFT_FACTOR = 0.7;
 export const MIN_DURATION = 120;
 export const VELOCITY_COEFFICIENT = 0.8;
-export const ANIMATION_END_BUFFER = 50; 

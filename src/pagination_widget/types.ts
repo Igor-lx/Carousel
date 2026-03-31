@@ -3,14 +3,19 @@ import type { CSSProperties } from "react";
 export type AnimationMode = "none" | "waiting" | "moving";
 
 export interface PaginationState {
-  readonly step: number;
-  readonly animMode: AnimationMode;
-  readonly activeDelay: number;
-  readonly activeDuration: number;
+  step: number;
+  animMode: AnimationMode;
+  activeDelay: number;
+  activeDuration: number;
 }
 
 export type PaginationAction =
-  | { type: "CLICK"; direction: "next" | "prev"; configDelay: number; configDuration: number }
+  | {
+      type: "CLICK";
+      direction: "next" | "prev";
+      configDelay: number;
+      configDuration: number;
+    }
   | { type: "START_ANIMATION"; direction: "next" | "prev" }
   | { type: "END_STEP" };
 
@@ -22,30 +27,28 @@ export interface PaginationWidgetClassMap {
 }
 
 export interface DotWidgetState {
-  readonly id: number;
-  readonly x: number;
-  readonly scale: number;
-  readonly opacity: number;
-  readonly isActive: boolean;
+  id: number;
+  x: number;
+  scale: number;
+  opacity: number;
+  isActive: boolean;
 }
 
-// Типизация для CSS Variables (Production-ready approach)
-export interface ContainerCSSVars extends CSSProperties {
+export interface ContainerWidgetStyle extends CSSProperties {
   "--duration"?: string;
   "--delay"?: string;
-  "--visible-dots-count"?: number;
 }
 
-export interface DotCSSVars extends CSSProperties {
+export interface DotWidgetStyle extends CSSProperties {
   "--dot-x": string;
   "--dot-scale": number;
   "--dot-opacity": number;
 }
 
 export interface SpatialConfig {
-  readonly size: number;
-  readonly gap: number;
-  readonly scaleFactor: number;
+  size: number;
+  gap: number;
+  scaleFactor: number;
 }
 
 export interface PaginationWidgetHandler {
@@ -60,4 +63,9 @@ export interface PaginationWidgetProps {
   delay?: number;
   duration?: number;
   scaleFactor?: number;
+}
+
+export interface PaginationWidgetDotProps {
+  state: DotWidgetState;
+  className: PaginationWidgetClassMap;
 }
