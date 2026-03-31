@@ -11,7 +11,7 @@ interface Dimensions {
 export function useDimensions(
   containerRef: React.RefObject<HTMLDivElement | null>,
 ): Dimensions {
-  const [dims, setDims] = useState<Dimensions>({ size: 0, gap: 0 });
+  const [dimentions, setDimentions] = useState<Dimensions>({ size: 0, gap: 0 });
 
   useIsomorphicLayoutEffect(() => {
     const el = containerRef.current;
@@ -19,12 +19,12 @@ export function useDimensions(
 
     const update = () => {
       const style = getComputedStyle(el);
-      const s = parseInt(style.getPropertyValue("--dot-size"), 10);
-      const g = parseInt(style.getPropertyValue("--dots-gap"), 10);
+      const size = parseInt(style.getPropertyValue("--dot-size"), 10);
+      const gap = parseInt(style.getPropertyValue("--dots-gap"), 10);
 
-      setDims({
-        size: isNaN(s) ? 0 : s,
-        gap: isNaN(g) ? 0 : g,
+      setDimentions({
+        size: isNaN(size) ? 0 : size,
+        gap: isNaN(gap) ? 0 : gap,
       });
     };
 
@@ -34,5 +34,5 @@ export function useDimensions(
     return () => obs.disconnect();
   }, [containerRef]);
 
-  return dims;
+  return dimentions;
 }

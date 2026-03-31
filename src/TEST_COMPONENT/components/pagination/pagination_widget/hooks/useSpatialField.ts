@@ -1,6 +1,6 @@
 import { useMemo, useCallback } from "react";
-import type { SpatialConfig, DotWidgetState } from "./types";
-import { EDGE_DRIFT_FACTOR } from "./const";
+import type { DotWidgetState, SpatialConfig } from "../types";
+import { DOTS_POOL_BUFFER, EDGE_DOT_DRIFT_FACTOR } from "../const";
 
 export function useSpatialField({
   visibleDots,
@@ -11,13 +11,12 @@ export function useSpatialField({
   config: SpatialConfig;
   step: number;
 }) {
-  const dotsCount = Number(visibleDots) || 3;
+  const dotsCount = Math.max(Number(visibleDots) || 3, 3);
 
   const { actualCount, centerIndex } = useMemo(() => {
     const actual = dotsCount % 2 === 0 ? dotsCount + 1 : dotsCount;
     return { actualCount: actual, centerIndex: Math.floor(actual / 2) };
   }, [dotsCount]);
-
   const getScale = useCallback(
     (dist: number) => {
       const abs = Math.abs(dist);
@@ -59,12 +58,12 @@ export function useSpatialField({
 
       let x: number;
       if (slot < 0) {
-        x = strip[0] - (1 - Math.exp(slot)) * (unit * EDGE_DRIFT_FACTOR);
+        x = strip[0] - (1 - Math.exp(slot)) * (unit * EDGE_DOT_DRIFT_FACTOR);
       } else if (slot > actualCount - 1) {
         const overSlot = slot - (actualCount - 1);
         x =
           strip[actualCount - 1] +
-          (1 - Math.exp(-overSlot)) * (unit * EDGE_DRIFT_FACTOR);
+          (1 - Math.exp(-overSlot)) * (unit * EDGE_DOT_DRIFT_FACTOR);
       } else {
         const f = Math.floor(slot),
           c = Math.ceil(slot),
@@ -90,10 +89,8 @@ export function useSpatialField({
   );
 
   const dotsPool = useMemo(() => {
-    const side = Math.max(actualCount, 10);
+    const side = Math.max(actualCount, DOTS_POOL_BUFFER);
     const range = [];
-    // Используем Math.floor для стабилизации ключей при дробных шагах,
-    // если они появятся в будущем
     const base = Math.round(step);
     for (let i = base - side; i <= base + side; i++) {
       range.push(i);

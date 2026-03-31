@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef } from "react";
-import { useTimer } from "./useTimer";
-import { ANIMATION_END_BUFFER } from "./const";
-import type { PaginationAction, AnimationMode } from "./types";
+import type { AnimationMode, PaginationAction } from "../types";
+import { useTimer } from ".";
+import { ANIMATION_END_BUFFER } from "../const";
+
 
 interface EngineProps {
   dispatch: React.Dispatch<PaginationAction>;
@@ -23,7 +24,6 @@ export function usePaginationEngine({
   const waitTimer = useTimer();
   const moveTimer = useTimer();
 
-  // Используем ref для актуального состояния в колбэках, чтобы не пересоздавать action
   const modeRef = useRef(mode);
   useEffect(() => {
     modeRef.current = mode;
@@ -35,11 +35,11 @@ export function usePaginationEngine({
       dispatch({ type: "CLICK", direction, configDelay, configDuration });
 
       if (modeRef.current !== "moving") {
-        const d = modeRef.current === "none" ? configDelay : 0;
-        if (d > 0) {
+        const delay = modeRef.current === "none" ? configDelay : 0;
+        if (delay > 0) {
           waitTimer.set(
             () => dispatch({ type: "START_ANIMATION", direction }),
-            d,
+            delay,
           );
         } else {
           dispatch({ type: "START_ANIMATION", direction });

@@ -10,10 +10,7 @@ import {
 } from "react";
 import clsx from "clsx";
 import { WIDGET_DEFAULTS } from "./const";
-import { useDimensions } from "./useDimensions";
-import { usePaginationEngine } from "./usePaginationEngine";
-import { useSpatialField } from "./useSpatialField";
-import { useLayoutNotice } from "./useLayoutNotice";
+
 import { paginationReducer, initialState } from "./reducer";
 import type {
   PaginationWidgetProps,
@@ -23,6 +20,7 @@ import type {
   ContainerCSSVars,
   DotCSSVars,
 } from "./types";
+import { useDimensions, useLayoutNotice, usePaginationEngine, useSpatialField } from "./hooks";
 
 const Dot = memo(
   ({
@@ -138,4 +136,4 @@ export const PaginationWidget = memo(
   }),
 );
 
-PaginationWidget.displayName = "PaginationWidget";
+

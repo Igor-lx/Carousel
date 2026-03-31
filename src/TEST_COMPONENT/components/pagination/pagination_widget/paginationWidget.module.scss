@@ -1,35 +1,30 @@
 .container_PW {
+  --dot-color: var(--color-secondary-global);
+  --dot-active-color: var(--color-global);
 
-  --dot-color: var(--color-secondary-global, #ccc);
-  --dot-active-color: var(--color-global, #007aff);
-
-  /* Тайминги и кривые */
   --anim-style: cubic-bezier(0.25, 1, 0.5, 1);
   --duration-move: var(--duration, 300ms);
   --duration-scale: calc(var(--duration-move) * 1.15);
   --duration-opacity: calc(var(--duration-move) * 0.8);
   --duration-color: calc(var(--duration-move) * 0.9);
 
-  /* Геометрия */
   --dot-size: 24px;
   --dots-gap: 30px;
-  --visible-dots-count: 5; 
+  --visible-dots-count: 5;
 
   display: flex;
   position: relative;
   align-items: center;
   justify-content: center;
 
-
   width: calc(
     (var(--visible-dots-count) * var(--dot-size)) +
-      ((var(--visible-dots-count) - 1) * var(--dots-gap)) + 44px
+      ((var(--visible-dots-count) - 1) * var(--dots-gap)) + 50px
   );
   height: 50px;
 
   border: 1px solid rgb(from var(--border-global) r g b / 0.4);
   border-radius: 25px;
-
 
   overflow: hidden;
   contain: paint;
@@ -50,7 +45,6 @@
   scale: var(--dot-scale, 1);
   opacity: var(--dot-opacity, 1);
 
-
   transition:
     translate var(--duration-move) var(--anim-style),
     scale var(--duration-scale) var(--anim-style),
@@ -66,11 +60,10 @@
 
 .dotActive_PW {
   background-color: var(--dot-active-color);
-  box-shadow: 0 0 10px 2px var(--dot-active-color);
-  z-index: 2; 
+  box-shadow: 0 0 8px 1px var(--dot-active-color);
+  z-index: 2;
 }
 
-/* Состояние заморозки: отключаем все транзиции разом */
 .freezed .dot_PW,
 .freezed.container_PW {
   transition: none !important;

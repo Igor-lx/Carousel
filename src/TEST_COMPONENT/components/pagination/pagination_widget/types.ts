@@ -29,7 +29,7 @@ export interface DotWidgetState {
   readonly isActive: boolean;
 }
 
-// Типизация для CSS Variables (Production-ready approach)
+
 export interface ContainerCSSVars extends CSSProperties {
   "--duration"?: string;
   "--delay"?: string;
