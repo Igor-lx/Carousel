@@ -11,5 +11,6 @@ export const DEFAULT_SETTINGS = {
   isPaginationDynamic: true,
   isInteractive: true,
   isInfinite: true,
+  isControlsOn: true,
   className: {},
 } as const;

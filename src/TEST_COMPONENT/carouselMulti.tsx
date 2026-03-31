@@ -13,7 +13,7 @@ import pagBstyles from "./components/pagination/pagination_basic/paginationBasic
 
 import { reducer, initialState, getAnimStatus } from "./reducer";
 import {
-  NavZone,
+  Controls,
   PaginationBasic,
   PaginationWidget,
   SlideItem,
@@ -53,7 +53,7 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
   const {
     slides = [],
     visibleSlides = DEFAULT_SETTINGS.visibleSlides,
-    speedAutoBase = DEFAULT_SETTINGS.speedAutoBase,
+    speedAuto: speedAutoBase = DEFAULT_SETTINGS.speedAutoBase,
     delayAuto = DEFAULT_SETTINGS.delayAuto,
     speedManualStep = DEFAULT_SETTINGS.speedManualStep,
     speedManualJump = DEFAULT_SETTINGS.speedManualJump,
@@ -64,9 +64,10 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
     isPaginationDynamic = DEFAULT_SETTINGS.isPaginationDynamic,
     isInteractive = DEFAULT_SETTINGS.isInteractive,
     isInfinite = DEFAULT_SETTINGS.isInfinite,
+    isControlsOn = DEFAULT_SETTINGS.isControlsOn,
     className = DEFAULT_SETTINGS.className,
-    isReducedMotionProp,
-    isTouchProp,
+    isInstantMotion: isReducedMotionProp,
+    isTouchDevice: isTouchProp,
     onSlideClick,
   } = props;
 
@@ -178,7 +179,8 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
   });
 
   const {
-    handleMove: handleMoveClick,
+    handlePrev: handleMovePrevClick,
+    handleNext: handleMoveNextClick,
     handleDot: handleDotClick,
     handleSlide: handleSlideClick,
   } = useCarouselClick({
@@ -314,32 +316,22 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
             );
           })}
         </div>
-        {canSlide && (
-          <>
-            {!isFiniteAndAtStart && (
-              <NavZone
-                direction="left"
-                onClick={() => handleMoveClick(-1)}
-                className={baseMergedStyles}
-              />
-            )}
-            {!isFiniteAndAtEnd && (
-              <NavZone
-                direction="right"
-                onClick={() => handleMoveClick(1)}
-                className={baseMergedStyles}
-              />
-            )}
-          </>
+        {isControlsOn && canSlide && (
+          <Controls
+            isAtStart={isFiniteAndAtStart}
+            isAtEnd={isFiniteAndAtEnd}
+            onPrev={handleMovePrevClick}
+            onNext={handleMoveNextClick}
+            className={baseMergedStyles}
+          />
         )}
       </div>
       {isPaginated && canSlide && (
         <>
-          {isTouch ? (
+          {!isTouch ? (
             <PaginationWidget
               ref={paginationWidgetHandler}
-              className={pagWStyles}
-              visibleDots={5}
+              className={baseMergedStyles}
             />
           ) : (
             <PaginationBasic

@@ -25,7 +25,6 @@ import { useMemo, useState } from "react";
 import { useMatchMedia, useIsTouchScreen } from "../utilites_global";
 import { type Slide } from "../TEST_COMPONENT/types/types";
 
-
 //=====================================================================================================================================
 
 const handleSlideClick = (dataUnit: Slide) => {
@@ -60,7 +59,7 @@ function App() {
 
   const CAROUSEL_VIS = useMemo(
     () => ({
-      DESKTOP: 2,
+      DESKTOP: 4,
       TABLET: 2,
       MOBILE: 1,
       DEFAULT: 3,
@@ -69,7 +68,6 @@ function App() {
   );
 
   const visibleSlides = useMatchMedia(CAROUSEL_VIS);
-
 
   return (
     <main className={appStyles.app}>
@@ -98,11 +96,12 @@ function App() {
             isPaginated={true}
             isPaginationDynamic={true}
             isInteractive={true}
-            speedAutoBase={4000}
+            speedAuto={4000}
             speedManualStep={2000}
             speedManualJump={800}
             delayAuto={3000}
-            isTouchProp={isTouch}
+           // isInstantMotion={true}
+            isTouchDevice={isTouch}
             onSlideClick={handleSlideClick}
           />
         </div>

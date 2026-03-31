@@ -1,44 +1,70 @@
-.paginationWidgetContainer {
+.container_PW {
   --dot-color: var(--color-secondary-global);
   --dot-active-color: var(--color-global);
-  --anim-timing: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --dot-size: 20px;
-  --dots-gap: 22px;
+
+  /* Чистый, быстрый и точный без отскока назад (overshoot) */
+  --anim-style: cubic-bezier(0.25, 1, 0.5, 1);
+
+  --dot-size: 24px;
+  --dots-gap: 30px;
+
+  /* Ширина контейнера */
+  width: calc(
+    (var(--visible-dots-count) * var(--dot-size)) +
+      ((var(--visible-dots-count) - 1) * var(--dots-gap)) + 220px
+  );
+
+  /* ТАЙМИНГИ: Сближаем их для эффекта единой анимации.
+     Разница всего в 10-15%, что дает "органическую" мягкость, 
+     но не дает анимации развалиться.
+  */
+  --duration-move: var(--duration);
+  --duration-scale: calc(var(--duration) * 1.15);
+  --duration-opacity: calc(var(--duration) * 0.8);
+  --duration-color: calc(var(--duration) * 0.9);
 
   display: flex;
   position: relative;
   align-items: center;
   justify-content: center;
-  width: 300px;
   height: 50px;
-  margin-top: 50px;
+  border: 1px solid var(--border-global);
+  border-radius: 25px;
   overflow: hidden;
-  background-color: transparent;
-  border-radius: 30px;
+  transition: width 0.3s ease;
 }
 
-.dotPaginationWidget {
+.dot_PW {
   position: absolute;
+  top: 50%;
+  left: 50%;
   width: var(--dot-size);
   height: var(--dot-size);
   border-radius: 50%;
   background-color: var(--dot-color);
-  transform: translateX(var(--dot-x)) scale(var(--dot-scale));
+
+  margin-left: calc(var(--dot-size) / -2);
+  margin-top: calc(var(--dot-size) / -2);
+
+  translate: var(--dot-x) 0;
+  scale: var(--dot-scale);
   opacity: var(--dot-opacity);
+
+  /* Используем один и тот же bezier для всего, кроме прозрачности,
+     чтобы движение и рост были синхронны. 
+  */
   transition:
-    transform 450ms ease,
-    opacity 300ms ease,
-    background-color 300ms ease;
-  will-change: transform, opacity;
+    translate var(--duration-move) var(--anim-style),
+    scale var(--duration-scale) var(--anim-style),
+    opacity var(--duration-opacity) ease-out,
+    background-color var(--duration-color) var(--anim-style),
+    box-shadow var(--duration-color) var(--anim-style);
+
+  transition-delay: var(--delay, 0ms);
+  will-change: translate, scale, opacity;
 }
 
-.paginationWidgetFreezed .dotPaginationWidget {
-  transition: none !important;
-  will-change: auto !important;
-}
-
-/* ИМЯ ИСПРАВЛЕНО ДЛЯ СООТВЕТСТВИЯ ТИПАМ */
-.dotPaginationWidgetActive {
-  box-shadow: 0 0 12px 2px var(--dot-color);
+.dotActive_PW {
   background-color: var(--dot-active-color);
+  box-shadow: 0 0 15px 2px var(--dot-active-color);
 }

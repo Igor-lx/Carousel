@@ -1,9 +1,7 @@
-import clsx from "clsx";
 import { memo } from "react";
-
+import type { ControlsProps, NavZoneProps } from "../types";
+import clsx from "clsx";
 import { ChevronIcon } from "../../utilites_global";
-import type { NavZoneProps } from "../types";
-
 
 export const NavZone = memo(
   ({ direction, onClick, className }: NavZoneProps) => {
@@ -24,3 +22,22 @@ export const NavZone = memo(
     );
   },
 );
+
+export const Controls = memo(function Controls({
+  isAtStart,
+  isAtEnd,
+  onPrev,
+  onNext,
+  className,
+}: ControlsProps) {
+  return (
+    <>
+      {!isAtStart && (
+        <NavZone direction="left" onClick={onPrev} className={className} />
+      )}
+      {!isAtEnd && (
+        <NavZone direction="right" onClick={onNext} className={className} />
+      )}
+    </>
+  );
+});

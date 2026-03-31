@@ -2,7 +2,6 @@ import clsx from "clsx";
 import { memo, useState, useEffect } from "react";
 import type { SlideItemProps } from "../types";
 
-
 export const SlideItem = memo(
   ({
     slide,
@@ -34,7 +33,7 @@ export const SlideItem = memo(
           className.slide,
           isBroken && className.slideError,
           !isImg && className.slideText,
-          isClickable && className.interactive,
+          isClickable && className.slideInteractive,
         )}
         {...(isClickable && { type: "button" })}
         onClick={isClickable ? () => onSlideClick?.(slide) : undefined}

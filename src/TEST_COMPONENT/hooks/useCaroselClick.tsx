@@ -13,6 +13,8 @@ interface ClickResult {
   readonly handleMove: (step: number) => void;
   readonly handleDot: (index: number) => void;
   readonly handleSlide: (slide: Slide) => void;
+  readonly handlePrev: () => void;
+  readonly handleNext: () => void;
 }
 
 export function useCarouselClick({
@@ -29,6 +31,14 @@ export function useCarouselClick({
     [onMove],
   );
 
+  const handlePrev = useCallback(() => {
+    handleMove(-1);
+  }, [handleMove]);
+
+  const handleNext = useCallback(() => {
+    handleMove(1);
+  }, [handleMove]);
+
   const handleDot = useCallback(
     (index: number) => {
       onGoTo(offset + index * stepSize, "click");
@@ -43,6 +53,8 @@ export function useCarouselClick({
 
   return {
     handleMove,
+      handlePrev,
+    handleNext,
     handleDot,
     handleSlide,
   };

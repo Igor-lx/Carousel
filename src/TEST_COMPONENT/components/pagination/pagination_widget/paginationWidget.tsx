@@ -1,21 +1,49 @@
 import {
   memo,
   useRef,
-  useState,
   useImperativeHandle,
   forwardRef,
-  useMemo,
+  useEffect,
+  useState,
+  useReducer,
 } from "react";
 import clsx from "clsx";
+import { WIDGET_DEFAULTS } from "./const";
+import { useDimensions } from "./useDimensions";
+import { usePaginationEngine } from "./usePaginationEngine";
+import { useSpatialField } from "./useSpatialField";
+import { paginationReducer, initialState } from "./reducer";
 import type {
   PaginationWidgetProps,
   PaginationWidgetHandler,
   PaginationWidgetDotProps,
-  PaginationWidgetConfig,
   DotWidgetStyle,
+  ContainerWidgetStyle,
 } from "./types";
-import { useVisualPagination } from "./usePaginationWidget";
-import { useIsomorphicLayoutEffect } from "../../../hooks";
+
+interface WidgetNoticeProps {
+  readonly visibleDots: number;
+  readonly actualVisibleDots: number;
+}
+
+export function useLayoutNotice({
+  visibleDots,
+  actualVisibleDots,
+}: WidgetNoticeProps): void {
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
+    if (visibleDots !== actualVisibleDots) {
+      console.warn(
+        `[PaginationWidget]: "visibleDots" must be an odd number. Input (${visibleDots}) was rounded up to ${actualVisibleDots}.`,
+      );
+    }
+    if (actualVisibleDots < 3) {
+      console.warn(
+        `[PaginationWidget]: ${actualVisibleDots} dots is too few for animation. Consider using at least 3.`,
+      );
+    }
+  }, [visibleDots, actualVisibleDots]);
+}
 
 const Dot = memo(({ state, className }: PaginationWidgetDotProps) => {
   const style: DotWidgetStyle = {
@@ -23,12 +51,11 @@ const Dot = memo(({ state, className }: PaginationWidgetDotProps) => {
     "--dot-scale": state.scale,
     "--dot-opacity": state.opacity,
   };
-
   return (
     <div
       className={clsx(
-        className.dotPaginationWidget,
-        state.isActive && className.dotPaginationWidgetActive,
+        className.dot_PW,
+        state.isActive && className.dotActive_PW,
       )}
       style={style}
     />
@@ -36,63 +63,67 @@ const Dot = memo(({ state, className }: PaginationWidgetDotProps) => {
 });
 
 export const PaginationWidget = memo(
-  forwardRef<PaginationWidgetHandler, PaginationWidgetProps>(
-    ({ visibleDots = 7, dotSize, gap, isFreezed = false, className }, ref) => {
-      const containerRef = useRef<HTMLDivElement>(null);
+  forwardRef<PaginationWidgetHandler, PaginationWidgetProps>((props, ref) => {
+    const {
+      visibleDots = WIDGET_DEFAULTS.visibleDots,
+      isFreezed = WIDGET_DEFAULTS.isFreezed,
+      delay = WIDGET_DEFAULTS.delay,
+      duration = WIDGET_DEFAULTS.duration,
+      scaleFactor = WIDGET_DEFAULTS.scaleFactor,
+      className,
+    } = props;
 
-      const [internalStep, setInternalStep] = useState(0);
+    const [isMounted, setIsMounted] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [state, dispatch] = useReducer(paginationReducer, initialState);
 
-      const [visualConfig, setVisualConfig] = useState<PaginationWidgetConfig>({
-        size: dotSize ?? 20,
-        gap: gap ?? 12,
-      });
+    const dims = useDimensions(containerRef);
+    const { getDotState, dotsPool, actualVisibleDots } = useSpatialField({
+      visibleDots,
+      config: { ...dims, scaleFactor },
+      step: state.step,
+    });
 
-      useImperativeHandle(ref, () => ({
-        moveRight: () => setInternalStep((s) => s + 1),
-        moveLeft: () => setInternalStep((s) => s - 1),
-      }));
+    const { action: handleMove } = usePaginationEngine({
+      dispatch,
+      mode: state.animMode,
+      step: state.step,
+      duration: state.activeDuration,
+      configDelay: delay,
+      configDuration: duration,
+    });
 
-      useIsomorphicLayoutEffect(() => {
-        if (dotSize !== undefined && gap !== undefined) return;
+    useLayoutNotice({ visibleDots, actualVisibleDots });
 
-        const container = containerRef.current;
-        if (!container) return;
+    useEffect(() => {
+      setIsMounted(true);
+    }, []);
 
-        const style = getComputedStyle(container);
+    useImperativeHandle(ref, () => ({
+      moveRight: () => handleMove("next"),
+      moveLeft: () => handleMove("prev"),
+    }));
 
-        const cssSize = parseInt(style.getPropertyValue("--dot-size"), 10);
-        const cssGap = parseInt(style.getPropertyValue("--dots-gap"), 10);
+    // Добавляем типизацию для кастомных свойств
+    const containerStyle = {
+      "--duration": `${!isMounted || isFreezed ? 0 : state.activeDuration}ms`,
+      "--delay": `${!isMounted || isFreezed ? 0 : state.activeDelay}ms`,
+      "--visible-dots-count": actualVisibleDots,
+    } as ContainerWidgetStyle & Record<string, number | string>;
 
-        setVisualConfig({
-          size: dotSize ?? (Number.isNaN(cssSize) ? 20 : cssSize),
-          gap: gap ?? (Number.isNaN(cssGap) ? 12 : cssGap),
-        });
-      }, [dotSize, gap]);
-
-      const { getDotState, totalSlots } = useVisualPagination(
-        visibleDots,
-        visualConfig,
-        internalStep,
-      );
-
-      const dotsPool = useMemo(
-        () => Array.from({ length: totalSlots }, (_, i) => i),
-        [totalSlots],
-      );
-
-      return (
-        <div
-          ref={containerRef}
-          className={clsx(
-            className.paginationWidgetContainer,
-            isFreezed && className.paginationWidgetFreezed,
-          )}
-        >
-          {dotsPool.map((id) => (
-            <Dot key={id} state={getDotState(id)} className={className} />
-          ))}
-        </div>
-      );
-    },
-  ),
+    return (
+      <div
+        ref={containerRef}
+        className={clsx(
+          className.container_PW,
+          (isFreezed || !isMounted) && className.freezed,
+        )}
+        style={containerStyle}
+      >
+        {dotsPool.map((id) => (
+          <Dot key={id} state={getDotState(id)} className={className} />
+        ))}
+      </div>
+    );
+  }),
 );

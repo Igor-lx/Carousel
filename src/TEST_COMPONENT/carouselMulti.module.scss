@@ -30,6 +30,7 @@
   flex: 1;
   overflow: hidden;
   user-select: none;
+  margin-bottom: 20px;
 }
 
 .innerContainer:focus-visible {
@@ -207,7 +208,7 @@
 
 @media (max-height: 500px) and (orientation: landscape) {
   .innerContainer {
-    flex-grow: 0;
+    flex: 1;
     height: 60vh;
   }
 }
@@ -218,7 +219,7 @@
   opacity: 1;
 }
 
-.outerContainer[data-touch="false"] .interactive:hover {
+.outerContainer[data-touch="false"] .slideInteractive:hover {
   cursor: pointer;
   border-color: rgb(139, 139, 241);
 }
