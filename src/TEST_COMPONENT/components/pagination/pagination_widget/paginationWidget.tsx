@@ -1,50 +1,40 @@
 import {
   memo,
-  useRef,
   useImperativeHandle,
   forwardRef,
-  useEffect,
-  useState,
   useReducer,
   useMemo,
 } from "react";
 import clsx from "clsx";
 import { WIDGET_DEFAULTS } from "./const";
-
 import { paginationReducer, initialState } from "./reducer";
 import type {
   PaginationWidgetProps,
   PaginationWidgetHandler,
-  DotWidgetState,
   PaginationWidgetClassMap,
+  DotWidgetState,
   ContainerCSSVars,
   DotCSSVars,
 } from "./types";
-import { useDimensions, useLayoutNotice, usePaginationEngine, useSpatialField } from "./hooks";
+import { useLayoutNotice, usePaginationEngine, useSpatialField } from "./hooks";
 
 const Dot = memo(
   ({
-    state,
+    x,
+    scale,
+    opacity,
+    isActive,
     className,
-  }: {
-    state: DotWidgetState;
-    className: PaginationWidgetClassMap;
-  }) => {
-    const style = useMemo<DotCSSVars>(
-      () => ({
-        "--dot-x": `${state.x}px`,
-        "--dot-scale": state.scale,
-        "--dot-opacity": state.opacity,
-      }),
-      [state.x, state.scale, state.opacity],
-    );
+  }: DotWidgetState & { className: PaginationWidgetClassMap }) => {
+    const style: DotCSSVars = {
+      "--dot-x": `${x}px`,
+      "--dot-scale": scale,
+      "--dot-opacity": opacity,
+    };
 
     return (
       <div
-        className={clsx(
-          className.dot_PW,
-          state.isActive && className.dotActive_PW,
-        )}
+        className={clsx(className.dot_PW, isActive && className.dotActive_PW)}
         style={style}
       />
     );
@@ -57,6 +47,8 @@ export const PaginationWidget = memo(
   forwardRef<PaginationWidgetHandler, PaginationWidgetProps>((props, ref) => {
     const {
       visibleDots = WIDGET_DEFAULTS.visibleDots,
+      dotSize = WIDGET_DEFAULTS.dotSize,
+      dotGap = WIDGET_DEFAULTS.dotGap,
       isFreezed = WIDGET_DEFAULTS.isFreezed,
       delay = WIDGET_DEFAULTS.delay,
       duration = WIDGET_DEFAULTS.duration,
@@ -64,14 +56,15 @@ export const PaginationWidget = memo(
       className,
     } = props;
 
-    const [isMounted, setIsMounted] = useState(false);
-    const containerRef = useRef<HTMLDivElement>(null);
     const [state, dispatch] = useReducer(paginationReducer, initialState);
 
-    const dims = useDimensions(containerRef);
     const spatialConfig = useMemo(
-      () => ({ ...dims, scaleFactor }),
-      [dims, scaleFactor],
+      () => ({
+        size: dotSize,
+        gap: dotGap,
+        scaleFactor,
+      }),
+      [dotSize, dotGap, scaleFactor],
     );
 
     const { getDotState, dotsPool, actualVisibleDots } = useSpatialField({
@@ -80,20 +73,12 @@ export const PaginationWidget = memo(
       step: state.step,
     });
 
-    const { action: handleMove } = usePaginationEngine({
-      dispatch,
-      mode: state.animMode,
-      step: state.step,
-      duration: state.activeDuration,
-      configDelay: delay,
-      configDuration: duration,
+    const { action: handleMove } = usePaginationEngine(state, dispatch, {
+      delay,
+      duration,
     });
 
     useLayoutNotice({ visibleDots, actualVisibleDots });
-
-    useEffect(() => {
-      setIsMounted(true);
-    }, []);
 
     useImperativeHandle(
       ref,
@@ -104,36 +89,34 @@ export const PaginationWidget = memo(
       [handleMove],
     );
 
-    const containerStyle = useMemo<ContainerCSSVars>(
-      () => ({
-        "--duration": `${!isMounted || isFreezed ? 0 : state.activeDuration}ms`,
-        "--delay": `${!isMounted || isFreezed ? 0 : state.activeDelay}ms`,
+    const containerStyle = useMemo<ContainerCSSVars>(() => {
+      const isAnimating = state.mode === "MOVING" && !isFreezed;
+      return {
+        "--duration": `${isAnimating ? state.activeDuration : 0}ms`,
+        "--delay": `${state.mode === "WAITING" ? state.activeDelay : 0}ms`,
         "--visible-dots-count": actualVisibleDots,
-      }),
-      [
-        isMounted,
-        isFreezed,
-        state.activeDuration,
-        state.activeDelay,
-        actualVisibleDots,
-      ],
-    );
+        "--dot-size": `${dotSize}px`,
+        "--dots-gap": `${dotGap}px`,
+      };
+    }, [
+      state.mode,
+      state.activeDuration,
+      state.activeDelay,
+      actualVisibleDots,
+      dotSize,
+      dotGap,
+      isFreezed,
+    ]);
 
     return (
       <div
-        ref={containerRef}
-        className={clsx(
-          className.container_PW,
-          (isFreezed || !isMounted) && className.freezed,
-        )}
+        className={clsx(className.container_PW, isFreezed && className.freezed)}
         style={containerStyle}
       >
         {dotsPool.map((id) => (
-          <Dot key={id} state={getDotState(id)} className={className} />
+          <Dot key={id} {...getDotState(id)} className={className} />
         ))}
       </div>
     );
   }),
 );
-
-

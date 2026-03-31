@@ -1,62 +1,46 @@
-import { useCallback, useEffect, useRef } from "react";
-import type { AnimationMode, PaginationAction } from "../types";
-import { useTimer } from ".";
+import { useEffect } from "react";
+import type { PaginationState, PaginationAction } from "../types";
+import { useTimer } from "./useTimer";
 import { ANIMATION_END_BUFFER } from "../const";
 
-
-interface EngineProps {
-  dispatch: React.Dispatch<PaginationAction>;
-  mode: AnimationMode;
-  step: number;
-  duration: number;
-  configDelay: number;
-  configDuration: number;
-}
-
-export function usePaginationEngine({
-  dispatch,
-  mode,
-  step,
-  duration,
-  configDelay,
-  configDuration,
-}: EngineProps) {
+export function usePaginationEngine(
+  state: PaginationState,
+  dispatch: React.Dispatch<PaginationAction>,
+  config: { delay: number; duration: number }
+) {
   const waitTimer = useTimer();
   const moveTimer = useTimer();
 
-  const modeRef = useRef(mode);
   useEffect(() => {
-    modeRef.current = mode;
-  }, [mode]);
-
-  const action = useCallback(
-    (direction: "next" | "prev") => {
-      waitTimer.clear();
-      dispatch({ type: "CLICK", direction, configDelay, configDuration });
-
-      if (modeRef.current !== "moving") {
-        const delay = modeRef.current === "none" ? configDelay : 0;
-        if (delay > 0) {
-          waitTimer.set(
-            () => dispatch({ type: "START_ANIMATION", direction }),
-            delay,
-          );
-        } else {
-          dispatch({ type: "START_ANIMATION", direction });
-        }
+    waitTimer.clear();
+    if (state.mode === "WAITING") {
+      if (state.activeDelay > 0) {
+        waitTimer.set(() => dispatch({ type: "START_ANIMATION" }), state.activeDelay);
+      } else {
+        dispatch({ type: "START_ANIMATION" });
       }
-    },
-    [configDelay, configDuration, dispatch, waitTimer],
-  );
+    }
+  }, [state.mode, dispatch]);
 
   useEffect(() => {
-    if (mode === "moving") {
+    moveTimer.clear();
+    if (state.mode === "MOVING") {
       moveTimer.set(
         () => dispatch({ type: "END_STEP" }),
-        duration + ANIMATION_END_BUFFER,
+        state.activeDuration + ANIMATION_END_BUFFER
       );
     }
-  }, [step, mode, duration, dispatch, moveTimer]);
+    return () => moveTimer.clear();
+  }, [state.mode, state.step, state.activeDuration, dispatch]);
 
-  return { action };
+  return {
+    action: (direction: "next" | "prev") => {
+      dispatch({ 
+        type: "CLICK", 
+        direction, 
+        configDelay: config.delay, 
+        configDuration: config.duration 
+      });
+    }
+  };
 }

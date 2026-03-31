@@ -1,11 +1,14 @@
 export const WIDGET_DEFAULTS = {
   visibleDots: 5,
+  dotSize: 24,
+  dotGap: 30,
   delay: 0,
   duration: 1800,
   scaleFactor: 0.585,
   isFreezed: false,
 } as const;
 
+export const LIMIT_STEP = 1e6;
 export const EDGE_DOT_DRIFT_FACTOR = 0.7;
 export const MIN_DURATION = 600;
 export const VELOCITY_COEFFICIENT = 0.93;

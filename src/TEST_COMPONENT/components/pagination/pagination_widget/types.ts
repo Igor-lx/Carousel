@@ -1,39 +1,45 @@
 import type { CSSProperties } from "react";
 
-export type AnimationMode = "none" | "waiting" | "moving";
+export type AnimationMode = "IDLE" | "WAITING" | "MOVING";
 
 export interface PaginationState {
   readonly step: number;
-  readonly animMode: AnimationMode;
+  readonly mode: AnimationMode;
   readonly activeDelay: number;
   readonly activeDuration: number;
+  readonly lastDirection: "next" | "prev" | null;
 }
 
 export type PaginationAction =
-  | { type: "CLICK"; direction: "next" | "prev"; configDelay: number; configDuration: number }
-  | { type: "START_ANIMATION"; direction: "next" | "prev" }
+  | {
+      type: "CLICK";
+      direction: "next" | "prev";
+      configDelay: number;
+      configDuration: number;
+    }
+  | { type: "START_ANIMATION" }
   | { type: "END_STEP" };
 
 export interface PaginationWidgetClassMap {
-  readonly container_PW?: string;
-  readonly dot_PW?: string;
-  readonly dotActive_PW?: string;
+  readonly container_PW: string;
+  readonly dot_PW: string;
+  readonly dotActive_PW: string;
   readonly freezed?: string;
 }
 
 export interface DotWidgetState {
-  readonly id: number;
   readonly x: number;
   readonly scale: number;
   readonly opacity: number;
   readonly isActive: boolean;
 }
 
-
 export interface ContainerCSSVars extends CSSProperties {
-  "--duration"?: string;
-  "--delay"?: string;
-  "--visible-dots-count"?: number;
+  "--duration": string;
+  "--delay": string;
+  "--visible-dots-count": number;
+  "--dot-size": string;
+  "--dots-gap": string;
 }
 
 export interface DotCSSVars extends CSSProperties {
@@ -55,6 +61,8 @@ export interface PaginationWidgetHandler {
 
 export interface PaginationWidgetProps {
   className: PaginationWidgetClassMap;
+  dotSize?: number;
+  dotGap?: number;
   visibleDots?: number;
   isFreezed?: boolean;
   delay?: number;

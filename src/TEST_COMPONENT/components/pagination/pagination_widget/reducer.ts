@@ -3,52 +3,61 @@ import type { PaginationState, PaginationAction } from "./types";
 
 export const initialState: PaginationState = {
   step: 0,
-  animMode: "none",
+  mode: "IDLE",
   activeDelay: 0,
   activeDuration: 0,
+  lastDirection: null,
 };
-
-const getNextStep = (current: number, dir: "next" | "prev") =>
-  dir === "next" ? current + 1 : current - 1;
 
 export function paginationReducer(
   state: PaginationState,
   action: PaginationAction,
 ): PaginationState {
   switch (action.type) {
-    case "CLICK":
-      if (state.animMode === "moving") {
+    case "CLICK": {
+      const isMoving = state.mode === "MOVING";
+      const isWaiting = state.mode === "WAITING";
+      const delta = action.direction === "next" ? 1 : -1;
+
+      if (isMoving) {
         return {
           ...state,
-          step: getNextStep(state.step, action.direction),
+          step: state.step + delta,
           activeDuration: Math.max(
             state.activeDuration * VELOCITY_COEFFICIENT,
             MIN_DURATION,
           ),
           activeDelay: 0,
+          lastDirection: action.direction,
         };
       }
-      return {
-        ...state,
-        animMode: "waiting",
-        activeDuration: action.configDuration,
-        activeDelay: state.animMode === "none" ? action.configDelay : 0,
-      };
 
-    case "START_ANIMATION":
+      if (isWaiting) {
+        return { ...state, lastDirection: action.direction };
+      }
+
       return {
         ...state,
-        animMode: "moving",
-        step: getNextStep(state.step, action.direction),
+        mode: "WAITING",
+        lastDirection: action.direction,
+        activeDuration: action.configDuration,
+        activeDelay: action.configDelay,
       };
+    }
+
+    case "START_ANIMATION": {
+      if (state.mode !== "WAITING" || !state.lastDirection) return state;
+      const delta = state.lastDirection === "next" ? 1 : -1;
+      return {
+        ...state,
+        mode: "MOVING",
+        step: state.step + delta,
+        activeDelay: 0,
+      };
+    }
 
     case "END_STEP":
-      return {
-        ...state,
-        animMode: "none",
-        activeDelay: 0,
-        activeDuration: 0,
-      };
+      return { ...initialState, step: state.step };
 
     default:
       return state;
