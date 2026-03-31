@@ -328,7 +328,7 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
       </div>
       {isPaginated && canSlide && (
         <>
-          {!isTouch ? (
+          {isTouch ? (
             <PaginationWidget
               ref={paginationWidgetHandler}
               className={baseMergedStyles}
