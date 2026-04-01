@@ -18,9 +18,7 @@ export function useTimer() {
     [clear],
   );
 
-  useEffect(() => {
-    return () => clear();
-  }, [clear]);
+  useEffect(() => () => clear(), [clear]);
 
   return { set, clear };
 }

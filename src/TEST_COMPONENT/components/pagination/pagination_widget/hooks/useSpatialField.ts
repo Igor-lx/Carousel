@@ -1,6 +1,11 @@
-import { useMemo, useCallback } from "react";
-import type { DotWidgetState, SpatialConfig } from "../types";
-import { DOTS_POOL_BUFFER, EDGE_DOT_DRIFT_FACTOR } from "../const";
+import { useMemo } from "react";
+import type { SpatialConfig, DotWidgetState, LayoutModel } from "../types";
+import {
+  precomputeScales,
+  computeStrip,
+  computePool,
+  projectDot,
+} from "../utils/math";
 
 export function useSpatialField({
   visibleDots,
@@ -11,78 +16,48 @@ export function useSpatialField({
   config: SpatialConfig;
   step: number;
 }) {
-  // 2.5 Валидация конфига
-  const safeConfig = useMemo(() => ({
-    size: Math.max(config.size, 1),
-    gap: Math.max(config.gap, 0),
-    scaleFactor: Math.max(config.scaleFactor, 0.1),
-  }), [config]);
+  const safeConfig = useMemo(
+    () => ({
+      size: Math.max(config.size, 1),
+      gap: Math.max(config.gap, 0),
+      scaleFactor: Math.max(config.scaleFactor, 0.01),
+    }),
+    [config.size, config.gap, config.scaleFactor],
+  );
 
-  const { actualCount, centerIndex } = useMemo(() => {
+  const layoutModel = useMemo((): LayoutModel => {
     const count = Math.max(Number(visibleDots) || 3, 3);
-    const actual = count % 2 === 0 ? count + 1 : count;
-    return { actualCount: actual, centerIndex: Math.floor(actual / 2) };
-  }, [visibleDots]);
+    const actualCount = count % 2 === 0 ? count + 1 : count;
+    const centerIndex = Math.floor(actualCount / 2);
 
-  const unit = useMemo(
-    () => safeConfig.size + safeConfig.gap,
-    [safeConfig.size, safeConfig.gap],
-  );
+    const scales = precomputeScales(
+      actualCount,
+      centerIndex,
+      safeConfig.scaleFactor,
+    );
 
-  const getScale = useCallback(
-    (dist: number) => {
-      const abs = Math.abs(dist);
-      return abs > centerIndex + 0.5 ? 0 : Math.pow(safeConfig.scaleFactor, abs);
-    },
-    [centerIndex, safeConfig.scaleFactor],
-  );
-
-  // strip вычисляется только при изменении геометрии
-  const strip = useMemo(() => {
-    const res = new Array(actualCount).fill(0);
-    for (let i = centerIndex + 1; i < actualCount; i++) {
-      const d = safeConfig.gap + (safeConfig.size * (getScale(i - 1 - centerIndex) + getScale(i - centerIndex))) / 2;
-      res[i] = res[i - 1] + d;
-    }
-    for (let i = centerIndex - 1; i >= 0; i--) {
-      const d = safeConfig.gap + (safeConfig.size * (getScale(i + 1 - centerIndex) + getScale(i - centerIndex))) / 2;
-      res[i] = res[i + 1] - d;
-    }
-    return res;
-  }, [actualCount, centerIndex, safeConfig.gap, safeConfig.size, getScale]);
-
-  const getDotState = useCallback(
-    (id: number): DotWidgetState => {
-      const dist = id - step;
-      const absDist = Math.abs(dist);
-      const slot = dist + centerIndex;
-
-      let x: number;
-      if (slot < 0) {
-        x = strip[0] - (1 - Math.exp(slot)) * (unit * EDGE_DOT_DRIFT_FACTOR);
-      } else if (slot > actualCount - 1) {
-        x = strip[actualCount - 1] + (1 - Math.exp(-(slot - (actualCount - 1)))) * (unit * EDGE_DOT_DRIFT_FACTOR);
-      } else {
-        const f = Math.floor(slot), c = Math.ceil(slot), t = slot - f;
-        const xF = strip[f], xC = strip[c] ?? xF + unit;
-        x = xF + (xC - xF) * t;
-      }
-
-      return {
-        x,
-        scale: getScale(dist),
-        opacity: absDist > centerIndex - 0.5 ? Math.max(0, 1 - (absDist - (centerIndex - 0.5))) : 1,
-        isActive: id === Math.round(step),
-      };
-    },
-    [step, centerIndex, strip, unit, getScale, actualCount],
-  );
+    return {
+      scales,
+      geometry: {
+        strip: computeStrip(scales, safeConfig),
+        actualCount,
+        centerIndex,
+        unit: safeConfig.size + safeConfig.gap,
+      },
+    };
+  }, [visibleDots, safeConfig]);
 
   const baseStep = Math.round(step);
-  const dotsPool = useMemo(() => {
-    const side = Math.max(actualCount, DOTS_POOL_BUFFER);
-    return Array.from({ length: side * 2 + 1 }, (_, i) => baseStep - side + i);
-  }, [baseStep, actualCount]);
+  const pool = useMemo(() => {
+    return computePool(baseStep, layoutModel.geometry.actualCount);
+  }, [baseStep, layoutModel.geometry.actualCount]);
 
-  return { getDotState, dotsPool, actualVisibleDots: actualCount };
+  const dotsData = useMemo((): DotWidgetState[] => {
+    return pool.map((id) => projectDot(id, step, layoutModel));
+  }, [pool, step, layoutModel]);
+
+  return {
+    dotsData,
+    actualVisibleDots: layoutModel.geometry.actualCount,
+  };
 }

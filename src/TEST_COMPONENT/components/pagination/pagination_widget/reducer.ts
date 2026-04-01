@@ -12,34 +12,26 @@ export function paginationReducer(
 ): PaginationState {
   switch (action.type) {
     case "CLICK": {
+      const isMoving = state.mode === "MOVING";
       return {
         ...state,
-        mode: state.mode === "MOVING" ? "MOVING" : "WAITING",
+        mode: isMoving ? "MOVING" : "WAITING",
         lastDirection: action.direction,
-        // Если уже двигаемся, инкрементируем шаг сразу (подхватится анимацией)
-        step:
-          state.mode === "MOVING"
-            ? state.step + (action.direction === "next" ? 1 : -1)
-            : state.step,
+        step: isMoving
+          ? state.step + (action.direction === "next" ? 1 : -1)
+          : state.step,
       };
     }
-
     case "START_ANIMATION": {
       if (state.mode !== "WAITING" || !state.lastDirection) return state;
-      const delta = state.lastDirection === "next" ? 1 : -1;
       return {
         ...state,
         mode: "MOVING",
-        step: state.step + delta,
+        step: state.step + (state.lastDirection === "next" ? 1 : -1),
       };
     }
-
     case "END_STEP":
-      return {
-        ...initialState,
-        step: Math.round(state.step), // Защита от накопления плавающей точки
-      };
-
+      return { ...initialState, step: Math.round(state.step) };
     default:
       return state;
   }

@@ -11,44 +11,34 @@ import { paginationReducer, initialState } from "./reducer";
 import type {
   PaginationWidgetProps,
   PaginationWidgetHandler,
-  PaginationWidgetClassMap,
   ContainerCSSVars,
   DotCSSVars,
+  DotProps,
 } from "./types";
-import { useLayoutNotice, usePaginationEngine, useSpatialField } from "./hooks";
+import { usePaginationEngine } from "./hooks/usePaginationEngine";
+import { useSpatialField } from "./hooks/useSpatialField";
 
-// Оптимизированный Dot: принимает примитивы для стабильности memo
-const Dot = memo(
-  ({
-    id,
-    getDotState,
-    className,
-  }: {
-    id: number;
-    getDotState: (id: number) => any;
-    className: PaginationWidgetClassMap;
-  }) => {
-    const { x, scale, opacity, isActive } = getDotState(id);
+/**
+ * Пропсы для точки: данные состояния отделены от оформления
+ */
 
-    const style: DotCSSVars = {
-      "--dot-x": `${x}px`,
-      "--dot-scale": scale,
-      "--dot-opacity": opacity,
-    };
+const Dot = memo(({ state, className }: DotProps) => {
+  const style: DotCSSVars = {
+    "--dot-x": `${state.x}px`,
+    "--dot-scale": state.scale,
+    "--dot-opacity": state.opacity,
+  };
 
-    return (
-      <div
-        className={clsx(className.dot_PW, isActive && className.dotActive_PW)}
-        style={style}
-      />
-    );
-  },
-  (prev, next) => {
-    // Кастомное сравнение: Dot ререндерится только если изменилась функция получения состояния
-    // (которая зависит от step) или id.
-    return prev.id === next.id && prev.getDotState === next.getDotState;
-  },
-);
+  return (
+    <div
+      className={clsx(
+        className.dot_PW,
+        state.isActive && className.dotActive_PW,
+      )}
+      style={style}
+    />
+  );
+});
 
 Dot.displayName = "PaginationWidget.Dot";
 
@@ -76,30 +66,24 @@ export const PaginationWidget = memo(
       [dotSize, dotGap, scaleFactor],
     );
 
-    const { getDotState, dotsPool, actualVisibleDots } = useSpatialField({
+    const { dotsData, actualVisibleDots } = useSpatialField({
       visibleDots,
       config: spatialConfig,
       step: state.step,
     });
 
-    const { action: handleMove, activeDuration } = usePaginationEngine(
-      state,
-      dispatch,
-      {
-        delay,
-        duration,
-      },
-    );
-
-    useLayoutNotice({ visibleDots, actualVisibleDots });
+    const { action, activeDuration } = usePaginationEngine(state, dispatch, {
+      delay,
+      duration,
+    });
 
     useImperativeHandle(
       ref,
       () => ({
-        moveRight: () => handleMove("next"),
-        moveLeft: () => handleMove("prev"),
+        moveRight: () => action("next"),
+        moveLeft: () => action("prev"),
       }),
-      [handleMove],
+      [action],
     );
 
     const containerStyle = useMemo<ContainerCSSVars>(() => {
@@ -126,13 +110,8 @@ export const PaginationWidget = memo(
         className={clsx(className.container_PW, isFreezed && className.freezed)}
         style={containerStyle}
       >
-        {dotsPool.map((id) => (
-          <Dot
-            key={id}
-            id={id}
-            getDotState={getDotState}
-            className={className}
-          />
+        {dotsData.map((dot) => (
+          <Dot key={dot.id} state={dot} className={className} />
         ))}
       </div>
     );

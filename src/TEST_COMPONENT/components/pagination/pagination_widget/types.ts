@@ -20,6 +20,26 @@ export interface PaginationWidgetClassMap {
   readonly freezed?: string;
 }
 
+export interface DotWidgetState {
+  readonly id: number;
+  readonly x: number;
+  readonly scale: number;
+  readonly opacity: number;
+  readonly isActive: boolean;
+}
+
+export interface GeometryData {
+  readonly strip: number[];
+  readonly actualCount: number;
+  readonly centerIndex: number;
+  readonly unit: number;
+}
+
+export interface LayoutModel {
+  readonly geometry: GeometryData;
+  readonly scales: number[];
+}
+
 export interface ContainerCSSVars extends CSSProperties {
   "--duration": string;
   "--delay": string;
@@ -34,13 +54,6 @@ export interface DotCSSVars extends CSSProperties {
   "--dot-opacity": number;
 }
 
-export interface DotWidgetState {
-  readonly x: number;
-  readonly scale: number;
-  readonly opacity: number;
-  readonly isActive: boolean;
-}
-
 export interface SpatialConfig {
   readonly size: number;
   readonly gap: number;
@@ -50,6 +63,11 @@ export interface SpatialConfig {
 export interface PaginationWidgetHandler {
   moveRight: () => void;
   moveLeft: () => void;
+}
+
+export interface DotProps {
+  readonly state: DotWidgetState;
+  readonly className: PaginationWidgetClassMap;
 }
 
 export interface PaginationWidgetProps {
