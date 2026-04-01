@@ -16,7 +16,6 @@ export function paginationReducer(
   switch (action.type) {
     case "CLICK": {
       const isMoving = state.mode === "MOVING";
-      const isWaiting = state.mode === "WAITING";
       const delta = action.direction === "next" ? 1 : -1;
 
       if (isMoving) {
@@ -30,10 +29,6 @@ export function paginationReducer(
           activeDelay: 0,
           lastDirection: action.direction,
         };
-      }
-
-      if (isWaiting) {
-        return { ...state, lastDirection: action.direction };
       }
 
       return {

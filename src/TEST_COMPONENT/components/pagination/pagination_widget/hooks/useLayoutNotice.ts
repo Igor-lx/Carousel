@@ -10,7 +10,6 @@ export function useLayoutNotice({
   actualVisibleDots,
 }: WidgetNoticeProps): void {
   useEffect(() => {
-
     if (process.env.NODE_ENV !== "development") return;
 
     if (visibleDots < 3) {
@@ -19,7 +18,7 @@ export function useLayoutNotice({
           `Minimum 3 dots are required for the animation engine to function. ` +
           `Value was forced to 3.`,
       );
-      return; 
+      return;
     }
 
     if (visibleDots !== actualVisibleDots) {
