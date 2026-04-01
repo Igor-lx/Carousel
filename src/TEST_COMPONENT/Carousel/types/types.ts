@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type ReactElement } from "react";
+import { type ReactElement, type ReactNode } from "react";
 
 const ReactElementSchema = z.custom<ReactElement>(
   (val) =>
@@ -67,7 +67,9 @@ export const CarouselMultiPropsSchema = z.object({
   ErrAltPlaceholder: z.string().optional(),
 });
 
-export type CarouselMultiProps = z.infer<typeof CarouselMultiPropsSchema>;
+export type CarouselMultiProps = z.infer<typeof CarouselMultiPropsSchema> & {
+  children?: ReactNode;
+};
 
 //-------------------------------------------------------------------------------------------------
 

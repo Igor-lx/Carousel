@@ -18,9 +18,6 @@ import type {
 import { usePaginationEngine } from "./hooks/usePaginationEngine";
 import { useSpatialField } from "./hooks/useSpatialField";
 
-/**
- * Пропсы для точки: данные состояния отделены от оформления
- */
 
 const Dot = memo(({ state, className }: DotProps) => {
   const style: DotCSSVars = {

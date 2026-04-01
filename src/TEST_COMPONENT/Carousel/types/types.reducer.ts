@@ -1,4 +1,4 @@
-import type { CarouselLayout } from "./data.types";
+import type { CarouselLayout } from "./types.data";
 
 export type AnimationMode = "normal" | "jump" | "instant" | "snap" | "none";
 export type MoveReason = "click" | "gesture" | "autoplay" | "unknown";

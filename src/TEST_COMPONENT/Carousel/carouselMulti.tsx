@@ -8,17 +8,9 @@ import {
 } from "react";
 
 import defaultStyles from "./carouselMulti.module.scss";
-import pagWStyles from "./components/pagination/pagination_widget/paginationWidget.module.scss";
-import pagBstyles from "./components/pagination/pagination_basic/paginationBasic.module.scss";
 
 import { reducer, initialState, getAnimStatus } from "./reducer";
-import {
-  Controls,
-  PaginationBasic,
-  PaginationWidget,
-  SlideItem,
-  type PaginationWidgetHandler,
-} from "./components";
+
 import {
   useCarouselAutoPlay,
   useCarouselClick,
@@ -43,11 +35,14 @@ import {
   useComponentVisibility,
   useReducedMotion,
   useIsTouchScreen,
-} from "../utilites_global";
+} from "../../utilites_global";
 
 import { DEFAULT_SETTINGS } from "./default_settings";
 import type { CarouselLayout, CarouselMultiProps } from "./types";
 import { getCarouselLayout } from "./utilites";
+import { Controls, SlideItem } from "./components";
+import { CarouselContext } from "./context/carouselContext";
+import { useCarouselBridge } from "./context/useCarouselBridge";
 
 const CarouselMulti = memo((props: CarouselMultiProps) => {
   const {
@@ -69,6 +64,7 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
     isInstantMotion: isReducedMotionProp,
     isTouchDevice: isTouchProp,
     onSlideClick,
+    children,
   } = props;
 
   const length = slides.length;
@@ -76,7 +72,7 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
 
   const animatedTrackRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const paginationWidgetHandler = useRef<PaginationWidgetHandler>(null);
+
   const timer = useCarouselTimer();
 
   const isReducedMotion = isReducedMotionProp ?? useReducedMotion();
@@ -85,6 +81,8 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
     elementRef: containerRef,
     threshold: VISIBILITY_THRESHOLD,
   });
+
+  const { externalRef, enhancedChildren } = useCarouselBridge(children);
 
   const {
     speedAuto: safeSpeedAuto,
@@ -161,7 +159,7 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
     finalize: componentFinalize,
     onReset: timer.clear,
     enabled: canSlide,
-    widgetControls: paginationWidgetHandler,
+    externalController: externalRef,
   });
 
   const enabled = canSlide && !isMoving;
@@ -198,7 +196,6 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
     delay: safeDelayAuto,
     isPaused: isPaused,
     isAtEnd: isFiniteAndAtEnd,
-    widgetControls: paginationWidgetHandler,
     onGoTo: executeGoTo,
     onMove: executeMove,
   });
@@ -224,7 +221,7 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
   });
 
   const baseMergedStyles = useMemo(
-    () => mergeBaseStyles(defaultStyles, pagBstyles, pagWStyles, className),
+    () => mergeBaseStyles(defaultStyles, className),
     [className],
   );
 
@@ -276,79 +273,84 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
       manageFocusShift(containerRef.current);
     }
   }, [isIdle, currentIndex]);
+
+  const contextValue = useMemo(
+    () => ({
+      pageCount,
+      activeDotIndex,
+      isMoving,
+      isJumping,
+      moveReason,
+      actualSpeed,
+      isPaginationDynamic,
+      handleDotClick,
+    }),
+    [
+      pageCount,
+      activeDotIndex,
+      isMoving,
+      isJumping,
+      moveReason,
+      actualSpeed,
+      isPaginationDynamic,
+      handleDotClick,
+    ],
+  );
+
   return (
-    <div
-      className={baseMergedStyles.outerContainer}
-      role="region"
-      aria-roledescription="carousel"
-      data-touch={isTouch}
-      data-reduced-motion={isReducedMotion}
-    >
+    <CarouselContext.Provider value={contextValue}>
       <div
-        ref={containerRef}
-        tabIndex={-1}
-        className={baseMergedStyles.innerContainer}
-        onMouseEnter={() => onHover(true)}
-        onMouseLeave={() => onHover(false)}
-        {...bindDragListeners}
+        className={baseMergedStyles.outerContainer}
+        role="region"
+        aria-roledescription="carousel"
+        data-touch={isTouch}
+        data-reduced-motion={isReducedMotion}
       >
         <div
-          ref={animatedTrackRef}
-          className={baseMergedStyles.slideContainer}
-          onTransitionEnd={handleTransitionEnd}
-          style={containerTechStyle}
+          ref={containerRef}
+          tabIndex={-1}
+          className={baseMergedStyles.innerContainer}
+          onMouseEnter={() => onHover(true)}
+          onMouseLeave={() => onHover(false)}
+          {...bindDragListeners}
         >
-          {virtualSlides.map((vs) => {
-            return (
-              <SlideItem
-                key={vs.slideKey}
-                slide={slides[vs.originalIndex]}
-                className={baseMergedStyles}
-                style={slideWrapperTechStyle}
-                isImg={isImg}
-                errAltPlaceholder={actualErrAltPlaceholder}
-                onSlideClick={handleSlideClick}
-                isInteractive={isInteractive}
-                isActive={vs.isActive}
-                isActual={vs.isActual}
-                {...vs.a11yProps}
-              />
-            );
-          })}
-        </div>
-        {isControlsOn && canSlide && (
-          <Controls
-            isAtStart={isFiniteAndAtStart}
-            isAtEnd={isFiniteAndAtEnd}
-            onPrev={handleMovePrevClick}
-            onNext={handleMoveNextClick}
-            className={baseMergedStyles}
-          />
-        )}
-      </div>
-      {isPaginated && canSlide && (
-        <>
-          {isTouch ? (
-            <PaginationWidget
-              ref={paginationWidgetHandler}
+          <div
+            ref={animatedTrackRef}
+            className={baseMergedStyles.slideContainer}
+            onTransitionEnd={handleTransitionEnd}
+            style={containerTechStyle}
+          >
+            {virtualSlides.map((vs) => {
+              return (
+                <SlideItem
+                  key={vs.slideKey}
+                  slide={slides[vs.originalIndex]}
+                  className={baseMergedStyles}
+                  style={slideWrapperTechStyle}
+                  isImg={isImg}
+                  errAltPlaceholder={actualErrAltPlaceholder}
+                  onSlideClick={handleSlideClick}
+                  isInteractive={isInteractive}
+                  isActive={vs.isActive}
+                  isActual={vs.isActual}
+                  {...vs.a11yProps}
+                />
+              );
+            })}
+          </div>
+          {isControlsOn && canSlide && (
+            <Controls
+              isAtStart={isFiniteAndAtStart}
+              isAtEnd={isFiniteAndAtEnd}
+              onPrev={handleMovePrevClick}
+              onNext={handleMoveNextClick}
               className={baseMergedStyles}
-            />
-          ) : (
-            <PaginationBasic
-              pageCount={pageCount}
-              activeDotIndex={activeDotIndex}
-              onDotClick={handleDotClick}
-              className={baseMergedStyles}
-              isMoving={isMoving}
-              isDynamic={isPaginationDynamic}
-              isJump={isJumping}
-              moveReason={moveReason}
-              speed={actualSpeed}
             />
           )}
-        </>
-      )}
-    </div>
+        </div>
+        {enhancedChildren}
+      </div>
+    </CarouselContext.Provider>
   );
 });
 export default CarouselMulti;

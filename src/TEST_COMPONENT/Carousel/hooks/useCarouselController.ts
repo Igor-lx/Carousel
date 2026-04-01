@@ -1,15 +1,12 @@
 import { useCallback } from "react";
-
-import type { PaginationWidgetHandler } from "../components";
-import type { Action, MoveReason } from "../types";
-
+import type { Action, CarouselExternalController, MoveReason } from "../types";
 
 interface ControllerProps {
   readonly dispatch: React.Dispatch<Action>;
   readonly finalize: () => void;
   readonly onReset: () => void;
   readonly enabled: boolean;
-  readonly widgetControls?: React.RefObject<PaginationWidgetHandler | null>;
+  readonly externalController: React.RefObject<CarouselExternalController | null>;
 }
 
 interface ControllerResult {
@@ -25,7 +22,7 @@ export function useCarouselController({
   finalize,
   onReset,
   enabled,
-  widgetControls,
+  externalController,
 }: ControllerProps): ControllerResult {
   const action = useCallback(
     (actionFn: () => void) => {
@@ -39,12 +36,12 @@ export function useCarouselController({
     (step: number, moveReason: MoveReason = "unknown") => {
       if (!enabled) return;
 
-      if (step > 0) widgetControls?.current?.moveRight();
-      else if (step < 0) widgetControls?.current?.moveLeft();
+      if (step > 0) externalController.current?.moveRight?.();
+      else if (step < 0) externalController.current?.moveLeft?.();
 
       action(() => dispatch({ type: "MOVE", step, moveReason }));
     },
-    [enabled, action, dispatch, widgetControls],
+    [enabled, action, dispatch, externalController],
   );
 
   const goTo = useCallback(

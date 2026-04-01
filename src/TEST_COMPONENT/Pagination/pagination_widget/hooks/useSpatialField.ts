@@ -1,11 +1,7 @@
 import { useMemo } from "react";
 import type { SpatialConfig, DotWidgetState, LayoutModel } from "../types";
-import {
-  precomputeScales,
-  computeStrip,
-  computePool,
-  projectDot,
-} from "../utils/math";
+import { computePool, computeStrip, precomputeScales, projectDot } from "../utils/math";
+
 
 export function useSpatialField({
   visibleDots,

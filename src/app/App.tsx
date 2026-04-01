@@ -20,10 +20,14 @@ import carousel14 from "../images/carousel14.jpg";
 import carousel15 from "../images/carousel15.jpg";
 import carousel16 from "../images/carousel16.jpg";
 
-import CarouselMulti from "../TEST_COMPONENT/carouselMulti";
+import CarouselMulti from "../TEST_COMPONENT/Carousel/carouselMulti";
 import { useMemo, useState } from "react";
 import { useMatchMedia, useIsTouchScreen } from "../utilites_global";
-import { type Slide } from "../TEST_COMPONENT/types/types";
+import { type Slide } from "../TEST_COMPONENT/Carousel/types/types";
+
+import st from "../TEST_COMPONENT/Pagination/pagination_widget/paginationWidget.module.scss";
+
+import { PaginationWidget } from "../TEST_COMPONENT/Pagination/pagination_widget/paginationWidget";
 
 //=====================================================================================================================================
 
@@ -100,10 +104,11 @@ function App() {
             speedManualStep={2000}
             speedManualJump={800}
             delayAuto={3000}
-           // isInstantMotion={true}
             isTouchDevice={isTouch}
             onSlideClick={handleSlideClick}
-          />
+          >
+            <PaginationWidget className={st} />
+          </CarouselMulti>
         </div>
       </section>
     </main>

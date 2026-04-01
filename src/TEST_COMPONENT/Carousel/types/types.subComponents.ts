@@ -28,3 +28,8 @@ export interface SlideItemProps extends Omit<
   isActual: boolean;
   onSlideClick?: (slide: Slide) => void;
 }
+
+export interface CarouselExternalController {
+  moveRight: () => void;
+  moveLeft: () => void;
+}

@@ -53,7 +53,7 @@ export function useCarouselClick({
 
   return {
     handleMove,
-      handlePrev,
+    handlePrev,
     handleNext,
     handleDot,
     handleSlide,
