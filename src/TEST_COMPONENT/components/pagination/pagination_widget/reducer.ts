@@ -1,11 +1,8 @@
-import { MIN_DURATION, VELOCITY_COEFFICIENT } from "./const";
 import type { PaginationState, PaginationAction } from "./types";
 
 export const initialState: PaginationState = {
   step: 0,
   mode: "IDLE",
-  activeDelay: 0,
-  activeDuration: 0,
   lastDirection: null,
 };
 
@@ -15,28 +12,15 @@ export function paginationReducer(
 ): PaginationState {
   switch (action.type) {
     case "CLICK": {
-      const isMoving = state.mode === "MOVING";
-      const delta = action.direction === "next" ? 1 : -1;
-
-      if (isMoving) {
-        return {
-          ...state,
-          step: state.step + delta,
-          activeDuration: Math.max(
-            state.activeDuration * VELOCITY_COEFFICIENT,
-            MIN_DURATION,
-          ),
-          activeDelay: 0,
-          lastDirection: action.direction,
-        };
-      }
-
       return {
         ...state,
-        mode: "WAITING",
+        mode: state.mode === "MOVING" ? "MOVING" : "WAITING",
         lastDirection: action.direction,
-        activeDuration: action.configDuration,
-        activeDelay: action.configDelay,
+        // Если уже двигаемся, инкрементируем шаг сразу (подхватится анимацией)
+        step:
+          state.mode === "MOVING"
+            ? state.step + (action.direction === "next" ? 1 : -1)
+            : state.step,
       };
     }
 
@@ -47,12 +31,14 @@ export function paginationReducer(
         ...state,
         mode: "MOVING",
         step: state.step + delta,
-        activeDelay: 0,
       };
     }
 
     case "END_STEP":
-      return { ...initialState, step: state.step };
+      return {
+        ...initialState,
+        step: Math.round(state.step), // Защита от накопления плавающей точки
+      };
 
     default:
       return state;

@@ -22,5 +22,6 @@ export function useCarouselTimer() {
     return () => clear();
   }, [clear]);
 
+  
   return useMemo(() => ({ set, clear }), [set, clear]);
 }

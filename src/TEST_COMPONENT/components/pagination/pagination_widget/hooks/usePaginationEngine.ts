@@ -1,7 +1,11 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import type { PaginationState, PaginationAction } from "../types";
 import { useTimer } from "./useTimer";
-import { ANIMATION_END_BUFFER } from "../const";
+import {
+  ANIMATION_END_BUFFER,
+  MIN_DURATION,
+  VELOCITY_COEFFICIENT,
+} from "../const";
 
 export function usePaginationEngine(
   state: PaginationState,
@@ -11,62 +15,53 @@ export function usePaginationEngine(
   const waitTimer = useTimer();
   const moveTimer = useTimer();
 
+  // Храним текущую длительность в ref для предотвращения stale closures
+  const currentDurationRef = useRef(config.duration);
 
-  const scheduleEnd = useCallback(
-    (duration: number) => {
-      moveTimer.set(
-        () => dispatch({ type: "END_STEP" }),
-        duration + ANIMATION_END_BUFFER,
-      );
-    },
-    [dispatch, moveTimer],
-  );
-
-
-  useEffect(() => {
-    waitTimer.clear();
-    if (state.mode === "WAITING") {
-      const delay = state.activeDelay;
-      delay > 0
-        ? waitTimer.set(() => dispatch({ type: "START_ANIMATION" }), delay)
-        : dispatch({ type: "START_ANIMATION" });
-    }
-    return () => waitTimer.clear();
-  }, [state.mode, state.activeDelay, dispatch, waitTimer]);
-
-
+  // Логика ускорения при спаме кликами
   useEffect(() => {
     if (state.mode === "MOVING") {
-      scheduleEnd(state.activeDuration);
-    } else {
-      moveTimer.clear();
+      currentDurationRef.current = Math.max(
+        currentDurationRef.current * VELOCITY_COEFFICIENT,
+        MIN_DURATION,
+      );
+    } else if (state.mode === "IDLE") {
+      currentDurationRef.current = config.duration;
+    }
+  }, [state.mode, config.duration]);
+
+  // Реакция на переход в WAITING
+  useEffect(() => {
+    if (state.mode === "WAITING") {
+      if (config.delay > 0) {
+        waitTimer.set(
+          () => dispatch({ type: "START_ANIMATION" }),
+          config.delay,
+        );
+      } else {
+        dispatch({ type: "START_ANIMATION" });
+      }
+    }
+    return () => waitTimer.clear();
+  }, [state.mode, config.delay, dispatch, waitTimer]);
+
+  // Реакция на переход в MOVING (Единственное место запуска таймера завершения)
+  useEffect(() => {
+    if (state.mode === "MOVING") {
+      moveTimer.set(
+        () => dispatch({ type: "END_STEP" }),
+        currentDurationRef.current + ANIMATION_END_BUFFER,
+      );
     }
     return () => moveTimer.clear();
-  }, [state.mode, state.activeDuration, scheduleEnd, moveTimer]);
+  }, [state.mode, state.step, dispatch, moveTimer]); // Перезапуск при изменении шага внутри движения
 
- 
   const action = useCallback(
     (direction: "next" | "prev") => {
-      if (state.mode === "MOVING") {
-        scheduleEnd(state.activeDuration);
-      }
-
-      dispatch({
-        type: "CLICK",
-        direction,
-        configDelay: config.delay,
-        configDuration: config.duration,
-      });
+      dispatch({ type: "CLICK", direction });
     },
-    [
-      state.mode,
-      state.activeDuration,
-      config.delay,
-      config.duration,
-      dispatch,
-      scheduleEnd,
-    ],
+    [dispatch],
   );
 
-  return { action };
+  return { action, activeDuration: currentDurationRef.current };
 }

@@ -12,20 +12,24 @@ import type {
   PaginationWidgetProps,
   PaginationWidgetHandler,
   PaginationWidgetClassMap,
-  DotWidgetState,
   ContainerCSSVars,
   DotCSSVars,
 } from "./types";
 import { useLayoutNotice, usePaginationEngine, useSpatialField } from "./hooks";
 
+// Оптимизированный Dot: принимает примитивы для стабильности memo
 const Dot = memo(
   ({
-    x,
-    scale,
-    opacity,
-    isActive,
+    id,
+    getDotState,
     className,
-  }: DotWidgetState & { className: PaginationWidgetClassMap }) => {
+  }: {
+    id: number;
+    getDotState: (id: number) => any;
+    className: PaginationWidgetClassMap;
+  }) => {
+    const { x, scale, opacity, isActive } = getDotState(id);
+
     const style: DotCSSVars = {
       "--dot-x": `${x}px`,
       "--dot-scale": scale,
@@ -38,6 +42,11 @@ const Dot = memo(
         style={style}
       />
     );
+  },
+  (prev, next) => {
+    // Кастомное сравнение: Dot ререндерится только если изменилась функция получения состояния
+    // (которая зависит от step) или id.
+    return prev.id === next.id && prev.getDotState === next.getDotState;
   },
 );
 
@@ -73,10 +82,14 @@ export const PaginationWidget = memo(
       step: state.step,
     });
 
-    const { action: handleMove } = usePaginationEngine(state, dispatch, {
-      delay,
-      duration,
-    });
+    const { action: handleMove, activeDuration } = usePaginationEngine(
+      state,
+      dispatch,
+      {
+        delay,
+        duration,
+      },
+    );
 
     useLayoutNotice({ visibleDots, actualVisibleDots });
 
@@ -92,16 +105,16 @@ export const PaginationWidget = memo(
     const containerStyle = useMemo<ContainerCSSVars>(() => {
       const isAnimating = state.mode === "MOVING" && !isFreezed;
       return {
-        "--duration": `${isAnimating ? state.activeDuration : 0}ms`,
-        "--delay": `${state.mode === "WAITING" ? state.activeDelay : 0}ms`,
-        "--visible-dots-count": actualVisibleDots,
+        "--duration": `${isAnimating ? activeDuration : 0}ms`,
+        "--delay": `${state.mode === "WAITING" ? delay : 0}ms`,
+        "--visible-dots-count": String(actualVisibleDots),
         "--dot-size": `${dotSize}px`,
         "--dots-gap": `${dotGap}px`,
       };
     }, [
       state.mode,
-      state.activeDuration,
-      state.activeDelay,
+      activeDuration,
+      delay,
       actualVisibleDots,
       dotSize,
       dotGap,
@@ -114,7 +127,12 @@ export const PaginationWidget = memo(
         style={containerStyle}
       >
         {dotsPool.map((id) => (
-          <Dot key={id} {...getDotState(id)} className={className} />
+          <Dot
+            key={id}
+            id={id}
+            getDotState={getDotState}
+            className={className}
+          />
         ))}
       </div>
     );
