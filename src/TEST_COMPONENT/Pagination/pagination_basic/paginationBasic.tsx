@@ -1,7 +1,8 @@
 import clsx from "clsx";
 import { memo, useMemo, useCallback } from "react";
-import { usePaginationSync } from "../../../hooks";
+
 import type { PaginationBasicDotProps, PaginationBasicProps } from "./types";
+import { usePaginationSync } from "../../Carousel/hooks";
 
 export const PaginationBasic = memo(
   ({

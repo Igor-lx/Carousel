@@ -1,4 +1,4 @@
-import type { MoveReason } from "../../../types";
+import type { MoveReason } from "../../Carousel/types";
 
 export interface PaginationBasicClassMap {
   readonly paginationWrapper?: string;

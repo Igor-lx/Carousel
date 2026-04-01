@@ -55,7 +55,7 @@ const CarouselMulti = memo((props: CarouselMultiProps) => {
     isImg = DEFAULT_SETTINGS.isImg,
     ErrAltPlaceholder = DEFAULT_SETTINGS.errAltPH,
     isAuto = DEFAULT_SETTINGS.isAuto,
-    isPaginated = DEFAULT_SETTINGS.isPaginated,
+    //isPaginated = DEFAULT_SETTINGS.isPaginated,
     isPaginationDynamic = DEFAULT_SETTINGS.isPaginationDynamic,
     isInteractive = DEFAULT_SETTINGS.isInteractive,
     isInfinite = DEFAULT_SETTINGS.isInfinite,
