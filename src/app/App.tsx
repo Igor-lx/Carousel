@@ -20,14 +20,14 @@ import carousel14 from "../images/carousel14.jpg";
 import carousel15 from "../images/carousel15.jpg";
 import carousel16 from "../images/carousel16.jpg";
 
-import CarouselMulti from "../TEST_COMPONENT/Carousel/carouselMulti";
 import { useMemo, useState } from "react";
-import { useMatchMedia, useIsTouchScreen } from "../utilites_global";
-import { type Slide } from "../TEST_COMPONENT/Carousel/types/types";
+import { useMatchMedia, useIsTouchDevice } from "../shared";
 
-import st from "../TEST_COMPONENT/Pagination/pagination_widget/paginationWidget.module.scss";
 
-import { PaginationWidget } from "../TEST_COMPONENT/Pagination/pagination_widget/paginationWidget";
+import { PaginationWidget } from "../TEST-COMPONENT/pagination/pagination-widget/PaginationWidget";
+import Carousel from "../TEST-COMPONENT/сarousel/Carousel";
+import type { Slide } from "../TEST-COMPONENT/сarousel/Carousel.types";
+
 
 //=====================================================================================================================================
 
@@ -58,7 +58,7 @@ const carouselImgMock: Slide[] = [
 function App() {
   const { toggleTheme, theme } = useTheme();
 
-  const isTouch = useIsTouchScreen();
+  const isTouch = useIsTouchDevice();
   const [isAutoOn, setIsAutoOn] = useState(false);
 
   const CAROUSEL_VIS = useMemo(
@@ -93,7 +93,7 @@ function App() {
         </div>
 
         <div className={appStyles.component}>
-          <CarouselMulti
+          <Carousel
             visibleSlides={visibleSlides}
             slides={carouselImgMock}
             isAuto={isAutoOn}
@@ -107,8 +107,8 @@ function App() {
             isTouchDevice={isTouch}
             onSlideClick={handleSlideClick}
           >
-            <PaginationWidget className={st} />
-          </CarouselMulti>
+            <PaginationWidget/>
+          </Carousel>
         </div>
       </section>
     </main>
