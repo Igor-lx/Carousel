@@ -1,4 +1,4 @@
-import type { MoveReason } from "../../сarousel/types";
+import type { MoveReason } from "../../сarousel/model/reducer";
 
 export interface PaginationBasicClassMap {
   readonly paginationWrapper?: string;
@@ -14,7 +14,7 @@ export type PaginationBasicProps = {
   isDynamic: boolean;
   isMoving: boolean;
   isJump: boolean;
-  moveReason: MoveReason;
+  moveReason: MoveReasgiton;
   speed: number;
 };
 
