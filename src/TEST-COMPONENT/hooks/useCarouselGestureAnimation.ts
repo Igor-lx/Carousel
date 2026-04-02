@@ -1,5 +1,6 @@
 import { type RefObject } from "react";
-import { useIsomorphicLayoutEffect } from "../../../shared";
+import { useIsomorphicLayoutEffect } from "../../shared";
+
 
 
 interface GestureAnimationProps {

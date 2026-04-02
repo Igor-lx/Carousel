@@ -1,5 +1,5 @@
 export * from "./utils/mergeStyles";
-export * from "./features/ChevronIcon";
+export * from "./features/ChevronIcon/ChevronIcon";
 export * from "./utils/focusShift";
 export * from "./hooks/useComponentVisibility";
 export * from "./hooks/useIsReducedMotion";

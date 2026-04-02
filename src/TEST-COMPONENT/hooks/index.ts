@@ -8,9 +8,6 @@ export * from "./useCarouselGestureSpeed";
 export * from "./useCarouselSlides";
 export * from "./useCarouselSpeed";
 export * from "./useCarouselTechStyles";
-export * from "./useIsomorphicLayoutEffect";
 export * from "./usePaginationSync";
 export * from "./usePerfectLayoutNotice";
 export * from "./useSafeSettings";
-export * from "./useTimer";
-

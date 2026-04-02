@@ -1,7 +1,8 @@
 import { type RefObject } from "react";
 
-import { useDrag, type DragListeners } from "../../../shared";
+
 import type { MoveReason } from "../model/reducer";
+import { type DragListeners, useDrag } from "../../shared";
 
 
 interface GestureProps {

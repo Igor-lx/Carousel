@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from "react";
 
 import type { Action } from "../model/reducer";
 import type { CarouselLayout } from "../utilites";
-import { useIsomorphicLayoutEffect } from "../../../shared";
+import { useIsomorphicLayoutEffect } from "../../shared";
 
 interface EngineProps {
   readonly dispatch: React.Dispatch<Action>;

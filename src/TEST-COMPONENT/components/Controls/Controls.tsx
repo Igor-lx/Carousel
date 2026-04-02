@@ -1,7 +1,8 @@
 import { memo } from "react";
 import clsx from "clsx";
-import { ChevronIcon } from "../../../../shared";
+
 import type { ControlsProps, NavZoneProps } from "./types";
+import { ChevronIcon } from "../../../shared";
 
 
 export const Controls = memo(function Controls({

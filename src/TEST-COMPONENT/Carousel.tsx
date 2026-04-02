@@ -31,7 +31,7 @@ import {
   useIsomorphicLayoutEffect,
   useIsReducedMotion,
   useIsTouchDevice,
-} from "../../shared";
+} from "../shared";
 
 import { Controls, SlideItem } from "./components";
 import { getAnimStatus, initialState, reducer } from "./model/reducer";
@@ -40,7 +40,7 @@ import {
   ANIMATION_SAFETY_MARGIN,
 } from "./model/constants";
 import { DEFAULT_SETTINGS } from "./model/defaultSettings";
-import { CarouselContext, useCarouselBridge } from "./model/context";
+import { CarouselContext, useExternalRefBridge } from "./model/context";
 import type { CarouseProps } from "./Carousel.types";
 import { getCarouselLayout, type CarouselLayout } from "./utilites";
 
@@ -82,7 +82,7 @@ const Carousel = memo((props: CarouseProps) => {
     threshold: VISIBILITY_THRESHOLD,
   });
 
-  const { externalRef, enhancedChildren } = useCarouselBridge(children);
+  const { externalRef, connectedChildren } = useExternalRefBridge(children);
 
   const {
     speedAuto: safeSpeedAuto,
@@ -297,6 +297,7 @@ const Carousel = memo((props: CarouseProps) => {
     ],
   );
 
+
   return (
     <CarouselContext.Provider value={contextValue}>
       <div
@@ -348,7 +349,7 @@ const Carousel = memo((props: CarouseProps) => {
             />
           )}
         </div>
-        {isPaginated && enhancedChildren}
+        {isPaginated && connectedChildren}
       </div>
     </CarouselContext.Provider>
   );
