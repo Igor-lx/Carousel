@@ -14,7 +14,7 @@ export type PaginationBasicProps = {
   isDynamic: boolean;
   isMoving: boolean;
   isJump: boolean;
-  moveReason: MoveReasgiton;
+  moveReason: MoveReason;
   speed: number;
 };
 
