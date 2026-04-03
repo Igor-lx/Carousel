@@ -1,14 +1,14 @@
-import clsx from "clsx";
-import { memo, useMemo, useCallback } from "react";
+import { memo, useMemo } from "react";
 
-import type { PaginationDotProps, PaginationProps } from "./types";
+import type { PaginationProps } from "./types";
 
 import styles from "./Pagination.module.scss";
 import { mergeStyles } from "../../../shared";
 import { usePaginationSync } from "../../hooks";
 import { useCarouselContext } from "../../model/context";
+import { PaginationView } from "./components/PaginationView";
 
-export const PaginationCarousel = memo(({ className }: PaginationProps) => {
+export const Pagination = memo(({ className }: PaginationProps) => {
   const {
     pageCount,
     activeDotIndex,
@@ -37,45 +37,14 @@ export const PaginationCarousel = memo(({ className }: PaginationProps) => {
     speed: actualSpeed,
   });
 
-  const dots = useMemo(
-    () => Array.from({ length: pageCount }, (_, i) => i),
-    [pageCount],
-  );
-
   return (
-    <div className={mergedStyles.paginationWrapper} aria-hidden="true">
-      {dots.map((idx) => (
-        <Dot
-          key={idx}
-          idx={idx}
-          visualIndex={visualIndex}
-          className={mergedStyles}
-          onDotClick={handleDotClick}
-        />
-      ))}
-    </div>
+    <PaginationView
+      pageCount={pageCount}
+      visualIndex={visualIndex}
+      mergedStyles={mergedStyles}
+      handleDotClick={handleDotClick}
+    />
   );
 });
 
-const Dot = memo(
-  ({ idx, visualIndex, className, onDotClick }: PaginationDotProps) => {
-    const handleClick = useCallback(() => onDotClick(idx), [idx, onDotClick]);
-    const handleMouseDown = useCallback(
-      (e: React.MouseEvent) => e.preventDefault(),
-      [],
-    );
-    return (
-      <button
-        type="button"
-        className={clsx(
-          className.dot,
-          idx === visualIndex && className.dotActive,
-        )}
-        onMouseDown={handleMouseDown}
-        onClick={handleClick}
-        disabled={idx === visualIndex}
-        tabIndex={-1}
-      />
-    );
-  },
-);
+(Pagination as any).slot = "pagination";

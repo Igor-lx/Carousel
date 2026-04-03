@@ -10,13 +10,17 @@ export function usePerfectLayoutNotice({
   visibleSlides,
 }: PerfectLayoutProps): void {
   useEffect(() => {
-    if (import.meta.env.MODE === "development") {
-      if (length > 0 && visibleSlides > 0 && length % visibleSlides !== 0) {
-        console.warn(
-          `[CarouselMulti]: Perfect UI layout requires slide count (${length}) ` +
-            `to be evenly divisible by visibleSlides (${visibleSlides}).`,
-        );
-      }
+    if (!import.meta.env.DEV) return;
+
+    const isUnperfectLayout =
+      length > 0 && visibleSlides > 0 && length % visibleSlides !== 0;
+
+    if (isUnperfectLayout) {
+      console.warn(
+        `[CarouselMulti]: Perfect UI layout requires slide count (${length}) ` +
+          `to be evenly divisible by visibleSlides (${visibleSlides}). ` +
+          `Current remainder: ${length % visibleSlides}.`,
+      );
     }
   }, [length, visibleSlides]);
 }

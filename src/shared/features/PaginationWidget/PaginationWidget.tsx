@@ -16,10 +16,10 @@ import type {
   DotCSSVars,
   DotProps,
 } from "./model/types";
-import { usePaginationEngine } from "./hooks/usePaginationEngine";
-import { useSpatialField } from "./hooks/useSpatialField";
+
 import { initialState, paginationReducer } from "./model/reducer";
 import { mergeStyles } from "../../../shared";
+import { useLayoutNotice, usePaginationEngine, useSpatialField } from "./hooks";
 
 export const PaginationWidget = memo(
   forwardRef<PaginationWidgetHandler, PaginationWidgetProps>((props, ref) => {
@@ -54,6 +54,11 @@ export const PaginationWidget = memo(
       visibleDots,
       config: spatialConfig,
       step: state.step,
+    });
+
+    useLayoutNotice({
+      visibleDots,
+      actualVisibleDots,
     });
 
     const { action, activeDuration } = usePaginationEngine(state, dispatch, {

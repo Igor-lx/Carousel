@@ -1,45 +1,29 @@
-import { memo } from "react";
-import clsx from "clsx";
+import { memo, useMemo } from "react";
+import { ControlsView } from "./components/ControlsView";
+import { useCarouselContext } from "../../model/context";
+import type { ControlsProps } from "./types";
+import { mergeStyles } from "../../../shared";
+import styles from "./Controls.module.scss";
 
-import type { ControlsProps, NavZoneProps } from "./types";
-import { ChevronIcon } from "../../../shared";
+export const Controls = memo(({ className }: ControlsProps) => {
+  const { isTouch, handlePrev, handleNext, isAtStart, isAtEnd } =
+    useCarouselContext();
 
+  const mergedStyles = useMemo(
+    () => mergeStyles(styles, className),
+    [className],
+  );
 
-export const Controls = memo(function Controls({
-  isAtStart,
-  isAtEnd,
-  onPrev,
-  onNext,
-  className,
-}: ControlsProps) {
   return (
-    <>
-      {!isAtStart && (
-        <NavZone direction="left" onClick={onPrev} className={className} />
-      )}
-      {!isAtEnd && (
-        <NavZone direction="right" onClick={onNext} className={className} />
-      )}
-    </>
+    <ControlsView
+      isAtStart={isAtStart}
+      isAtEnd={isAtEnd}
+      onPrev={handlePrev}
+      onNext={handleNext}
+      isTouch={isTouch}
+      className={mergedStyles}
+    />
   );
 });
 
-export const NavZone = memo(
-  ({ direction, onClick, className }: NavZoneProps) => {
-    const directionStyle =
-      direction === "left" ? className.navZoneL : className.navZoneR;
-
-    return (
-      <button
-        type="button"
-        className={clsx(className.navZone, directionStyle)}
-        onClick={onClick}
-        aria-label={direction === "left" ? "Previous slide" : "Next slide"}
-      >
-        <div aria-hidden="true" className={className.navButton}>
-          <ChevronIcon direction={direction} />
-        </div>
-      </button>
-    );
-  },
-);
+(Controls as any).slot = "controls";

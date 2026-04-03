@@ -31,13 +31,15 @@ import {
   useIsomorphicLayoutEffect,
   useIsReducedMotion,
   useIsTouchDevice,
+  resolveSlots,
 } from "../shared";
 
-import { Controls, SlideItem } from "./components";
+import { SlideItem } from "./components";
 import { getAnimStatus, initialState, reducer } from "./model/reducer";
 import {
   VISIBILITY_THRESHOLD,
   ANIMATION_SAFETY_MARGIN,
+  CAROUSEL_SLOTS,
 } from "./model/constants";
 import { DEFAULT_SETTINGS } from "./model/defaultSettings";
 import { CarouselContext, useExternalRefBridge } from "./model/context";
@@ -61,8 +63,8 @@ const Carousel = memo((props: CarouseProps) => {
     isInfinite = DEFAULT_SETTINGS.isInfinite,
     isControlsOn = DEFAULT_SETTINGS.isControlsOn,
     className = DEFAULT_SETTINGS.className,
-    isInstantMotion: isReducedMotionProp,
-    isTouchDevice: isTouchProp,
+    isInstantMotion,
+    isTouchDevice,
     onSlideClick,
     children,
   } = props;
@@ -75,14 +77,19 @@ const Carousel = memo((props: CarouseProps) => {
 
   const timer = useTimer();
 
-  const isReducedMotion = isReducedMotionProp ?? useIsReducedMotion();
-  const isTouch = isTouchProp ?? useIsTouchDevice();
+  const isReducedMotion = isInstantMotion ?? useIsReducedMotion();
+  const isTouch = isTouchDevice ?? useIsTouchDevice();
   const { visible: isVisible } = useComponentVisibility({
     elementRef: containerRef,
     threshold: VISIBILITY_THRESHOLD,
   });
 
   const { externalRef, connectedChildren } = useExternalRefBridge(children);
+
+  const slots = useMemo(
+    () => resolveSlots(connectedChildren, CAROUSEL_SLOTS),
+    [connectedChildren],
+  );
 
   const {
     speedAuto: safeSpeedAuto,
@@ -284,6 +291,11 @@ const Carousel = memo((props: CarouseProps) => {
       actualSpeed,
       isPaginationDynamic,
       handleDotClick,
+      handlePrev: handleMovePrevClick,
+      handleNext: handleMoveNextClick,
+      isAtStart: isFiniteAndAtStart,
+      isAtEnd: isFiniteAndAtEnd,
+      isTouch,
     }),
     [
       pageCount,
@@ -294,9 +306,13 @@ const Carousel = memo((props: CarouseProps) => {
       actualSpeed,
       isPaginationDynamic,
       handleDotClick,
+      handleMovePrevClick,
+      handleMoveNextClick,
+      isFiniteAndAtStart,
+      isFiniteAndAtEnd,
+      isTouch,
     ],
   );
-
 
   return (
     <CarouselContext.Provider value={contextValue}>
@@ -339,17 +355,9 @@ const Carousel = memo((props: CarouseProps) => {
               );
             })}
           </div>
-          {isControlsOn && canSlide && (
-            <Controls
-              isAtStart={isFiniteAndAtStart}
-              isAtEnd={isFiniteAndAtEnd}
-              onPrev={handleMovePrevClick}
-              onNext={handleMoveNextClick}
-              className={baseMergedStyles}
-            />
-          )}
+          {isControlsOn && canSlide && slots.controls}
         </div>
-        {isPaginated && connectedChildren}
+        {isPaginated && (slots.pagination || null)}
       </div>
     </CarouselContext.Provider>
   );

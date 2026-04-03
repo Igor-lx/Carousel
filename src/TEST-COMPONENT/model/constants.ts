@@ -16,3 +16,5 @@ export const VISIBILITY_THRESHOLD = 0.2;
 
 export const PAGINATION_DYNAMIC_DELAY_auto = 2;
 export const PAGINATION_DYNAMIC_DELAY_step = 4.5;
+
+export const CAROUSEL_SLOTS = ["pagination", "controls"] as const;

@@ -21,12 +21,13 @@ import carousel15 from "../images/carousel15.jpg";
 import carousel16 from "../images/carousel16.jpg";
 
 import { useMemo, useState } from "react";
-import { useMatchMedia, useIsTouchDevice } from "../shared";
+import { useMatchMedia, useIsTouchDevice, injectSlot } from "../shared";
 
 import Carousel from "../TEST-COMPONENT/Carousel";
 import type { Slide } from "../TEST-COMPONENT/Carousel.types";
 import { PaginationWidget } from "../shared/features/PaginationWidget/PaginationWidget";
-
+import { Pagination } from "../TEST-COMPONENT/components/Pagination/Pagination";
+import { Controls } from "../TEST-COMPONENT/components";
 
 //=====================================================================================================================================
 
@@ -53,6 +54,8 @@ const carouselImgMock: Slide[] = [
   { id: "15", content: carousel15 },
   { id: "16", content: carousel16 },
 ];
+
+export const CarouselPagination = injectSlot(PaginationWidget, "pagination");
 
 function App() {
   const { toggleTheme, theme } = useTheme();
@@ -106,7 +109,8 @@ function App() {
             isTouchDevice={isTouch}
             onSlideClick={handleSlideClick}
           >
-            <PaginationWidget />
+            <Pagination />
+            <Controls />
           </Carousel>
         </div>
       </section>

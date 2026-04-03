@@ -1,0 +1,79 @@
+.navZone {
+  position: absolute;
+  height: 100%;
+  width: 8%;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  border: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+
+  opacity: var(--controls-opacity, 0);
+  pointer-events: var(--controls-pointer, none);
+  transition: opacity 0.6s ease;
+  background-color: rgba(0, 0, 0, 0.15);
+
+  &.touch {
+    opacity: 1;
+    pointer-events: auto;
+    background-color: transparent;
+    width: var(--nav-size-w);
+    height: var(--nav-size-h);
+    border-radius: var(--nav-radius);
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  &:focus-visible {
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+}
+
+.navZoneL {
+  left: 0;
+  :global(.outerContainer[data-touch="true"]) & {
+    left: var(--nav-offset);
+  }
+}
+
+.navZoneR {
+  right: 0;
+  :global(.outerContainer[data-touch="true"]) & {
+    right: var(--nav-offset);
+  }
+}
+
+.navButton {
+  width: var(--nav-size-w);
+  height: var(--nav-size-h);
+  border-radius: var(--nav-radius);
+  background-color: rgba(0, 0, 0, 0.45);
+  color: rgba(245, 245, 245, 0.807);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  pointer-events: none;
+
+  @media (max-width: 1024px) {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+
+  svg {
+    opacity: 0.8;
+    @media (max-width: 1024px) {
+      opacity: 0.6;
+    }
+  }
+}
+
+.navZoneL .navButton svg {
+  margin-right: 2px;
+}
+.navZoneR .navButton svg {
+  margin-left: 2px;
+}

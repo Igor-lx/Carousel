@@ -1,12 +1,12 @@
 import { useEffect, useCallback, useRef } from "react";
 import type { PaginationState, PaginationAction } from "../model/types";
+import { useTimer } from "../../../../shared";
 
 import {
   ANIMATION_END_BUFFER,
   MIN_DURATION,
   VELOCITY_COEFFICIENT,
 } from "../model/constants";
-import { useTimer } from "../../../../shared";
 
 export function usePaginationEngine(
   state: PaginationState,

@@ -10,7 +10,7 @@ export function useLayoutNotice({
   actualVisibleDots,
 }: WidgetNoticeProps): void {
   useEffect(() => {
-    if (import.meta.env.MODE === "development") return;
+    if (!import.meta.env.DEV) return;
 
     if (visibleDots < 3) {
       console.warn(

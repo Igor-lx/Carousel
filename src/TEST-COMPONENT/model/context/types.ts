@@ -11,7 +11,12 @@ export interface CarouselContextValue {
   isMoving: boolean;
   isJumping: boolean;
   actualSpeed: number;
-  isPaginationDynamic: boolean;
   moveReason: MoveReason;
-  handleDotClick: (idx: number) => void;
+  isPaginationDynamic: boolean;
+  handlePrev: () => void;
+  handleNext: () => void;
+  handleDotClick: (index: number) => void;
+  isAtStart: boolean;
+  isAtEnd: boolean;
+  isTouch: boolean;
 }

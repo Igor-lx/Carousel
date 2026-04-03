@@ -1,5 +1,4 @@
 .paginationWrapper {
-  --color: var(--color-component, var(--color-global));
   display: flex;
   justify-content: center;
   align-items: center;
@@ -24,7 +23,21 @@
   opacity: 0.2;
   transition:
     opacity 0.4s,
-    transform 0.5s;
+    transform 0.5s,
+    width 0.3s,
+    height 0.3s;
+
+
+  :global(.outerContainer[data-touch="false"]) &:not(.dotActive):hover {
+    opacity: 0.6;
+  }
+
+
+  :global(.outerContainer[data-touch="true"]) & {
+    width: 45px;
+    height: 15px;
+    border-radius: 6px;
+  }
 }
 
 .dotActive {

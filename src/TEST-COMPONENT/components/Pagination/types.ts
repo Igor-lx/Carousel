@@ -5,6 +5,14 @@ export interface PaginationClassMap {
   dotActive?: string;
 }
 
+
+export interface PaginationViewProps {
+  pageCount: number;
+  visualIndex: number;
+  mergedStyles: PaginationClassMap;
+  handleDotClick: (idx: number) => void;
+}
+
 export type PaginationProps = {
   className?: PaginationClassMap;
 };

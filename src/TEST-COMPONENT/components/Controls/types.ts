@@ -1,15 +1,28 @@
-import type { ClassNameMap } from "../../Carousel.types";
+export interface ControlsClassMap {
+  [key: string]: string | undefined;
+  navZone?: string;
+  navZoneL?: string;
+  navZoneR?: string;
+  navButton?: string;
+  touch?: string;
+}
 
 export interface NavZoneProps {
   direction: "left" | "right";
   onClick: () => void;
-  className: ClassNameMap;
+  className: ControlsClassMap;
+  isTouch: boolean;
 }
 
-export type ControlsProps = {
+export interface ControlsViewProps {
   isAtStart: boolean;
   isAtEnd: boolean;
   onPrev: () => void;
   onNext: () => void;
-  className: ClassNameMap;
+  className: ControlsClassMap;
+  isTouch: boolean;
+}
+
+export type ControlsProps = {
+  className?: ControlsClassMap;
 };
