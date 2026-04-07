@@ -1,3 +1,4 @@
+
 export const MIN_SPEED = 100;
 export const MIN_DELAY = 100;
 
@@ -18,3 +19,4 @@ export const PAGINATION_DYNAMIC_DELAY_auto = 2;
 export const PAGINATION_DYNAMIC_DELAY_step = 4.5;
 
 export const CAROUSEL_SLOTS = ["pagination", "controls"] as const;
+

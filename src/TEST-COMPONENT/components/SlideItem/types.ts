@@ -1,16 +1,13 @@
-import type { ClassNameMap, Slide } from "../../Carousel.types";
+import type { Slide, SlideItemClassMap } from "../../Carousel.types";
 
-export interface SlideItemProps extends Omit<
-  React.HTMLAttributes<HTMLElement>,
-  "className"
-> {
+export interface SlideItemProps {
   isImg?: boolean;
-  errAltPlaceholder: string;
-  className: ClassNameMap;
+  errAltPlaceholder?: string;
   style: React.CSSProperties;
   slide: Slide;
   isInteractive?: boolean;
-  isActive: boolean;
-  isActual: boolean;
+  isActive?: boolean;
+  isActual?: boolean;
   onSlideClick?: (slide: Slide) => void;
+  className: SlideItemClassMap;
 }

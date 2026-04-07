@@ -22,10 +22,10 @@ export const Pagination = memo(({ className }: PaginationProps) => {
 
   if (pageCount <= 1) return null;
 
-  const mergedStyles = useMemo(
-    () => mergeStyles(styles, className),
-    [className],
-  );
+  const mergedStyles = useMemo(() => {
+    if (!className) return styles;
+    return mergeStyles(styles, className);
+  }, [className]);
 
   const isInstantSync =
     !isPaginationDynamic || !isMoving || isJumping || moveReason === "gesture";
@@ -41,8 +41,8 @@ export const Pagination = memo(({ className }: PaginationProps) => {
     <PaginationView
       pageCount={pageCount}
       visualIndex={visualIndex}
-      mergedStyles={mergedStyles}
       handleDotClick={handleDotClick}
+      styles={mergedStyles}
     />
   );
 });

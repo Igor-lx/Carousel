@@ -7,7 +7,9 @@ import {
   useRef,
 } from "react";
 
-import defaultStyles from "./Сarousel.module.scss";
+import styles from "./Carousel.module.scss";
+import controlsVariables from "./styles/Controls.variables.module.scss";
+import paginationVariables from "./styles/Pagination.variables.module.scss";
 
 import {
   useCarouselAutoPlay,
@@ -32,6 +34,7 @@ import {
   useIsReducedMotion,
   useIsTouchDevice,
   resolveSlots,
+  usePickStyles,
 } from "../shared";
 
 import { SlideItem } from "./components";
@@ -43,7 +46,7 @@ import {
 } from "./model/constants";
 import { DEFAULT_SETTINGS } from "./model/defaultSettings";
 import { CarouselContext, useExternalRefBridge } from "./model/context";
-import type { CarouseProps } from "./Carousel.types";
+import { SLIDE_KEYS, type CarouseProps } from "./Carousel.types";
 import { getCarouselLayout, type CarouselLayout } from "./utilites";
 
 const Carousel = memo((props: CarouseProps) => {
@@ -62,7 +65,7 @@ const Carousel = memo((props: CarouseProps) => {
     isInteractive = DEFAULT_SETTINGS.isInteractive,
     isInfinite = DEFAULT_SETTINGS.isInfinite,
     isControlsOn = DEFAULT_SETTINGS.isControlsOn,
-    className = DEFAULT_SETTINGS.className,
+    className,
     isInstantMotion,
     isTouchDevice,
     onSlideClick,
@@ -227,11 +230,6 @@ const Carousel = memo((props: CarouseProps) => {
     getOffset: getDragOffset,
   });
 
-  const baseMergedStyles = useMemo(
-    () => mergeStyles(defaultStyles, className),
-    [className],
-  );
-
   const {
     containerStyle: containerTechStyle,
     itemStyle: slideWrapperTechStyle,
@@ -281,6 +279,10 @@ const Carousel = memo((props: CarouseProps) => {
     }
   }, [isIdle, currentIndex]);
 
+  useIsomorphicLayoutEffect(() => {
+    externalRef.current?.toggleFreezed(isReducedMotion);
+  }, [isReducedMotion, externalRef]);
+
   const contextValue = useMemo(
     () => ({
       pageCount,
@@ -293,9 +295,10 @@ const Carousel = memo((props: CarouseProps) => {
       handleDotClick,
       handlePrev: handleMovePrevClick,
       handleNext: handleMoveNextClick,
-      isAtStart: isFiniteAndAtStart,
-      isAtEnd: isFiniteAndAtEnd,
+      showAtStart: !isFiniteAndAtStart,
+      showAtEnd: !isFiniteAndAtEnd,
       isTouch,
+      isReducedMotion,
     }),
     [
       pageCount,
@@ -311,13 +314,28 @@ const Carousel = memo((props: CarouseProps) => {
       isFiniteAndAtStart,
       isFiniteAndAtEnd,
       isTouch,
+      isReducedMotion,
     ],
   );
+
+  const mergedStyles = useMemo(() => {
+    const internalStyles = mergeStyles(
+      styles,
+      controlsVariables,
+      paginationVariables,
+    );
+
+    if (!className) return internalStyles;
+
+    return mergeStyles(internalStyles, className);
+  }, [className]);
+
+  const slideItemStyles = usePickStyles(mergedStyles, SLIDE_KEYS);
 
   return (
     <CarouselContext.Provider value={contextValue}>
       <div
-        className={baseMergedStyles.outerContainer}
+        className={mergedStyles.outerContainer}
         role="region"
         aria-roledescription="carousel"
         data-touch={isTouch}
@@ -326,14 +344,14 @@ const Carousel = memo((props: CarouseProps) => {
         <div
           ref={containerRef}
           tabIndex={-1}
-          className={baseMergedStyles.innerContainer}
+          className={mergedStyles.innerContainer}
           onMouseEnter={() => onHover(true)}
           onMouseLeave={() => onHover(false)}
           {...bindDragListeners}
         >
           <div
             ref={animatedTrackRef}
-            className={baseMergedStyles.slideContainer}
+            className={mergedStyles.slideContainer}
             onTransitionEnd={handleTransitionEnd}
             style={containerTechStyle}
           >
@@ -342,7 +360,7 @@ const Carousel = memo((props: CarouseProps) => {
                 <SlideItem
                   key={vs.slideKey}
                   slide={slides[vs.originalIndex]}
-                  className={baseMergedStyles}
+                  className={slideItemStyles}
                   style={slideWrapperTechStyle}
                   isImg={isImg}
                   errAltPlaceholder={actualErrAltPlaceholder}
@@ -357,9 +375,10 @@ const Carousel = memo((props: CarouseProps) => {
           </div>
           {isControlsOn && canSlide && slots.controls}
         </div>
-        {isPaginated && (slots.pagination || null)}
+        {isPaginated && slots.pagination}
       </div>
     </CarouselContext.Provider>
   );
 });
+
 export default Carousel;

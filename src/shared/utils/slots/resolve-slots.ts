@@ -4,7 +4,6 @@ interface UnknownSlotted {
   slot?: string;
 }
 
-
 export function resolveSlots<T extends string>(
   children: ReactNode,
   slots: readonly T[],
@@ -17,9 +16,7 @@ export function resolveSlots<T extends string>(
   Children.forEach(children, (child) => {
     if (!isValidElement(child)) return;
 
-
     const slotName = (child.type as UnknownSlotted).slot;
-
 
     if (!slotName) return;
 
@@ -30,22 +27,20 @@ export function resolveSlots<T extends string>(
             `Expected one of: [${slots.join(", ")}]. ` +
             `This component will be ignored.`,
         );
-        return; 
+        return;
       }
     }
 
- 
     const validSlotName = slotName as T;
-
 
     if (import.meta.env.DEV) {
       if (result[validSlotName]) {
         console.warn(
-          `[ExtractSlots]: Duplicate slot detected: "${validSlotName}"`,
+          `[ExtractSlots]: Multiple components found for slot "${validSlotName}". ` +
+            `Only the last child will will be rendered. `,
         );
       }
     }
-
     result[validSlotName] = child;
   });
 

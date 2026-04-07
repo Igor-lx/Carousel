@@ -27,12 +27,16 @@ export const PaginationWidget = memo(
       visibleDots = WIDGET_DEFAULTS.visibleDots,
       dotSize = WIDGET_DEFAULTS.dotSize,
       dotGap = WIDGET_DEFAULTS.dotGap,
-      isFreezed = WIDGET_DEFAULTS.isFreezed,
       delay = WIDGET_DEFAULTS.delay,
       duration = WIDGET_DEFAULTS.duration,
       scaleFactor = WIDGET_DEFAULTS.scaleFactor,
       className,
     } = props;
+
+    const [localIsFreezed, setLocalIsFreezed] = useReducer(
+      (_: boolean, next: boolean) => next,
+      WIDGET_DEFAULTS.isFreezed,
+    );
 
     const mergedStyles = useMemo(
       () => mergeStyles(styles, className),
@@ -71,12 +75,13 @@ export const PaginationWidget = memo(
       () => ({
         moveRight: () => action("next"),
         moveLeft: () => action("prev"),
+        toggleFreezed: (val: boolean) => setLocalIsFreezed(val),
       }),
       [action],
     );
 
     const containerStyle = useMemo<ContainerCSSVars>(() => {
-      const isAnimating = state.mode === "MOVING" && !isFreezed;
+      const isAnimating = state.mode === "MOVING" && !localIsFreezed;
       return {
         "--duration": `${isAnimating ? activeDuration : 0}ms`,
         "--delay": `${state.mode === "WAITING" ? delay : 0}ms`,
@@ -91,14 +96,14 @@ export const PaginationWidget = memo(
       actualVisibleDots,
       dotSize,
       dotGap,
-      isFreezed,
+      localIsFreezed,
     ]);
 
     return (
       <div
         className={clsx(
           mergedStyles.container_PW,
-          isFreezed && mergedStyles.freezed,
+          localIsFreezed && mergedStyles.freezed,
         )}
         style={containerStyle}
       >

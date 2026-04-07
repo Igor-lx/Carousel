@@ -3,6 +3,7 @@ import type { MoveReason } from "../reducer";
 export interface CarouselExternalController {
   moveRight: () => void;
   moveLeft: () => void;
+  toggleFreezed: (isFreezed: boolean) => void;
 }
 
 export interface CarouselContextValue {
@@ -16,7 +17,8 @@ export interface CarouselContextValue {
   handlePrev: () => void;
   handleNext: () => void;
   handleDotClick: (index: number) => void;
-  isAtStart: boolean;
-  isAtEnd: boolean;
+  showAtStart: boolean;
+  showAtEnd: boolean;
   isTouch: boolean;
+  isReducedMotion: boolean;
 }

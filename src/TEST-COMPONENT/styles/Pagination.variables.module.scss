@@ -1,0 +1,20 @@
+.outerContainer {
+  --dot-w: 25px;
+  --dot-h: 6px;
+  --dot-radius: 2px;
+  --dot-opacity: 0.2;
+  --dot-active-opacity: 0.8;
+  --dot-active-scale: scaleX(1.4);
+  --dot-hover-opacity: 0.6;
+  --dot-transition: opacity 0.4s, transform 0.5s;
+
+  &[data-touch="true"] {
+    --dot-w: 45px;
+    --dot-h: 15px;
+    --dot-radius: 6px;
+  }
+
+  &[data-reduced-motion="true"] {
+    --dot-transition: none;
+  }
+}

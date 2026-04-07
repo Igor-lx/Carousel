@@ -21,13 +21,17 @@ import carousel15 from "../images/carousel15.jpg";
 import carousel16 from "../images/carousel16.jpg";
 
 import { useMemo, useState } from "react";
-import { useMatchMedia, useIsTouchDevice, injectSlot } from "../shared";
+import {
+  useMatchMedia,
+  useIsTouchDevice,
+  injectSlot,
+  PaginationWidget,
+} from "../shared";
 
 import Carousel from "../TEST-COMPONENT/Carousel";
 import type { Slide } from "../TEST-COMPONENT/Carousel.types";
-import { PaginationWidget } from "../shared/features/PaginationWidget/PaginationWidget";
-import { Pagination } from "../TEST-COMPONENT/components/Pagination/Pagination";
-import { Controls } from "../TEST-COMPONENT/components";
+
+import { Controls, Pagination } from "../TEST-COMPONENT/components";
 
 //=====================================================================================================================================
 
@@ -55,7 +59,10 @@ const carouselImgMock: Slide[] = [
   { id: "16", content: carousel16 },
 ];
 
-export const CarouselPagination = injectSlot(PaginationWidget, "pagination");
+export const CarouselPaginationWidget = injectSlot(
+  PaginationWidget,
+  "pagination",
+);
 
 function App() {
   const { toggleTheme, theme } = useTheme();
@@ -100,6 +107,7 @@ function App() {
             slides={carouselImgMock}
             isAuto={isAutoOn}
             isPaginated={true}
+            // isInstantMotion = {true}
             isPaginationDynamic={true}
             isInteractive={true}
             speedAuto={4000}
@@ -110,6 +118,7 @@ function App() {
             onSlideClick={handleSlideClick}
           >
             <Pagination />
+
             <Controls />
           </Carousel>
         </div>

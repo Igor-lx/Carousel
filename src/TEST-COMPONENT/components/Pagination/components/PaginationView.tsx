@@ -3,25 +3,20 @@ import type { PaginationViewProps } from "../types";
 import { Dot } from "./Dot";
 
 export const PaginationView = memo(
-  ({
-    pageCount,
-    visualIndex,
-    mergedStyles,
-    handleDotClick,
-  }: PaginationViewProps) => {
+  ({ pageCount, visualIndex, handleDotClick, styles }: PaginationViewProps) => {
     const dots = useMemo(
       () => Array.from({ length: pageCount }, (_, i) => i),
       [pageCount],
     );
 
     return (
-      <div className={mergedStyles.paginationWrapper} aria-hidden="true">
+      <div className={styles.paginationWrapper} aria-hidden="true">
         {dots.map((idx) => (
           <Dot
             key={idx}
             idx={idx}
+            styles={styles}
             visualIndex={visualIndex}
-            className={mergedStyles}
             onDotClick={handleDotClick}
           />
         ))}

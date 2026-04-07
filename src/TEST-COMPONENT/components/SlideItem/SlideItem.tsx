@@ -1,22 +1,22 @@
 import clsx from "clsx";
-import { memo, useState, useEffect } from "react";
+import { memo, useState, useEffect} from "react";
 import type { SlideItemProps } from "./types";
-
 
 export const SlideItem = memo(
   ({
     slide,
     isImg,
     errAltPlaceholder,
-    className,
     style,
     isActual,
     isActive,
     isInteractive,
     onSlideClick,
+    className,
     ...a11yProps
   }: SlideItemProps) => {
     if (!slide) return null;
+
     const [isBroken, setIsBroken] = useState(false);
 
     useEffect(() => setIsBroken(false), [slide.id, slide.content]);

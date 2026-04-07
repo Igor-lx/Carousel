@@ -15,23 +15,30 @@ const ContentSchema = z.union([
   ReactElementSchema,
 ]);
 
+const CarouselClassSchema = z.object({
+  outerContainer: z.string(),
+  innerContainer: z.string(),
+  slideContainer: z.string(),
+});
+
+const SlideItemClassSchema = z.object({
+  slide: z.string(),
+  slideInteractive: z.string(),
+  slideError: z.string(),
+  slideText: z.string(),
+});
+
+export const SLIDE_KEYS = SlideItemClassSchema.keyof().options;
+
 export const ClassNameMapSchema = z
   .object({
-    outerContainer: z.string(),
-    innerContainer: z.string(),
-    slideContainer: z.string(),
-    slide: z.string(),
-    navZone: z.string(),
-    navZoneL: z.string(),
-    navZoneR: z.string(),
-    navButton: z.string(),
-    slideInteractive: z.string(),
-    slideError: z.string(),
-    slideText: z.string(),
+    ...CarouselClassSchema.shape,
+    ...SlideItemClassSchema.shape,
   })
   .partial();
 
 export type ClassNameMap = z.infer<typeof ClassNameMapSchema>;
+export type SlideItemClassMap = Pick<ClassNameMap, (typeof SLIDE_KEYS)[number]>;
 
 const SlideSchema = z.object({
   id: z.union([z.string(), z.number()]),

@@ -1,3 +1,5 @@
+
+
 export const DEFAULT_SETTINGS = {
   visibleSlides: 3,
   speedAutoBase: 3000,
@@ -12,5 +14,4 @@ export const DEFAULT_SETTINGS = {
   isInteractive: true,
   isInfinite: true,
   isControlsOn: true,
-  className: {},
 } as const;

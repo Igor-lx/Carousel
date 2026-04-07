@@ -55,6 +55,7 @@ export interface DotCSSVars extends CSSProperties {
 export interface PaginationWidgetHandler {
   moveRight: () => void;
   moveLeft: () => void;
+  toggleFreezed: (isFreezed: boolean) => void;
 }
 
 export type PaginationWidgetClassMap = {
@@ -70,7 +71,6 @@ export interface PaginationWidgetProps {
   dotSize?: number;
   dotGap?: number;
   visibleDots?: number;
-  isFreezed?: boolean;
   delay?: number;
   duration?: number;
   scaleFactor?: number;

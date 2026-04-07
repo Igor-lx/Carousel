@@ -3,14 +3,20 @@ import { NavZone } from "./NavZone";
 import type { ControlsViewProps } from "../types";
 
 export const ControlsView = memo(
-  ({ isAtStart, isAtEnd, onPrev, onNext, className, isTouch }: ControlsViewProps) => {
+  ({
+    showAtStart,
+    showAtEnd,
+    onPrev,
+    onNext,
+    styles,
+  }: ControlsViewProps) => {
     return (
       <>
-        {!isAtStart && (
-          <NavZone direction="left" onClick={onPrev} className={className} isTouch={isTouch} />
+        {showAtStart && (
+          <NavZone direction="left" onClick={onPrev} styles={styles} />
         )}
-        {!isAtEnd && (
-          <NavZone direction="right" onClick={onNext} className={className} isTouch={isTouch} />
+        {showAtEnd && (
+          <NavZone direction="right" onClick={onNext} styles={styles} />
         )}
       </>
     );

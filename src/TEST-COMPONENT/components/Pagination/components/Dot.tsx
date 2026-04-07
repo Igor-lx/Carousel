@@ -3,7 +3,7 @@ import { memo, useCallback } from "react";
 import type { PaginationDotProps } from "../types";
 
 export const Dot = memo(
-  ({ idx, visualIndex, className, onDotClick }: PaginationDotProps) => {
+  ({ idx, visualIndex, onDotClick, styles }: PaginationDotProps) => {
     const handleClick = useCallback(() => onDotClick(idx), [idx, onDotClick]);
     const handleMouseDown = useCallback(
       (e: React.MouseEvent) => e.preventDefault(),
@@ -12,10 +12,7 @@ export const Dot = memo(
     return (
       <button
         type="button"
-        className={clsx(
-          className.dot,
-          idx === visualIndex && className.dotActive,
-        )}
+        className={clsx(styles.dot, idx === visualIndex && styles.dotActive)}
         onMouseDown={handleMouseDown}
         onClick={handleClick}
         disabled={idx === visualIndex}
