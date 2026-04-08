@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { memo, useState, useEffect} from "react";
+import { memo, useState, useEffect } from "react";
 import type { SlideItemProps } from "./types";
 
 export const SlideItem = memo(
@@ -43,6 +43,7 @@ export const SlideItem = memo(
           !isBroken ? (
             <img
               src={slide.content}
+              loading="lazy"
               alt={slide.alt || ""}
               draggable={false}
               onError={() => setIsBroken(true)}

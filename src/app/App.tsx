@@ -51,35 +51,27 @@ const handleSlideClick = (dataUnit: Slide) => {
   window.open(String(data), "_blank");
 };
 
-const carouselImgMockM: Slide[] = [
-  { id: "1", content: m1 },
-  { id: "2", content: m2 },
-  { id: "3", content: m3 },
-  { id: "4", content: m4 },
-  { id: "5", content: m5 },
-  { id: "6", content: m6 },
-  { id: "7", content: m7 },
-  { id: "8", content: m8 },
-  { id: "9", content: m9 },
-  { id: "10", content: m10 },
-  { id: "11", content: m11 },
-  { id: "12", content: m12 },
+const CAROUSEL_DATA = [
+  { id: "1", DESKTOP: d1, MOBILE: m1 },
+  { id: "2", DESKTOP: d2, MOBILE: m2 },
+  { id: "3", DESKTOP: d3, MOBILE: m3 },
+  { id: "4", DESKTOP: d4, MOBILE: m4 },
+  { id: "5", DESKTOP: d5, MOBILE: m5 },
+  { id: "6", DESKTOP: d6, MOBILE: m6 },
+  { id: "7", DESKTOP: d7, MOBILE: m7 },
+  { id: "8", DESKTOP: d8, MOBILE: m8 },
+  { id: "9", DESKTOP: d9, MOBILE: m9 },
+  { id: "10", DESKTOP: d10, MOBILE: m10 },
+  { id: "11", DESKTOP: d11, MOBILE: m11 },
+  { id: "12", DESKTOP: d12, MOBILE: m12 },
 ];
 
-const carouselImgMockDT: Slide[] = [
-  { id: "1", content: d1 },
-  { id: "2", content: d2 },
-  { id: "3", content: d3 },
-  { id: "4", content: d4 },
-  { id: "5", content: d5 },
-  { id: "6", content: d6 },
-  { id: "7", content: d7 },
-  { id: "8", content: d8 },
-  { id: "9", content: d9 },
-  { id: "10", content: d10 },
-  { id: "11", content: d11 },
-  { id: "12", content: d12 },
-];
+const VIS_CONFIG = {
+  DESKTOP: 4,
+  TABLET: 2,
+  MOBILE: 1,
+  DEFAULT: 3,
+};
 
 export const CarouselPaginationWidget = injectSlot(
   PaginationWidget,
@@ -92,24 +84,23 @@ function App() {
   const isTouch = useIsTouchDevice();
   const [isAutoOn, setIsAutoOn] = useState(false);
 
-  const CAROUSEL_VIS = useMemo(
-    () => ({
-      DESKTOP: 4,
-      TABLET: 2,
-      MOBILE: 1,
-      DEFAULT: 3,
-    }),
-    [],
+  const device = useMatchMedia({
+    DESKTOP: "DESKTOP",
+    TABLET: "TABLET",
+    MOBILE: "MOBILE",
+    DEFAULT: "DEFAULT",
+  }) as keyof typeof VIS_CONFIG;
+
+  const visibleSlidesNr = VIS_CONFIG[device];
+
+  const slides = useMemo(
+    () =>
+      CAROUSEL_DATA.map((s) => ({
+        id: s.id,
+        content: device === "MOBILE" ? s.MOBILE : s.DESKTOP,
+      })),
+    [device],
   );
-
-  const visibleSlidesNr = useMatchMedia(CAROUSEL_VIS);
-
-  const slides = useMatchMedia({
-    DESKTOP: carouselImgMockDT,
-    TABLET: carouselImgMockDT,
-    MOBILE: carouselImgMockM,
-    DEFAULT: carouselImgMockDT,
-  });
 
   return (
     <main className={appStyles.app}>
