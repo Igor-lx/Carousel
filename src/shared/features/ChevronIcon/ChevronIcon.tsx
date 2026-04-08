@@ -1,6 +1,6 @@
 export type ChevronDirection = "right" | "left" | "up" | "down";
 
-export type ChevronIconProps = {
+export interface ChevronIconProps {
   direction: ChevronDirection;
   className?: string;
 };

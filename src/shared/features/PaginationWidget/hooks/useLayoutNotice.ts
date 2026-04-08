@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 
 interface WidgetNoticeProps {
-  readonly visibleDots: number;
-  readonly actualVisibleDots: number;
+  visibleDots: number;
+  actualVisibleDots: number;
 }
 
 export function useLayoutNotice({

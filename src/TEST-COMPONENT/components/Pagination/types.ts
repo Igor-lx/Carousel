@@ -5,7 +5,7 @@ export interface PaginationClassMap {
   dotActive?: string;
 }
 
-export type PaginationProps = {
+export interface PaginationProps {
   className?: PaginationClassMap;
 };
 

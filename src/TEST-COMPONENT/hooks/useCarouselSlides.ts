@@ -11,19 +11,19 @@ import {
 import type { Slide } from "../Carousel.types";
 
 interface SlidesProps {
-  readonly current: number;
-  readonly prev: number | null;
-  readonly isMoving: boolean;
-  readonly layout: CarouselLayout;
-  readonly data: Slide[];
-  readonly count: number;
+  current: number;
+  prev: number | null;
+  isMoving: boolean;
+  layout: CarouselLayout;
+  data: Slide[];
+  count: number;
 }
 
 interface SlidesResult {
-  readonly data: VirtualSlide[];
-  readonly activeDot: number;
-  readonly isAtStart: boolean;
-  readonly isAtEnd: boolean;
+  data: VirtualSlide[];
+  activeDot: number;
+  isAtStart: boolean;
+  isAtEnd: boolean;
 }
 
 export function useCarouselSlides({

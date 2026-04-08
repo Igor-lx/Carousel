@@ -3,22 +3,33 @@ import { useTheme } from "../support/theme_toggle/useThemeSwitcher";
 //--------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------
-import carousel1 from "../images/carousel1.jpg";
-import carousel2 from "../images/carousel2.jpg";
-import carousel3 from "../images/carousel3.jpg";
-import carousel4 from "../images/carousel4.jpg";
-import carousel5 from "../images/carousel5.jpg";
-import carousel6 from "../images/carousel6.jpg";
-import carousel7 from "../images/carousel7.jpg";
-import carousel8 from "../images/carousel8.jpg";
-import carousel9 from "../images/carousel9.jpg";
-import carousel10 from "../images/carousel10.jpg";
-import carousel11 from "../images/carousel11.jpg";
-import carousel12 from "../images/carousel12.jpg";
-import carousel13 from "../images/carousel13.jpg";
-import carousel14 from "../images/carousel14.jpg";
-import carousel15 from "../images/carousel15.jpg";
-import carousel16 from "../images/carousel16.jpg";
+// Mobile imports
+import m1 from "../images/Carousel/mobile/carousel1.webp";
+import m2 from "../images/Carousel/mobile/carousel2.webp";
+import m3 from "../images/Carousel/mobile/carousel3.webp";
+import m4 from "../images/Carousel/mobile/carousel4.webp";
+import m5 from "../images/Carousel/mobile/carousel5.webp";
+import m6 from "../images/Carousel/mobile/carousel6.webp";
+import m7 from "../images/Carousel/mobile/carousel7.webp";
+import m8 from "../images/Carousel/mobile/carousel8.webp";
+import m9 from "../images/Carousel/mobile/carousel9.webp";
+import m10 from "../images/Carousel/mobile/carousel10.webp";
+import m11 from "../images/Carousel/mobile/carousel11.webp";
+import m12 from "../images/Carousel/mobile/carousel12.webp";
+
+// Desktop imports
+import d1 from "../images/Carousel/destktop/carousel1.webp";
+import d2 from "../images/Carousel/destktop/carousel2.webp";
+import d3 from "../images/Carousel/destktop/carousel3.webp";
+import d4 from "../images/Carousel/destktop/carousel4.webp";
+import d5 from "../images/Carousel/destktop/carousel5.webp";
+import d6 from "../images/Carousel/destktop/carousel6.webp";
+import d7 from "../images/Carousel/destktop/carousel7.webp";
+import d8 from "../images/Carousel/destktop/carousel8.webp";
+import d9 from "../images/Carousel/destktop/carousel9.webp";
+import d10 from "../images/Carousel/destktop/carousel10.webp";
+import d11 from "../images/Carousel/destktop/carousel11.webp";
+import d12 from "../images/Carousel/destktop/carousel12.webp";
 
 import { useMemo, useState } from "react";
 import {
@@ -40,23 +51,34 @@ const handleSlideClick = (dataUnit: Slide) => {
   window.open(String(data), "_blank");
 };
 
-const carouselImgMock: Slide[] = [
-  { id: "1", content: carousel1 },
-  { id: "2", content: carousel2 },
-  { id: "3", content: carousel3 },
-  { id: "4", content: carousel4 },
-  { id: "5", content: carousel5 },
-  { id: "6", content: carousel6 },
-  { id: "7", content: carousel7 },
-  { id: "8", content: carousel8 },
-  { id: "9", content: carousel9 },
-  { id: "10", content: carousel10 },
-  { id: "11", content: carousel11 },
-  { id: "12", content: carousel12 },
-  { id: "13", content: carousel13 },
-  { id: "14", content: carousel14 },
-  { id: "15", content: carousel15 },
-  { id: "16", content: carousel16 },
+const carouselImgMockM: Slide[] = [
+  { id: "1", content: m1 },
+  { id: "2", content: m2 },
+  { id: "3", content: m3 },
+  { id: "4", content: m4 },
+  { id: "5", content: m5 },
+  { id: "6", content: m6 },
+  { id: "7", content: m7 },
+  { id: "8", content: m8 },
+  { id: "9", content: m9 },
+  { id: "10", content: m10 },
+  { id: "11", content: m11 },
+  { id: "12", content: m12 },
+];
+
+const carouselImgMockDT: Slide[] = [
+  { id: "1", content: d1 },
+  { id: "2", content: d2 },
+  { id: "3", content: d3 },
+  { id: "4", content: d4 },
+  { id: "5", content: d5 },
+  { id: "6", content: d6 },
+  { id: "7", content: d7 },
+  { id: "8", content: d8 },
+  { id: "9", content: d9 },
+  { id: "10", content: d10 },
+  { id: "11", content: d11 },
+  { id: "12", content: d12 },
 ];
 
 export const CarouselPaginationWidget = injectSlot(
@@ -80,7 +102,14 @@ function App() {
     [],
   );
 
-  const visibleSlides = useMatchMedia(CAROUSEL_VIS);
+  const visibleSlidesNr = useMatchMedia(CAROUSEL_VIS);
+
+  const slides = useMatchMedia({
+    DESKTOP: carouselImgMockDT,
+    TABLET: carouselImgMockDT,
+    MOBILE: carouselImgMockM,
+    DEFAULT: carouselImgMockDT,
+  });
 
   return (
     <main className={appStyles.app}>
@@ -103,8 +132,8 @@ function App() {
 
         <div className={appStyles.component}>
           <Carousel
-            visibleSlides={visibleSlides}
-            slides={carouselImgMock}
+            visibleSlides={visibleSlidesNr}
+            slides={slides}
             isAuto={isAutoOn}
             isPaginated={true}
             // isInstantMotion = {true}
@@ -117,8 +146,7 @@ function App() {
             isTouchDevice={isTouch}
             onSlideClick={handleSlideClick}
           >
-            <Pagination />
-
+            {isTouch ? <CarouselPaginationWidget /> : <Pagination />}
             <Controls />
           </Carousel>
         </div>

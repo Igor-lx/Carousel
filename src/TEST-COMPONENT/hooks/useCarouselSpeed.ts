@@ -4,15 +4,15 @@ import { SNAP_BACK_TIME } from "../model/constants";
 import type { MoveReason, AnimationMode } from "../model/reducer";
 
 interface SpeedProps {
-  readonly reason: MoveReason;
-  readonly animMode: AnimationMode;
-  readonly isInteractive: boolean;
-  readonly isInstant: boolean;
-  readonly velocity: number;
-  readonly trackRef: RefObject<HTMLElement | null>;
-  readonly speedAuto: number;
-  readonly speedStep: number;
-  readonly speedJump: number;
+  reason: MoveReason;
+  animMode: AnimationMode;
+  isInteractive: boolean;
+  isInstant: boolean;
+  velocity: number;
+  trackRef: RefObject<HTMLElement | null>;
+  speedAuto: number;
+  speedStep: number;
+  speedJump: number;
 }
 
 export function useCarouselSpeed({

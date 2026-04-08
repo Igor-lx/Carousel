@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 
 interface PerfectLayoutProps {
-  readonly length: number;
-  readonly visibleSlides: number;
+  length: number;
+  visibleSlides: number;
 }
 
 export function usePerfectLayoutNotice({

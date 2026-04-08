@@ -1,28 +1,28 @@
 @layer components {
   .paginationWrapper {
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     flex-wrap: wrap;
-    gap: 10px 35px;
     width: 100%;
     height: auto;
-    pointer-events: none;
     padding: 20px 15px 0;
+    gap: 10px 35px;
+    pointer-events: none;
   }
 
   .dot {
-    flex-shrink: 0;
-    pointer-events: auto;
     width: var(--dot-w);
     height: var(--dot-h);
-    cursor: pointer;
     border: none;
     border-radius: var(--dot-radius);
     background-color: var(--color);
-    -webkit-tap-highlight-color: transparent;
     opacity: var(--dot-opacity);
     transition: var(--dot-transition);
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+    pointer-events: auto;
 
     &:hover {
       opacity: var(--dot-hover-opacity);

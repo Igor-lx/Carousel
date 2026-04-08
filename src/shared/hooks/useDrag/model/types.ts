@@ -17,12 +17,12 @@ export interface GestureContext {
 }
 
 export interface DragListeners {
-  readonly onPointerDown: (e: ReactPointerEvent) => void;
-  readonly onPointerMove: (e: ReactPointerEvent) => void;
-  readonly onPointerUp: (e: ReactPointerEvent) => void;
-  readonly onPointerCancel: (e: ReactPointerEvent) => void;
-  readonly onLostPointerCapture: (e: ReactPointerEvent) => void;
-  readonly style: CSSProperties;
+  onPointerDown: (e: ReactPointerEvent) => void;
+  onPointerMove: (e: ReactPointerEvent) => void;
+  onPointerUp: (e: ReactPointerEvent) => void;
+  onPointerCancel: (e: ReactPointerEvent) => void;
+  onLostPointerCapture: (e: ReactPointerEvent) => void;
+  style: CSSProperties;
 }
 
 export interface DragProps {

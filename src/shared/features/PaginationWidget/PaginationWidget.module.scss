@@ -12,56 +12,48 @@
   --dots-gap: 30px;
   --visible-dots-count: 5;
 
-  display: flex;
   position: relative;
+  display: flex;
   align-items: center;
   justify-content: center;
-
   width: calc(
     (var(--visible-dots-count) * var(--dot-size)) +
       ((var(--visible-dots-count) - 1) * var(--dots-gap)) + 50px
   );
   height: 50px;
-
   border: 1px solid rgb(from var(--border-global) r g b / 0.4);
   border-radius: 25px;
-
   overflow: hidden;
-  contain: paint;
   transition: width 0.3s ease;
+  contain: paint;
 }
 
 .dot_PW {
   position: absolute;
   top: calc(50% - (var(--dot-size) / 2));
   left: calc(50% - (var(--dot-size) / 2));
-
   width: var(--dot-size);
   height: var(--dot-size);
   border-radius: 50%;
   background-color: var(--dot-color);
-
-  translate: var(--dot-x, 0) 0;
-  scale: var(--dot-scale, 1);
-  opacity: var(--dot-opacity, 1);
-
   transition:
     translate var(--duration-move) var(--anim-style),
     scale var(--duration-scale) var(--anim-style),
     opacity var(--duration-opacity) ease-out,
     background-color var(--duration-color) var(--anim-style),
     box-shadow var(--duration-color) var(--anim-style);
-
   transition-delay: var(--delay, 0ms);
-
+  translate: var(--dot-x, 0) 0;
+  scale: var(--dot-scale, 1);
+  opacity: var(--dot-opacity, 1);
   will-change: translate, scale, opacity;
   backface-visibility: hidden;
 }
 
 .dotActive_PW {
+  z-index: 2;
   background-color: var(--dot-active-color);
   box-shadow: 0 0 8px 1px var(--dot-active-color);
-  z-index: 2;
 }
 
 .freezed .dot_PW,

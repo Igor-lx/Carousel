@@ -6,17 +6,17 @@ import type { CarouselLayout } from "../utilites";
 import { useIsomorphicLayoutEffect } from "../../shared";
 
 interface EngineProps {
-  readonly dispatch: React.Dispatch<Action>;
-  readonly isMoving: boolean;
-  readonly isInstantMode: boolean;
-  readonly currentLayout: CarouselLayout;
-  readonly nextLayout: CarouselLayout;
-  readonly pendingAction: Action | null;
+  dispatch: React.Dispatch<Action>;
+  isMoving: boolean;
+  isInstantMode: boolean;
+  currentLayout: CarouselLayout;
+  nextLayout: CarouselLayout;
+  pendingAction: Action | null;
 }
 
 interface EngineResult {
-  readonly dispatch: React.Dispatch<Action>;
-  readonly finalize: () => void;
+  dispatch: React.Dispatch<Action>;
+  finalize: () => void;
 }
 export function useCarouselEngine({
   dispatch,

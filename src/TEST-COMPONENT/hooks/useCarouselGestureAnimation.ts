@@ -4,11 +4,11 @@ import { useIsomorphicLayoutEffect } from "../../shared";
 
 
 interface GestureAnimationProps {
-  readonly targetRef: RefObject<HTMLElement | null>;
-  readonly isDragging: boolean;
-  readonly getOffset: () => number;
-  readonly isLocked: boolean;
-  readonly isInstantMode: boolean;
+  targetRef: RefObject<HTMLElement | null>;
+  isDragging: boolean;
+  getOffset: () => number;
+  isLocked: boolean;
+  isInstantMode: boolean;
 }
 
 export function useCarouselGestureAnimation({

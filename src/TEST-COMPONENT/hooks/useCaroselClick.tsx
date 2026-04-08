@@ -4,19 +4,19 @@ import type { Slide } from "../Carousel.types";
 
 
 interface ClickProps {
-  readonly onMove: (step: number, reason: MoveReason) => void;
-  readonly onGoTo: (target: number, reason: MoveReason) => void;
-  readonly offset: number;
-  readonly stepSize: number;
-  readonly onClick?: (slide: Slide) => void;
+  onMove: (step: number, reason: MoveReason) => void;
+  onGoTo: (target: number, reason: MoveReason) => void;
+  offset: number;
+  stepSize: number;
+  onClick?: (slide: Slide) => void;
 }
 
 interface ClickResult {
-  readonly handleMove: (step: number) => void;
-  readonly handleDot: (index: number) => void;
-  readonly handleSlide: (slide: Slide) => void;
-  readonly handlePrev: () => void;
-  readonly handleNext: () => void;
+  handleMove: (step: number) => void;
+  handleDot: (index: number) => void;
+  handleSlide: (slide: Slide) => void;
+  handlePrev: () => void;
+  handleNext: () => void;
 }
 
 export function useCarouselClick({

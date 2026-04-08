@@ -30,7 +30,7 @@ const SlideItemClassSchema = z.object({
 
 export const SLIDE_KEYS = SlideItemClassSchema.keyof().options;
 
-export const ClassNameMapSchema = z
+const ClassNameMapSchema = z
   .object({
     ...CarouselClassSchema.shape,
     ...SlideItemClassSchema.shape,
@@ -74,9 +74,9 @@ export const CarouselPropsSchema = z.object({
   ErrAltPlaceholder: z.string().optional(),
 });
 
-export type CarouseProps = z.infer<typeof CarouselPropsSchema> & {
+export interface CarouseProps extends z.infer<typeof CarouselPropsSchema> {
   children?: ReactNode;
-};
+}
 
 //-------------------------------------------------------------------------------------------------
 

@@ -22,6 +22,6 @@ export interface ControlsViewProps {
   styles: ControlsClassMap;
 }
 
-export type ControlsProps = {
+export interface ControlsProps {
   className?: ControlsClassMap;
 };

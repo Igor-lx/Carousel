@@ -3,9 +3,9 @@ import type { CSSProperties } from "react";
 export type AnimationMode = "IDLE" | "WAITING" | "MOVING";
 
 export interface PaginationState {
-  readonly step: number;
-  readonly mode: AnimationMode;
-  readonly lastDirection: "next" | "prev" | null;
+  step: number;
+  mode: AnimationMode;
+  lastDirection: "next" | "prev" | null;
 }
 
 export type PaginationAction =
@@ -14,29 +14,29 @@ export type PaginationAction =
   | { type: "END_STEP" };
 
 export interface DotWidgetState {
-  readonly id: number;
-  readonly x: number;
-  readonly scale: number;
-  readonly opacity: number;
-  readonly isActive: boolean;
+  id: number;
+  x: number;
+  scale: number;
+  opacity: number;
+  isActive: boolean;
 }
 
-export interface GeometryData {
-  readonly strip: number[];
-  readonly actualCount: number;
-  readonly centerIndex: number;
-  readonly unit: number;
+interface GeometryData {
+  strip: number[];
+  actualCount: number;
+  centerIndex: number;
+  unit: number;
 }
 
 export interface LayoutModel {
-  readonly geometry: GeometryData;
-  readonly scales: number[];
+  geometry: GeometryData;
+  scales: number[];
 }
 
 export interface SpatialConfig {
-  readonly size: number;
-  readonly gap: number;
-  readonly scaleFactor: number;
+  size: number;
+  gap: number;
+  scaleFactor: number;
 }
 export interface ContainerCSSVars extends CSSProperties {
   "--duration": string;

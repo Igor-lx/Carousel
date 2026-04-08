@@ -4,18 +4,18 @@ import type { MoveReason } from "../model/reducer";
 
 
 interface AutoPlayProps {
-  readonly enabled: boolean;
-  readonly delay: number;
-  readonly isPaused: boolean;
-  readonly ignoreHover: boolean;
-  readonly isAtEnd: boolean;
-  readonly onGoTo: (target: number, reason: MoveReason) => void;
-  readonly onMove: (step: number, reason: MoveReason) => void;
+  enabled: boolean;
+  delay: number;
+  isPaused: boolean;
+  ignoreHover: boolean;
+  isAtEnd: boolean;
+  onGoTo: (target: number, reason: MoveReason) => void;
+  onMove: (step: number, reason: MoveReason) => void;
 }
 
 interface AutoPlayResult {
-  readonly onHover: (active: boolean) => void;
-  readonly setPause: (active: boolean) => void;
+  onHover: (active: boolean) => void;
+  setPause: (active: boolean) => void;
 }
 
 export function useCarouselAutoPlay({

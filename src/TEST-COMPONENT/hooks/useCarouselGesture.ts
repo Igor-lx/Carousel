@@ -6,18 +6,18 @@ import { type DragListeners, useDrag } from "../../shared";
 
 
 interface GestureProps {
-  readonly onMove: (step: number, reason: MoveReason) => void;
-  readonly onDragStart: () => void;
-  readonly onDragSnap: () => void;
-  readonly enabled: boolean;
-  readonly measureRef: RefObject<HTMLDivElement | null>;
+  onMove: (step: number, reason: MoveReason) => void;
+  onDragStart: () => void;
+  onDragSnap: () => void;
+  enabled: boolean;
+  measureRef: RefObject<HTMLDivElement | null>;
 }
 
 interface GestureResult {
-  readonly isDragging: boolean;
-  readonly velocity: number;
-  readonly dragListeners: DragListeners;
-  readonly getDragOffset: () => number;
+  isDragging: boolean;
+  velocity: number;
+  dragListeners: DragListeners;
+  getDragOffset: () => number;
 }
 
 export function useCarouselGesture({

@@ -4,19 +4,19 @@ import  { DEFAULT_SETTINGS } from "../model/defaultSettings";
 
 
 interface SafeSettingsProps {
-  readonly speedAuto?: number;
-  readonly speedStep?: number;
-  readonly speedJump?: number;
-  readonly delay?: number;
-  readonly errAltPH?: string;
+  speedAuto?: number;
+  speedStep?: number;
+  speedJump?: number;
+  delay?: number;
+  errAltPH?: string;
 }
 
 interface SafeSettingsResult {
-  readonly speedAuto: number;
-  readonly speedStep: number;
-  readonly speedJump: number;
-  readonly delay: number;
-  readonly errAltPH: string;
+  speedAuto: number;
+  speedStep: number;
+  speedJump: number;
+  delay: number;
+  errAltPH: string;
 }
 
 export const useSafeSettings = ({

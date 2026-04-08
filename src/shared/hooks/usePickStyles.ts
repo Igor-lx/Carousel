@@ -2,7 +2,7 @@ import { useMemo } from "react";
 
 export function usePickStyles<T extends object, K extends keyof T>(
   source: T | undefined,
-  keys: readonly K[],
+  keys: K[],
 ): Pick<T, K> {
 
   return useMemo(() => {

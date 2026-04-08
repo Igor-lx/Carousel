@@ -1,7 +1,6 @@
 import type { CarouselLayout } from "../../utilites/types";
 
 
-
 export type AnimationMode = "normal" | "jump" | "instant" | "snap" | "none";
 export type MoveReason = "click" | "gesture" | "autoplay" | "unknown";
 
@@ -22,7 +21,7 @@ export type Action =
   | { type: "RECONCILE"; nextLayout: CarouselLayout }
   | { type: "CLEAR_PENDING" };
 
-export type State = {
+export interface State {
   currentIndex: number;
   prevIndex: number | null;
   moveReason: MoveReason;

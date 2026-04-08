@@ -2,9 +2,9 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  height: 100vh;
   width: 100%;
   min-width: 0;
+  height: 100vh;
   background-color: var(--bg-global);
   transition: background-color var(--transition-bg);
 }
@@ -13,9 +13,9 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  padding: 40px 20px 0;
   min-height: 100vh;
   gap: 90px;
-  padding: 40px 20px 0;
 }
 
 .header {
@@ -34,9 +34,9 @@
   min-height: 40px;
   border: 1px solid gray;
   border-radius: 4px;
-  cursor: pointer;
-  transition: border-color 0.3s ease;
   line-height: 0;
+  transition: border-color 0.3s ease;
+  cursor: pointer;
 }
 
 .component {
@@ -48,8 +48,8 @@
 
 @media (max-width: 1023px) {
   .page {
-    gap: 30px;
     padding: 20px 10px;
+    gap: 30px;
   }
 
   .button {

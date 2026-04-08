@@ -9,9 +9,9 @@ const SPEED_CONFIG = {
 } as const;
 
 interface GestureSpeedProps {
-  readonly velocity: number;
-  readonly baseSpeed: number;
-  readonly containerWidth: number | undefined;
+  velocity: number;
+  baseSpeed: number;
+  containerWidth: number | undefined;
 }
 
 export function useCarouselGestureSpeed({

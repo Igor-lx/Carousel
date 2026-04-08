@@ -1,23 +1,22 @@
 @layer components {
   .navZone {
     position: absolute;
+    top: var(--nav-top);
     z-index: 10;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: none;
-    outline: none;
-    -webkit-tap-highlight-color: transparent;
-    cursor: pointer;
-
     width: var(--nav-w);
     height: var(--nav-h);
-    top: var(--nav-top);
-    transform: var(--nav-transform);
+    border: none;
+    outline: none;
     background-color: var(--nav-bg);
     opacity: var(--nav-opacity);
-    pointer-events: var(--nav-pointer);
     transition: var(--nav-transition);
+    transform: var(--nav-transform);
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+    pointer-events: var(--nav-pointer);
 
     &:focus-visible {
       background-color: rgba(0, 0, 0, 0.5);
@@ -33,15 +32,15 @@
   }
 
   .navButton {
-    width: var(--nav-size-w);
-    height: var(--nav-size-h);
-    border-radius: var(--nav-radius);
-    background-color: var(--nav-btn-bg);
-    color: rgba(245, 245, 245, 0.807);
     display: flex;
     align-items: center;
     justify-content: center;
+    width: var(--nav-size-w);
+    height: var(--nav-size-h);
     border: none;
+    border-radius: var(--nav-radius);
+    color: rgba(245, 245, 245, 0.807);
+    background-color: var(--nav-btn-bg);
     user-select: none;
     pointer-events: none;
 

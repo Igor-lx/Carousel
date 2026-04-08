@@ -11,13 +11,13 @@ import type { AnimationMode, MoveReason } from "../model/reducer";
 import { getCarouselTransform, getSlideFlexStyle } from "../utilites";
 
 interface TechStylesProps {
-  readonly current: number;
-  readonly size: number;
-  readonly animMode: AnimationMode;
-  readonly isInteractive: boolean;
-  readonly duration: number;
-  readonly enabled: boolean;
-  readonly reason: MoveReason;
+  current: number;
+  size: number;
+  animMode: AnimationMode;
+  isInteractive: boolean;
+  duration: number;
+  enabled: boolean;
+  reason: MoveReason;
 }
 
 export function useCarouselTechStyles({

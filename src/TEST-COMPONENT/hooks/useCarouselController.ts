@@ -4,19 +4,19 @@ import type { Action, MoveReason } from "../model/reducer";
 
 
 interface ControllerProps {
-  readonly dispatch: React.Dispatch<Action>;
-  readonly finalize: () => void;
-  readonly onReset: () => void;
-  readonly enabled: boolean;
-  readonly externalController: React.RefObject<CarouselExternalController | null>;
+  dispatch: React.Dispatch<Action>;
+  finalize: () => void;
+  onReset: () => void;
+  enabled: boolean;
+  externalController: React.RefObject<CarouselExternalController | null>;
 }
 
 interface ControllerResult {
-  readonly move: (step: number, moveReason?: MoveReason) => void;
-  readonly goTo: (index: number, moveReason?: MoveReason) => void;
-  readonly dragStart: () => void;
-  readonly dragSnap: () => void;
-  readonly finalize: () => void;
+  move: (step: number, moveReason?: MoveReason) => void;
+  goTo: (index: number, moveReason?: MoveReason) => void;
+  dragStart: () => void;
+  dragSnap: () => void;
+  finalize: () => void;
 }
 
 export function useCarouselController({
