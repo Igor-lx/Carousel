@@ -27,3 +27,8 @@ export interface VirtualSlide {
   isActual: boolean;
   a11yProps: SlideA11yProps;
 }
+
+export interface RenderWindow {
+  start: number;
+  end: number;
+}

@@ -71,7 +71,7 @@ export const CarouselPropsSchema = z.object({
   isTouchDevice: z.boolean().optional(),
   className: ClassNameMapSchema.optional(),
   onSlideClick: OnSlideClickSchema.optional(),
-  ErrAltPlaceholder: z.string().optional(),
+  errAltPlaceholder: z.string().optional(),
 });
 
 export interface CarouseProps extends z.infer<typeof CarouselPropsSchema> {

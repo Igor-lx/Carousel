@@ -1,7 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 
 import {
-  getSafeIndexMap,
+  getRenderWindow,
   getSlideA11y,
   getSlideMetadata,
   getSlideVisibility,
@@ -12,8 +12,10 @@ import type { Slide } from "../Carousel.types";
 
 interface SlidesProps {
   current: number;
-  prev: number | null;
+  prev: number;
+  renderTarget: number;
   isMoving: boolean;
+  targetIndex: number;
   layout: CarouselLayout;
   data: Slide[];
   count: number;
@@ -24,45 +26,68 @@ interface SlidesResult {
   activeDot: number;
   isAtStart: boolean;
   isAtEnd: boolean;
+  windowStart: number;
 }
 
 export function useCarouselSlides({
   current,
   prev,
+  renderTarget,
   isMoving,
+  targetIndex,
   layout,
   data,
   count,
 }: SlidesProps): SlidesResult {
-  const normalized = useMemo(() => {
-    if (!layout.canSlide) return 0;
+  const renderWindowRef = useRef(getRenderWindow(prev, renderTarget, layout));
 
-    const { normalizedIndex } = getSafeIndexMap(
-      current,
-      layout.cloneCount,
-      layout.virtualLength,
-    );
+  const renderWindow = useMemo(() => {
+    const nextWindow = getRenderWindow(prev, renderTarget, layout);
 
-    return normalizedIndex;
-  }, [current, layout.cloneCount, layout.virtualLength, layout.canSlide]);
+    if (!layout.canSlide || !isMoving) {
+      renderWindowRef.current = nextWindow;
+      return nextWindow;
+    }
+
+    const currentWindow = renderWindowRef.current;
+    const segmentStart = Math.floor(Math.min(prev, renderTarget));
+    const segmentEnd =
+      Math.ceil(Math.max(prev, renderTarget)) + layout.clampedVisible - 1;
+    const containsSegment =
+      currentWindow.start <= segmentStart && currentWindow.end >= segmentEnd;
+
+    if (containsSegment) {
+      return currentWindow;
+    }
+
+    const expandedWindow = {
+      start: Math.min(currentWindow.start, nextWindow.start),
+      end: Math.max(currentWindow.end, nextWindow.end),
+    };
+
+    renderWindowRef.current = expandedWindow;
+    return expandedWindow;
+  }, [prev, renderTarget, layout, isMoving]);
 
   const { isAtStart, isAtEnd } = useMemo(() => {
     if (layout.isInfinite) {
       return { isAtStart: false, isAtEnd: false };
     }
     return {
-      isAtStart: current <= layout.minScrollIndex,
-      isAtEnd: current >= layout.maxScrollIndex,
+      isAtStart: targetIndex <= 0,
+      isAtEnd: targetIndex >= layout.pageCount - 1,
     };
   }, [
     layout.isInfinite,
-    layout.minScrollIndex,
-    layout.maxScrollIndex,
-    current,
+    layout.pageCount,
+    targetIndex,
   ]);
 
   const virtualData = useMemo((): VirtualSlide[] => {
-    return Array.from({ length: layout.totalVirtual }).map((_, vIndex) => {
+    const length = Math.max(0, renderWindow.end - renderWindow.start + 1);
+
+    return Array.from({ length }).map((_, offset) => {
+      const vIndex = renderWindow.start + offset;
       const metadata = getSlideMetadata(vIndex, layout);
       const { originalIndex, isClone } = metadata;
 
@@ -86,14 +111,13 @@ export function useCarouselSlides({
         a11yProps,
       };
     });
-  }, [layout, current, prev, isMoving, data, count]);
-
-  const activeDot = Math.floor(normalized / layout.clampedVisible);
+  }, [layout, current, prev, isMoving, data, count, renderWindow]);
 
   return {
     data: virtualData,
-    activeDot,
+    activeDot: targetIndex,
     isAtStart,
     isAtEnd,
+    windowStart: renderWindow.start,
   };
 }

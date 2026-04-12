@@ -12,29 +12,39 @@ import { getCarouselTransform, getSlideFlexStyle } from "../utilites";
 
 interface TechStylesProps {
   current: number;
+  windowStart: number;
   size: number;
   animMode: AnimationMode;
   isInteractive: boolean;
   duration: number;
   enabled: boolean;
   reason: MoveReason;
+  dragOffset: number;
 }
 
 export function useCarouselTechStyles({
   current,
+  windowStart,
   size,
   animMode,
   isInteractive,
   duration,
   enabled,
   reason,
+  dragOffset,
 }: TechStylesProps) {
   const containerStyle = useMemo(() => {
     if (!enabled) return undefined;
 
-    const transform = `${getCarouselTransform(current, size)} translateX(var(--drag-offset, 0px))`;
+    const relativeIndex = current - windowStart;
+    const transform = `${getCarouselTransform(relativeIndex, size)} translateX(${dragOffset}px)`;
 
-    if (animMode === "none" || animMode === "instant" || isInteractive) {
+    if (
+      animMode === "none" ||
+      animMode === "instant" ||
+      animMode === "rebase" ||
+      isInteractive
+    ) {
       return {
         transform,
         transition: "none",
@@ -66,7 +76,18 @@ export function useCarouselTechStyles({
       transform,
       transition: `transform ${currentDuration}ms ${bezier}`,
     };
-  }, [current, size, animMode, isInteractive, duration, enabled, reason]);
+  }, [
+    current,
+    windowStart,
+    size,
+    animMode,
+    isInteractive,
+    duration,
+    enabled,
+    reason,
+    dragOffset,
+    animMode,
+  ]);
 
   const itemStyle = useMemo(() => getSlideFlexStyle(size), [size]);
 

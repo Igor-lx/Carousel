@@ -1,186 +1,222 @@
-import { useState, useRef, useCallback, useMemo } from "react";
-import { DRAG_CONFIG, STATIC_DRAG_STYLE, EMPTY_STYLE } from "./model/settings";
+import {
+  useReducer,
+  useRef,
+  useCallback,
+  useMemo,
+  useEffect,
+  useState,
+} from "react";
+import { initialState, dragReducer } from "./model/reducer";
+import {
+  DRAG_CONFIG as DEFAULT_CONFIG,
+  SHARED_DRAG_STYLES,
+} from "./model/settings";
 import type {
-  DragResult,
-  DragPhase,
-  GestureContext,
+  DragListeners,
   DragProps,
+  DragResult,
+  DragConfig,
 } from "./model/types";
 import {
-  detectSwipeResult,
-  calculateVelocity,
-  applyPhysics,
+  getSwipeDirection,
+  calculateEMA,
+  applyResistance,
 } from "./model/utilites";
 
 export function useDrag({
-  onDragEnd: onDrag,
   onDragStart,
+  onDragEnd,
   enabled = true,
   measureRef,
+  config = {},
 }: DragProps): DragResult {
-  const [isDragging, setIsDragging] = useState(false);
-  const offsetRef = useRef(0);
-  const wasDraggedRef = useRef(false);
+  const settings = useMemo(
+    () => ({ ...DEFAULT_CONFIG, ...config }) as Required<DragConfig>,
+    [config],
+  );
 
-  const state = useRef({
-    phase: "IDLE" as DragPhase,
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+
+  const [state, dispatch] = useReducer(dragReducer, initialState);
+  const [releasedVelocity, setReleasedVelocity] = useState(0);
+
+  const lockUntilRef = useRef<number>(0);
+  const timeoutRef = useRef<number | null>(null);
+  const phaseRef = useRef(state.phase);
+  useEffect(() => {
+    phaseRef.current = state.phase;
+  }, [state.phase]);
+
+  const gesture = useRef({
+    startX: 0,
+    startY: 0,
+    lastX: 0,
+    lastTime: 0,
     pointerId: null as number | null,
-    width: 0,
-    gesture: {
-      startX: 0,
-      startY: 0,
-      lastX: 0,
-      lastTime: 0,
-      velocity: 0,
-      offset: 0,
-    } as GestureContext,
   });
 
-  const getDragOffset = useCallback(() => offsetRef.current, []);
+  const stopDragging = useCallback(
+    (isCancel = false) => {
+      const target = measureRef.current;
+      const now = performance.now();
+      const currentPhase = phaseRef.current;
 
-  const resetState = useCallback(
-    (target?: HTMLElement | null) => {
-      const s = state.current;
-      const g = s.gesture;
-
-      try {
-        if (
-          target &&
-          s.pointerId !== null &&
-          target.hasPointerCapture(s.pointerId)
-        ) {
-          target.releasePointerCapture(s.pointerId);
-        }
-      } catch {}
-
-      if (enabled && s.phase === "DRAGGING") {
-        const result = detectSwipeResult(g.offset, g.velocity, s.width);
-        onDrag?.(result, g.velocity);
+      if (gesture.current.pointerId !== null && target) {
+        try {
+          target.releasePointerCapture(gesture.current.pointerId);
+        } catch {}
       }
 
-      s.phase = "IDLE";
-      s.pointerId = null;
-      s.width = 0;
+      if (currentPhase === "DRAGGING" && !isCancel) {
+        setReleasedVelocity(state.velocity);
 
-      g.startX = g.startY = g.lastX = g.lastTime = g.offset = 0;
-      offsetRef.current = 0;
+        const result = getSwipeDirection(
+          state.offset,
+          state.velocity,
+          target?.offsetWidth ?? 0,
+          settingsRef.current,
+        );
+        onDragEnd?.(result, state.velocity);
 
-      requestAnimationFrame(() => {
-        wasDraggedRef.current = false;
-        g.velocity = 0;
-      });
+        lockUntilRef.current = now + settingsRef.current.COOLDOWN_MS;
+        dispatch({ type: "SET_COOLDOWN" });
 
-      setIsDragging(false);
+        if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+        timeoutRef.current = window.setTimeout(() => {
+          dispatch({ type: "SET_IDLE" });
+          timeoutRef.current = null;
+        }, settingsRef.current.COOLDOWN_MS);
+      } else {
+        setReleasedVelocity(0);
+        dispatch({ type: "SET_IDLE" });
+      }
+
+      gesture.current.pointerId = null;
     },
-    [enabled, onDrag],
+    [measureRef, onDragEnd, state.offset, state.velocity],
   );
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
-      if (e.pointerType !== "touch" || !enabled || !e.isPrimary) return;
+      const now = performance.now();
+      if (
+        !enabled ||
+        !e.isPrimary ||
+        e.pointerType !== "touch" ||
+        e.button !== 0 ||
+        now < lockUntilRef.current
+      )
+        return;
 
-      const s = state.current;
-      const g = s.gesture;
+      const target = e.currentTarget as HTMLElement;
+      try {
+        target.setPointerCapture(e.pointerId);
+      } catch {}
 
-      s.phase = "PENDING";
-      s.pointerId = e.pointerId;
-      s.width = measureRef.current?.offsetWidth ?? 0;
-      wasDraggedRef.current = false;
-
-      g.startX = g.lastX = e.clientX;
-      g.startY = e.clientY;
-      g.lastTime = e.timeStamp;
-      g.velocity = g.offset = 0;
-
-      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      gesture.current = {
+        startX: e.clientX,
+        startY: e.clientY,
+        lastX: e.clientX,
+        lastTime: now,
+        pointerId: e.pointerId,
+      };
+      dispatch({ type: "SET_START" });
     },
-    [enabled, measureRef],
+    [enabled],
   );
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
-      const s = state.current;
-      if (
-        s.phase === "IDLE" ||
-        s.pointerId === null ||
-        e.pointerId !== s.pointerId
-      )
-        return;
+      const currentPhase = phaseRef.current;
+      if (currentPhase === "IDLE" || currentPhase === "COOLDOWN") return;
+      if (e.pointerId !== gesture.current.pointerId) return;
 
-      const g = s.gesture;
+      const g = gesture.current;
+      const now = performance.now();
       const dx = e.clientX - g.startX;
       const dy = e.clientY - g.startY;
+      const s = settingsRef.current;
 
-      if (s.phase === "PENDING") {
+      if (currentPhase === "START") {
         const absX = Math.abs(dx);
         const absY = Math.abs(dy);
 
-        if (
-          absX > DRAG_CONFIG.INTENT_THRESHOLD ||
-          absY > DRAG_CONFIG.INTENT_THRESHOLD
-        ) {
+        if (absX > s.INTENT_THRESHOLD || absY > s.INTENT_THRESHOLD) {
           if (absY > absX) {
-            resetState(e.currentTarget as HTMLElement);
+            stopDragging(true);
             return;
           }
-          s.phase = "DRAGGING";
-          wasDraggedRef.current = true;
           onDragStart?.();
-          setIsDragging(true);
-        } else return;
+          dispatch({ type: "SET_DRAG", offset: 0, velocity: 0 });
+        }
+        return;
       }
 
-      const dt = Math.max(1, e.timeStamp - g.lastTime);
-      g.velocity = calculateVelocity(g.velocity, e.clientX - g.lastX, dt);
+      const dt = Math.max(1, now - g.lastTime);
+      const instantV = Math.abs((e.clientX - g.lastX) / dt);
+      const velocity = calculateEMA(state.velocity, instantV, s.EMA_ALPHA);
+
       g.lastX = e.clientX;
-      g.lastTime = e.timeStamp;
-      g.offset = dx;
+      g.lastTime = now;
 
-      offsetRef.current = applyPhysics(dx, s.width);
+      dispatch({
+        type: "SET_DRAG",
+        offset: applyResistance(dx, s.RESISTANCE, s.RESISTANCE_CURVATURE),
+        velocity: Math.min(velocity, s.MAX_VELOCITY),
+      });
     },
-    [resetState, onDragStart],
+    [onDragStart, stopDragging, state.velocity],
   );
 
-  const handlePointerUp = useCallback(
-    (e: React.PointerEvent) => {
-      resetState(e.currentTarget as HTMLElement);
-    },
-    [resetState],
-  );
+  useEffect(() => {
+    const el = measureRef.current;
+    if (!el || !enabled) return;
 
-  const handleLostCapture = useCallback(() => {
-    if (state.current.phase !== "IDLE") {
-      resetState(null);
-    }
-  }, [resetState]);
+    const suppress = (e: MouseEvent) => {
+      if (performance.now() < lockUntilRef.current) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
 
-  const executeIfWasntDragged = useCallback((callback?: () => void) => {
-    if (!wasDraggedRef.current) callback?.();
-  }, []);
+    const prevent = (e: TouchEvent) => {
+      if (phaseRef.current === "DRAGGING" && e.cancelable) {
+        e.preventDefault();
+      }
+    };
 
-  const dragListeners = useMemo(
-    () => ({
+    el.addEventListener("click", suppress, { capture: true });
+    el.addEventListener("touchmove", prevent, { passive: false });
+
+    return () => {
+      el.removeEventListener("click", suppress, { capture: true });
+      el.removeEventListener("touchmove", prevent);
+
+      if (timeoutRef.current) {
+        window.clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, [enabled, measureRef]);
+
+  const dragListeners: DragListeners = useMemo(() => {
+    if (!enabled) return {};
+
+    return {
       onPointerDown: handlePointerDown,
       onPointerMove: handlePointerMove,
-      onPointerUp: handlePointerUp,
-      onPointerCancel: handlePointerUp,
-      onLostPointerCapture: handleLostCapture,
-      style: enabled ? STATIC_DRAG_STYLE : EMPTY_STYLE,
-    }),
-    [
-      enabled,
-      handlePointerDown,
-      handlePointerMove,
-      handlePointerUp,
-      handleLostCapture,
-    ],
-  );
+      onPointerUp: () => stopDragging(),
+      onPointerCancel: () => stopDragging(true),
+      onLostPointerCapture: () => stopDragging(true),
+      style: SHARED_DRAG_STYLES,
+    };
+  }, [enabled, handlePointerDown, handlePointerMove, stopDragging, state.phase]);
 
   return {
-    isDragging,
-    velocity: state.current.gesture.velocity,
+    isDragging: state.phase === "DRAGGING",
+    offset: state.offset,
+    velocity: state.phase === "DRAGGING" ? state.velocity : releasedVelocity,
     dragListeners,
-    getDragOffset,
-    getClickFilter: executeIfWasntDragged,
   };
 }

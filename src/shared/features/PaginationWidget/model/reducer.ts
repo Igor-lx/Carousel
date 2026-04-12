@@ -1,6 +1,5 @@
 import type { PaginationState, PaginationAction } from "./types";
 
-
 export const initialState: PaginationState = {
   step: 0,
   mode: "IDLE",

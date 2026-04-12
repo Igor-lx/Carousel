@@ -6,7 +6,7 @@ export const DEFAULT_SETTINGS = {
   delayAuto: 3000,
   speedManualStep: 2000,
   speedManualJump: 800,
-  errAltPH: "Ошибка загрузки.",
+  errAltPlaceholder: "Ошибка загрузки.",
   isImg: true,
   isAuto: true,
   isPaginated: true,

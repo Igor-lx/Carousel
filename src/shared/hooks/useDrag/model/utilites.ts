@@ -1,50 +1,45 @@
-import  { DRAG_CONFIG } from "./settings";
-import type { DragGestureResult } from "./types";
+import type { SwipeDirection, DragConfig } from "./types";
 
 
-export const applyPhysics = (offset: number, width: number): number => {
-  if (width <= 0) return offset;
-  const { RESISTANCE_LIMIT, RESISTANCE_FACTOR, MAX_OVERDRAG_RATIO } =
-    DRAG_CONFIG;
-
-  const absOffset = Math.abs(offset);
-  if (absOffset <= RESISTANCE_LIMIT) return offset;
-
-  const sign = offset > 0 ? 1 : -1;
-  const overdrag = absOffset - RESISTANCE_LIMIT;
-  const resisted = RESISTANCE_LIMIT + Math.sqrt(overdrag) * RESISTANCE_FACTOR;
-  const maxAllowed = RESISTANCE_LIMIT + width * MAX_OVERDRAG_RATIO;
-
-  return Math.min(resisted, maxAllowed) * sign;
-};
-
-export const calculateVelocity = (
-  currentVelocity: number,
-  dx: number,
-  dt: number,
+export const applyResistance = (
+  offset: number,
+  resistance: number,
+  curvature: number,
 ): number => {
-  if (dt <= 0) return currentVelocity;
-  const instantV = Math.abs(dx / dt);
-  const alpha = DRAG_CONFIG.VELOCITY_EMA_ALPHA;
-
-  const nextV = currentVelocity * (1 - alpha) + instantV * alpha;
-  return Math.min(nextV, DRAG_CONFIG.MAX_VELOCITY);
+  const sign = Math.sign(offset);
+  const abs = Math.abs(offset);
+  return sign * (abs / (1 + abs * resistance * curvature));
 };
 
-export const detectSwipeResult = (
+
+export const calculateEMA = (
+  prevV: number,
+  instantV: number,
+  alpha: number,
+): number => {
+  return prevV * (1 - alpha) + instantV * alpha;
+};
+
+
+export const getSwipeDirection = (
   offset: number,
   velocity: number,
   width: number,
-): DragGestureResult => {
-  const threshold = Math.max(
-    DRAG_CONFIG.MIN_SWIPE_DISTANCE,
-    width * DRAG_CONFIG.SWIPE_THRESHOLD_RATIO,
+  config: Required<DragConfig>,
+): SwipeDirection => {
+  const powerFactor = 1 - config.RESISTANCE;
+
+  const adaptedThreshold = Math.max(
+    config.MIN_SWIPE_DISTANCE,
+    width * config.SWIPE_THRESHOLD_RATIO * powerFactor,
   );
 
-  const isQuickFlick = velocity > 0.5 && Math.abs(offset) > 10;
+  const isQuickFlick =
+    velocity > config.SWIPE_VELOCITY_LIMIT &&
+    Math.abs(offset) > config.QUICK_SWIPE_MIN_OFFSET;
 
-  if (Math.abs(offset) > threshold || isQuickFlick) {
-    return offset < 0 ? "SWIPED_LEFT" : "SWIPED_RIGHT";
+  if (Math.abs(offset) > adaptedThreshold || isQuickFlick) {
+    return offset < 0 ? "LEFT" : "RIGHT";
   }
 
   return "NONE";

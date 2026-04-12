@@ -38,6 +38,7 @@ export interface SpatialConfig {
   gap: number;
   scaleFactor: number;
 }
+
 export interface ContainerCSSVars extends CSSProperties {
   "--duration": string;
   "--delay": string;
@@ -56,6 +57,7 @@ export interface PaginationWidgetHandler {
   moveRight: () => void;
   moveLeft: () => void;
   toggleFreezed: (isFreezed: boolean) => void;
+  setDuration: (val: number | null) => void;
 }
 
 export type PaginationWidgetClassMap = {

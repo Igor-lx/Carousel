@@ -18,8 +18,7 @@ export function usePerfectLayoutNotice({
     if (isUnperfectLayout) {
       console.warn(
         `[CarouselMulti]: Perfect UI layout requires slide count (${length}) ` +
-          `to be evenly divisible by visibleSlides (${visibleSlides}). ` +
-          `Current remainder: ${length % visibleSlides}.`,
+          `to be evenly divisible by visibleSlides (${visibleSlides}). `,
       );
     }
   }, [length, visibleSlides]);

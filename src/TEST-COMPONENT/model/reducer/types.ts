@@ -1,31 +1,46 @@
 import type { CarouselLayout } from "../../utilites/types";
 
 
-export type AnimationMode = "normal" | "jump" | "instant" | "snap" | "none";
+export type AnimationMode = "normal" | "jump" | "instant" | "snap" | "rebase" | "none";
 export type MoveReason = "click" | "gesture" | "autoplay" | "unknown";
+export interface PendingTransition {
+  targetIndex: number;
+  virtualIndex: number;
+  animMode: "normal" | "jump";
+  moveReason: MoveReason;
+}
 
 export type StepAction =
-  | { type: "MOVE"; step: number; isInstant?: boolean; moveReason: MoveReason }
+  | {
+      type: "MOVE";
+      step: number;
+      isInstant?: boolean;
+      moveReason: MoveReason;
+      fromVirtualIndex?: number;
+    }
   | {
       type: "GO_TO";
       target: number;
       isInstant?: boolean;
       moveReason: MoveReason;
+      fromVirtualIndex?: number;
     };
 
 export type Action =
   | StepAction
-  | { type: "START_DRAG" }
-  | { type: "END_DRAG_SNAP" }
+  | { type: "START_DRAG"; fromVirtualIndex?: number }
+  | { type: "END_DRAG_SNAP"; fromVirtualIndex?: number }
+  | { type: "COMMIT_REBASE" }
   | { type: "END_STEP" }
-  | { type: "RECONCILE"; nextLayout: CarouselLayout }
-  | { type: "CLEAR_PENDING" };
+  | { type: "RECONCILE"; nextLayout: CarouselLayout };
 
 export interface State {
-  currentIndex: number;
-  prevIndex: number | null;
+  activeIndex: number;
+  targetIndex: number;
+  virtualIndex: number;
+  fromVirtualIndex: number;
   moveReason: MoveReason;
   animMode: AnimationMode;
-  pendingAction: StepAction | null;
   currentLayout: CarouselLayout;
+  pendingTransition: PendingTransition | null;
 };

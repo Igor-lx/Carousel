@@ -1,23 +1,16 @@
 import { useMemo } from "react";
 
-export function usePickStyles<T extends object, K extends keyof T>(
-  source: T | undefined,
-  keys: K[],
-): Pick<T, K> {
-
+export function usePickStyles<
+  T extends Record<string, string>,
+  K extends keyof T,
+>(styles: T, keys: readonly K[]): Record<K, string> {
   return useMemo(() => {
-    const picked = {} as Pick<T, K>;
-
-    if (!source || Object.keys(source).length === 0) {
-      return picked;
-    }
+    const result = {} as Record<K, string>;
 
     keys.forEach((key) => {
-      if (key in source) {
-        (picked as any)[key] = source[key];
-      }
+      result[key] = styles[key] || "";
     });
 
-    return picked;
-  }, [source, keys]);
+    return result;
+  }, [styles, keys]);
 }

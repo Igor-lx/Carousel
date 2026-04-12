@@ -2,12 +2,9 @@ import { useCallback } from "react";
 import type { MoveReason } from "../model/reducer";
 import type { Slide } from "../Carousel.types";
 
-
 interface ClickProps {
   onMove: (step: number, reason: MoveReason) => void;
   onGoTo: (target: number, reason: MoveReason) => void;
-  offset: number;
-  stepSize: number;
   onClick?: (slide: Slide) => void;
 }
 
@@ -22,8 +19,6 @@ interface ClickResult {
 export function useCarouselClick({
   onMove,
   onGoTo,
-  offset,
-  stepSize,
   onClick,
 }: ClickProps): ClickResult {
   const handleMove = useCallback(
@@ -43,9 +38,9 @@ export function useCarouselClick({
 
   const handleDot = useCallback(
     (index: number) => {
-      onGoTo(offset + index * stepSize, "click");
+      onGoTo(index, "click");
     },
-    [onGoTo, offset, stepSize],
+    [onGoTo],
   );
 
   const handleSlide = useCallback(

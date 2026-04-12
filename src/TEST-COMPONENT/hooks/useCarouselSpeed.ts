@@ -9,7 +9,7 @@ interface SpeedProps {
   isInteractive: boolean;
   isInstant: boolean;
   velocity: number;
-  trackRef: RefObject<HTMLElement | null>;
+  viewportRef: RefObject<HTMLElement | null>;
   speedAuto: number;
   speedStep: number;
   speedJump: number;
@@ -21,17 +21,17 @@ export function useCarouselSpeed({
   isInteractive,
   isInstant,
   velocity,
-  trackRef,
+  viewportRef,
   speedAuto,
   speedStep,
   speedJump,
 }: SpeedProps): number {
-  const containerWidth = trackRef.current?.offsetWidth;
+  const containerWidth = viewportRef.current?.offsetWidth;
 
   const baseSpeed = useMemo(() => {
     if (animMode === "snap") return SNAP_BACK_TIME;
 
-    if (isInstant) return speedJump;
+    if (isInstant || animMode === "jump") return speedJump;
 
     switch (reason) {
       case "click":
@@ -56,7 +56,7 @@ export function useCarouselSpeed({
 
     if (animMode === "snap") return baseSpeed;
 
-    if (isInstant) return speedJump;
+    if (isInstant || animMode === "jump") return speedJump;
     if (reason === "gesture") return dynamicSpeed;
 
     return baseSpeed;

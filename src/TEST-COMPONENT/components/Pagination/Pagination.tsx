@@ -14,8 +14,8 @@ export const Pagination = memo(({ className }: PaginationProps) => {
     activeDotIndex,
     handleDotClick,
     isPaginationDynamic,
-    isMoving,
     isJumping,
+    isReducedMotion,
     moveReason,
     actualSpeed,
   } = useCarouselContext();
@@ -28,7 +28,7 @@ export const Pagination = memo(({ className }: PaginationProps) => {
   }, [className]);
 
   const isInstantSync =
-    !isPaginationDynamic || !isMoving || isJumping || moveReason === "gesture";
+    !isPaginationDynamic || isJumping || isReducedMotion;
 
   const visualIndex = usePaginationSync({
     targetIndex: activeDotIndex,

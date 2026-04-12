@@ -8,27 +8,29 @@ import {
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-let isTouchDevice = false;
+let isTouchDeviceState = false;
 let mql: MediaQueryList | null = null;
 const listeners = new Set<() => void>();
 
 const notify = () => {
-  const snapshot = [...listeners];
-  snapshot.forEach((cb) => cb());
+  listeners.forEach((cb) => cb());
 };
 
 const handleMqlChange = (e: MediaQueryListEvent) => {
-  if (isTouchDevice !== e.matches) {
-    isTouchDevice = e.matches;
+  if (isTouchDeviceState !== e.matches) {
+    isTouchDeviceState = e.matches;
     notify();
   }
 };
 
 const handlePointerDown = (e: PointerEvent) => {
   if (e.pointerType === "touch") {
-    if (isTouchDevice) return;
-    isTouchDevice = true;
-    notify();
+    if (!isTouchDeviceState) {
+      isTouchDeviceState = true;
+      notify();
+    }
+    // Как только тач зафиксирован, слушатель больше не нужен
+    window.removeEventListener("pointerdown", handlePointerDown);
   }
 };
 
@@ -37,14 +39,14 @@ const subscribe = (callback: () => void) => {
 
   if (typeof window !== "undefined" && !mql) {
     mql = window.matchMedia("(pointer: coarse)");
-    isTouchDevice = mql.matches;
+    isTouchDeviceState = mql.matches;
 
     mql.addEventListener("change", handleMqlChange);
 
-    if (!isTouchDevice) {
+    // Слушаем до первого реального тача, не используя once: true
+    if (!isTouchDeviceState) {
       window.addEventListener("pointerdown", handlePointerDown, {
         passive: true,
-        once: true,
       });
     }
   }
@@ -60,7 +62,7 @@ const subscribe = (callback: () => void) => {
   };
 };
 
-const getSnapshot = () => isTouchDevice;
+const getSnapshot = () => isTouchDeviceState;
 const getServerSnapshot = () => false;
 
 export function useIsTouchDevice(): boolean {

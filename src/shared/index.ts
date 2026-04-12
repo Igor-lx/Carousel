@@ -9,6 +9,7 @@ export * from "./hooks/useDrag/model/types";
 export * from "./hooks/useIsomorphicLayoutEffect";
 export * from "./hooks/usePickStyles";
 export * from "./hooks/useTimer";
+export * from "./hooks/useExternalRefBridge";
 export * from "./utils/focus-shift";
 export * from "./utils/merge-styles";
 export * from "./utils/slots/inject-slot";

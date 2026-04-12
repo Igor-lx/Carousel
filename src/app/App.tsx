@@ -64,10 +64,11 @@ const CAROUSEL_DATA = [
   { id: "10", DESKTOP: d10, MOBILE: m10 },
   { id: "11", DESKTOP: d11, MOBILE: m11 },
   { id: "12", DESKTOP: d12, MOBILE: m12 },
+
 ];
 
 const VIS_CONFIG = {
-  DESKTOP: 4,
+  DESKTOP: 3,
   TABLET: 2,
   MOBILE: 1,
   DEFAULT: 3,
@@ -130,9 +131,9 @@ function App() {
             // isInstantMotion = {true}
             isPaginationDynamic={true}
             isInteractive={true}
-            speedAuto={4000}
-            speedManualStep={2000}
-            speedManualJump={800}
+            speedAuto={8000}
+            speedManualStep={4000}
+            speedManualJump={2000}
             delayAuto={3000}
             isTouchDevice={isTouch}
             onSlideClick={handleSlideClick}
@@ -142,6 +143,7 @@ function App() {
           </Carousel>
         </div>
       </section>
+      <section className={appStyles.page}></section>
     </main>
   );
 }

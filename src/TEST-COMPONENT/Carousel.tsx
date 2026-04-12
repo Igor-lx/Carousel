@@ -1,11 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  memo,
-  useReducer,
-  useCallback,
-  useRef,
-} from "react";
+import { useMemo, memo, useReducer, useCallback, useRef, useEffect } from "react";
 
 import styles from "./Carousel.module.scss";
 import controlsVariables from "./styles/Controls.variables.module.scss";
@@ -17,7 +10,6 @@ import {
   useCarouselController,
   useCarouselEngine,
   useCarouselGesture,
-  useCarouselGestureAnimation,
   useCarouselSlides,
   useCarouselSpeed,
   useCarouselTechStyles,
@@ -28,26 +20,23 @@ import {
 import {
   manageFocusShift,
   mergeStyles,
-  useTimer,
   useComponentVisibility,
   useIsomorphicLayoutEffect,
   useIsReducedMotion,
   useIsTouchDevice,
   resolveSlots,
   usePickStyles,
+  useExternalRefBridge,
 } from "../shared";
 
 import { SlideItem } from "./components";
 import { getAnimStatus, initialState, reducer } from "./model/reducer";
-import {
-  VISIBILITY_THRESHOLD,
-  ANIMATION_SAFETY_MARGIN,
-  CAROUSEL_SLOTS,
-} from "./model/constants";
+import { VISIBILITY_THRESHOLD, CAROUSEL_SLOTS } from "./model/constants";
 import { DEFAULT_SETTINGS } from "./model/defaultSettings";
-import { CarouselContext, useExternalRefBridge } from "./model/context";
+import { CarouselContext } from "./model/context";
 import { SLIDE_KEYS, type CarouseProps } from "./Carousel.types";
 import { getCarouselLayout, type CarouselLayout } from "./utilites";
+import type { CarouselExternalController } from "./model/context/types";
 
 const Carousel = memo((props: CarouseProps) => {
   const {
@@ -58,7 +47,7 @@ const Carousel = memo((props: CarouseProps) => {
     speedManualStep = DEFAULT_SETTINGS.speedManualStep,
     speedManualJump = DEFAULT_SETTINGS.speedManualJump,
     isImg = DEFAULT_SETTINGS.isImg,
-    ErrAltPlaceholder = DEFAULT_SETTINGS.errAltPH,
+    errAltPlaceholder = DEFAULT_SETTINGS.errAltPlaceholder,
     isAuto = DEFAULT_SETTINGS.isAuto,
     isPaginated = DEFAULT_SETTINGS.isPaginated,
     isPaginationDynamic = DEFAULT_SETTINGS.isPaginationDynamic,
@@ -73,12 +62,9 @@ const Carousel = memo((props: CarouseProps) => {
   } = props;
 
   const length = slides.length;
-  if (length === 0) return null;
-
-  const animatedTrackRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const timer = useTimer();
+  const movingRef = useRef<HTMLDivElement>(null);
+  const resetMotion = useCallback(() => {}, []);
 
   const isReducedMotion = isInstantMotion ?? useIsReducedMotion();
   const isTouch = isTouchDevice ?? useIsTouchDevice();
@@ -87,7 +73,8 @@ const Carousel = memo((props: CarouseProps) => {
     threshold: VISIBILITY_THRESHOLD,
   });
 
-  const { externalRef, connectedChildren } = useExternalRefBridge(children);
+  const { instanceRef: externalRef, connectedChildren } =
+    useExternalRefBridge<CarouselExternalController>(children);
 
   const slots = useMemo(
     () => resolveSlots(connectedChildren, CAROUSEL_SLOTS),
@@ -99,37 +86,40 @@ const Carousel = memo((props: CarouseProps) => {
     speedStep: safeSpeedStep,
     speedJump: safeSpeedJump,
     delay: safeDelayAuto,
-    errAltPH: actualErrAltPlaceholder,
+    errAltPlaceholder: actualErrAltPlaceholder,
   } = useSafeSettings({
     speedAuto: speedAutoBase,
     speedStep: speedManualStep,
     speedJump: speedManualJump,
     delay: delayAuto,
-    errAltPH: ErrAltPlaceholder,
+    errAltPlaceholder,
   });
 
   const nextLayout = useMemo<CarouselLayout>(
     () => getCarouselLayout(slides, visibleSlides, isInfinite),
     [slides, visibleSlides, isInfinite],
   );
-  const { clampedVisible, canSlide, pageCount, cloneCount } = nextLayout;
+
+  const [state, baseDispatch] = useReducer(reducer, nextLayout, initialState);
+
+  const {
+    targetIndex,
+    virtualIndex,
+    fromVirtualIndex,
+    currentLayout,
+    animMode,
+    moveReason,
+    pendingTransition,
+  } = state;
+
+  const { canSlide, pageCount, clampedVisible } = currentLayout;
 
   usePerfectLayoutNotice({
     length: length,
     visibleSlides: clampedVisible,
   });
 
-  const [state, baseDispatch] = useReducer(reducer, nextLayout, initialState);
-  const {
-    currentIndex,
-    prevIndex,
-    currentLayout,
-    animMode,
-    moveReason,
-    pendingAction,
-  } = state;
-
-  const { isMoving, isJumping, isAnimating, isInstant, isIdle } = useMemo(
+  const { isMoving, isAnimating, isJumping, isInstant, isIdle } = useMemo(
     () => getAnimStatus(animMode),
     [animMode],
   );
@@ -139,11 +129,14 @@ const Carousel = memo((props: CarouseProps) => {
     activeDot: activeDotIndex,
     isAtStart: isFiniteAndAtStart,
     isAtEnd: isFiniteAndAtEnd,
+    windowStart,
   } = useCarouselSlides({
-    current: currentIndex,
-    prev: prevIndex,
+    current: virtualIndex,
+    prev: fromVirtualIndex,
+    renderTarget: pendingTransition?.virtualIndex ?? virtualIndex,
     isMoving: isAnimating,
-    layout: nextLayout,
+    targetIndex,
+    layout: currentLayout,
     data: slides,
     count: length,
   });
@@ -155,7 +148,6 @@ const Carousel = memo((props: CarouseProps) => {
       isMoving,
       currentLayout,
       nextLayout,
-      pendingAction,
     });
 
   const {
@@ -164,25 +156,34 @@ const Carousel = memo((props: CarouseProps) => {
     dragStart: executeDragStart,
     dragSnap: executeDragSnap,
     finalize: safeFinalizeMove,
+    activeSpeed,
   } = useCarouselController({
     dispatch: componentDispatch,
     finalize: componentFinalize,
-    onReset: timer.clear,
+    onReset: resetMotion,
     enabled: canSlide,
     externalController: externalRef,
+    isMoving,
+    baseSpeed: safeSpeedStep,
+    measureRef: containerRef,
+    movingRef,
+    layout: currentLayout,
+    state,
+    windowStart,
   });
 
-  const enabled = canSlide && !isMoving;
+  const isGestureEnabled = canSlide;
+
   const {
-    isDragging: isDragging,
-    velocity: velocity,
+    isDragging,
+    velocity,
     dragListeners: bindDragListeners,
-    getDragOffset: getDragOffset,
+    offset,
   } = useCarouselGesture({
     onDragStart: executeDragStart,
     onDragSnap: executeDragSnap,
     onMove: executeMove,
-    enabled: enabled,
+    enabled: isGestureEnabled,
     measureRef: containerRef,
   });
 
@@ -194,8 +195,6 @@ const Carousel = memo((props: CarouseProps) => {
   } = useCarouselClick({
     onMove: executeMove,
     onGoTo: executeGoTo,
-    offset: cloneCount,
-    stepSize: clampedVisible,
     onClick: onSlideClick,
   });
 
@@ -215,32 +214,26 @@ const Carousel = memo((props: CarouseProps) => {
     reason: moveReason,
     animMode: animMode,
     isInteractive: isDragging,
-    isInstant: isJumping,
-    trackRef: containerRef,
+    isInstant,
+    viewportRef: containerRef,
     speedAuto: safeSpeedAuto,
-    speedStep: safeSpeedStep,
+    speedStep: activeSpeed,
     speedJump: safeSpeedJump,
-  });
-
-  useCarouselGestureAnimation({
-    targetRef: animatedTrackRef,
-    isDragging: isDragging,
-    isLocked: isAnimating,
-    isInstantMode: isReducedMotion,
-    getOffset: getDragOffset,
   });
 
   const {
     containerStyle: containerTechStyle,
     itemStyle: slideWrapperTechStyle,
   } = useCarouselTechStyles({
-    current: currentIndex,
+    current: virtualIndex,
+    windowStart,
     size: clampedVisible,
     animMode: animMode,
     isInteractive: isDragging,
     duration: actualSpeed,
     enabled: canSlide,
     reason: moveReason,
+    dragOffset: offset,
   });
 
   const handleTransitionEnd = useCallback(
@@ -259,29 +252,24 @@ const Carousel = memo((props: CarouseProps) => {
   }, [isInstant, isReducedMotion, isAnimating, safeFinalizeMove]);
 
   useEffect(() => {
-    if (isAnimating && !isReducedMotion && isVisible) {
-      timer.set(safeFinalizeMove, actualSpeed + ANIMATION_SAFETY_MARGIN);
+    if (pendingTransition) {
+      componentDispatch({ type: "COMMIT_REBASE" });
     }
-    return () => timer.clear();
-  }, [
-    isVisible,
-    isAnimating,
-    isJumping,
-    actualSpeed,
-    isReducedMotion,
-    timer,
-    safeFinalizeMove,
-  ]);
+  }, [pendingTransition, componentDispatch]);
 
   useIsomorphicLayoutEffect(() => {
     if (isIdle) {
       manageFocusShift(containerRef.current);
     }
-  }, [isIdle, currentIndex]);
+  }, [isIdle, targetIndex]);
 
   useIsomorphicLayoutEffect(() => {
     externalRef.current?.toggleFreezed(isReducedMotion);
   }, [isReducedMotion, externalRef]);
+
+  useIsomorphicLayoutEffect(() => {
+    externalRef.current?.setDuration(actualSpeed);
+  }, [actualSpeed, externalRef]);
 
   const contextValue = useMemo(
     () => ({
@@ -324,13 +312,13 @@ const Carousel = memo((props: CarouseProps) => {
       controlsVariables,
       paginationVariables,
     );
-
     if (!className) return internalStyles;
-
     return mergeStyles(internalStyles, className);
   }, [className]);
 
   const slideItemStyles = usePickStyles(mergedStyles, SLIDE_KEYS);
+
+  if (length === 0) return null;
 
   return (
     <CarouselContext.Provider value={contextValue}>
@@ -350,7 +338,7 @@ const Carousel = memo((props: CarouseProps) => {
           {...bindDragListeners}
         >
           <div
-            ref={animatedTrackRef}
+            ref={movingRef}
             className={mergedStyles.slideContainer}
             onTransitionEnd={handleTransitionEnd}
             style={containerTechStyle}
