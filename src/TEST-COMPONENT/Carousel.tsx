@@ -40,13 +40,20 @@ import { VISIBILITY_THRESHOLD, CAROUSEL_SLOTS } from "./model/constants";
 import { DEFAULT_SETTINGS } from "./model/defaultSettings";
 import { CarouselContext } from "./model/context";
 import { SLIDE_KEYS, type CarouselProps } from "./Carousel.types";
-import { getCarouselLayout, type CarouselLayout } from "./utilites";
+import {
+  clampSlidesData,
+  getCarouselLayout,
+  hasImperfectLayout,
+  resolveSlidesData,
+  type CarouselLayout,
+} from "./utilites";
 import type { CarouselExternalController } from "./model/context/types";
 
 const Carousel = memo((props: CarouselProps) => {
   const {
     slidesData = [],
     visibleSlidesNr = DEFAULT_SETTINGS.visibleSlidesNr,
+    isLayoutClamped = DEFAULT_SETTINGS.isLayoutClamped,
     durationAutoplay = DEFAULT_SETTINGS.durationAutoplay,
     intervalAutoplay = DEFAULT_SETTINGS.intervalAutoplay,
     durationStep = DEFAULT_SETTINGS.durationStep,
@@ -100,9 +107,29 @@ const Carousel = memo((props: CarouselProps) => {
     errAltPlaceholder,
   });
 
+  const needsLayoutClamp = hasImperfectLayout(totalSlides, visibleSlidesNr);
+  const shouldClampLayout = isLayoutClamped && needsLayoutClamp;
+
+  const baseResolvedSlidesData = useMemo(
+    () => resolveSlidesData(slidesData),
+    [slidesData],
+  );
+
+  const resolvedSlidesData = useMemo(
+    () =>
+      shouldClampLayout
+        ? clampSlidesData(baseResolvedSlidesData, visibleSlidesNr)
+        : baseResolvedSlidesData,
+    [
+      baseResolvedSlidesData,
+      shouldClampLayout,
+      shouldClampLayout ? visibleSlidesNr : null,
+    ],
+  );
+
   const nextLayout = useMemo<CarouselLayout>(
-    () => getCarouselLayout(slidesData, visibleSlidesNr, isFinite),
-    [slidesData, visibleSlidesNr, isFinite],
+    () => getCarouselLayout(resolvedSlidesData, visibleSlidesNr, isFinite),
+    [resolvedSlidesData, visibleSlidesNr, isFinite],
   );
 
   const [state, baseDispatch] = useReducer(reducer, nextLayout, initialState);
@@ -123,8 +150,11 @@ const Carousel = memo((props: CarouselProps) => {
   const { canSlide, pageCount, clampedVisible } = nextLayout;
 
   usePerfectLayoutNotice({
-    length: totalSlides,
+    hasImperfectLayout: needsLayoutClamp,
+    originalLength: totalSlides,
+    normalizedLength: resolvedSlidesData.length,
     visibleSlidesNr: clampedVisible,
+    isLayoutClamped: shouldClampLayout,
   });
 
   const { isMoving, isAnimating, isJumping, isInstant, isIdle } = useMemo(
@@ -145,7 +175,7 @@ const Carousel = memo((props: CarouselProps) => {
     isMoving: isAnimating,
     targetIndex,
     layout: nextLayout,
-    slidesData,
+    slidesData: resolvedSlidesData,
   });
 
   const { dispatch: componentDispatch, finalize: componentFinalize } =

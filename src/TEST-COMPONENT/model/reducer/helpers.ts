@@ -29,7 +29,10 @@ export const getAnimStatus = (mode: AnimationMode) => ({
   isAnimating: mode === "normal" || mode === "jump" || mode === "snap",
 });
 
-const hasSameLayout = (prevLayout: CarouselLayout, nextLayout: CarouselLayout) =>
+const hasSameLayout = (
+  prevLayout: CarouselLayout,
+  nextLayout: CarouselLayout,
+) =>
   prevLayout.dataKey === nextLayout.dataKey &&
   prevLayout.totalVirtual === nextLayout.totalVirtual &&
   prevLayout.clampedVisible === nextLayout.clampedVisible &&
@@ -64,11 +67,13 @@ export const reconcileStateToLayout = (
     currentLayout,
     nextLayout,
   );
+
   const nextTargetIndex = getReconciledPageIndex(
     state.targetIndex,
     currentLayout,
     nextLayout,
   );
+
   const nextVirtualIndex = getPageStart(
     nextTargetIndex,
     nextLayout.clampedVisible,
@@ -89,11 +94,7 @@ export const reconcileStateToLayout = (
 const getStepAnimationMode = (
   action: StepAction,
 ): "instant" | "normal" | "jump" =>
-  action.isInstant
-    ? "instant"
-    : action.type === "GO_TO"
-      ? "jump"
-      : "normal";
+  action.isInstant ? "instant" : action.type === "GO_TO" ? "jump" : "normal";
 
 const getTransitionSource = (state: State, fromVirtualIndex: number) => {
   const { currentLayout } = state;
@@ -101,16 +102,13 @@ const getTransitionSource = (state: State, fromVirtualIndex: number) => {
   const isQueuedMotion = currentLayout.canSlide && state.animMode !== "none";
   const hasPendingTarget =
     currentLayout.canSlide && state.targetIndex !== state.activeIndex;
-  const currentLogicalIndex =
-    hasPendingTarget ? state.targetIndex : state.activeIndex;
+  const currentLogicalIndex = hasPendingTarget
+    ? state.targetIndex
+    : state.activeIndex;
   const laneReference = isQueuedMotion ? state.virtualIndex : fromVirtualIndex;
   const currentPhysicalIndex = currentLayout.isFinite
     ? getPageStart(currentLogicalIndex, stepSize)
-    : getAlignedVirtualIndex(
-        currentLogicalIndex,
-        laneReference,
-        currentLayout,
-      );
+    : getAlignedVirtualIndex(currentLogicalIndex, laneReference, currentLayout);
 
   return {
     currentLogicalIndex,

@@ -13,6 +13,15 @@ export interface CarouselLayout {
   minScrollIndex: number;
   maxScrollIndex: number;
 }
+
+export interface ResolvedCarouselSlide {
+  slideData: Slide;
+  sourceIndex: number;
+  positionIndex: number;
+  slideKey: string;
+  isLayoutClone: boolean;
+}
+
 export interface SlideA11yProps {
   role?: "group";
   "aria-roledescription"?: "slide";
@@ -22,7 +31,8 @@ export interface SlideA11yProps {
 
 export interface VirtualSlide {
   vIndex: number;
-  originalIndex: number;
+  slideIndex: number;
+  sourceIndex: number;
   slideData: Slide;
   isClone: boolean;
   slideKey: string;

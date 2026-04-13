@@ -24,12 +24,12 @@ export const getSlideVisibility = (
 };
 
 export const getSlideA11y = (
-  metadata: { originalIndex: number },
+  metadata: { slideIndex: number },
   isActual: boolean,
   totalSlides: number,
 ): SlideA11yProps => ({
   role: "group",
   "aria-roledescription": "slide",
-  "aria-label": `${metadata.originalIndex + 1} of ${totalSlides}`,
+  "aria-label": `${metadata.slideIndex + 1} of ${totalSlides}`,
   ...(isActual && { "aria-current": "step" as const }),
 });

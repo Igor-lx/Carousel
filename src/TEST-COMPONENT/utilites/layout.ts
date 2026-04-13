@@ -1,17 +1,94 @@
 import type { Slide } from "../Carousel.types";
-import type { CarouselLayout, RenderWindow } from "./types";
+import type {
+  CarouselLayout,
+  RenderWindow,
+  ResolvedCarouselSlide,
+} from "./types";
 import { clamp, mod, normalizePageIndex } from "./math";
 
 export const getPageStart = (pageIndex: number, visibleSlidesNr: number) =>
   pageIndex * visibleSlidesNr;
 
-export const getCarouselLayout = (
+const getResolvedVisibleSlidesNr = (
+  slidesLength: number,
+  visibleSlidesNr: number,
+) => Math.max(1, Math.min(visibleSlidesNr, slidesLength));
+
+const getSlideContentKey = (slideData: Slide) =>
+  `${slideData.id}-${typeof slideData.content === "string" ? slideData.content : "obj"}`;
+
+const createResolvedSlide = (
+  slideData: Slide,
+  sourceIndex: number,
+  positionIndex: number,
+  isLayoutClone: boolean,
+): ResolvedCarouselSlide => ({
+  slideData,
+  sourceIndex,
+  positionIndex,
+  isLayoutClone,
+  slideKey: isLayoutClone
+    ? `slide:${String(slideData.id)}:layout-clone:${positionIndex}`
+    : `slide:${String(slideData.id)}`,
+});
+
+export const resolveSlidesData = (
   slidesData: Slide[],
+): ResolvedCarouselSlide[] =>
+  slidesData.map((slideData, index) =>
+    createResolvedSlide(slideData, index, index, false),
+  );
+
+export const hasImperfectLayout = (
+  slidesLength: number,
+  visibleSlidesNr: number,
+): boolean => {
+  if (slidesLength === 0) return false;
+
+  const resolvedVisible = getResolvedVisibleSlidesNr(
+    slidesLength,
+    visibleSlidesNr,
+  );
+
+  return slidesLength % resolvedVisible !== 0;
+};
+
+export const clampSlidesData = (
+  resolvedSlidesData: ResolvedCarouselSlide[],
+  visibleSlidesNr: number,
+): ResolvedCarouselSlide[] => {
+  const length = resolvedSlidesData.length;
+
+  if (!hasImperfectLayout(length, visibleSlidesNr)) {
+    return resolvedSlidesData;
+  }
+
+  const resolvedVisible = getResolvedVisibleSlidesNr(length, visibleSlidesNr);
+  const paddedLength = Math.ceil(length / resolvedVisible) * resolvedVisible;
+  const appendedSlides = Array.from({ length: paddedLength - length }).map(
+    (_, offset) => {
+      const sourceIndex = offset % length;
+      const sourceSlide = resolvedSlidesData[sourceIndex]!;
+
+      return createResolvedSlide(
+        sourceSlide.slideData,
+        sourceSlide.sourceIndex,
+        length + offset,
+        true,
+      );
+    },
+  );
+
+  return [...resolvedSlidesData, ...appendedSlides];
+};
+
+export const getCarouselLayout = (
+  slidesData: ResolvedCarouselSlide[],
   visibleSlidesNr: number,
   isFinite: boolean,
 ): CarouselLayout => {
   const length = slidesData.length;
-  const clampedVisible = Math.max(1, Math.min(visibleSlidesNr, length));
+  const clampedVisible = getResolvedVisibleSlidesNr(length, visibleSlidesNr);
   const canSlide = length > clampedVisible;
   const pageCount = Math.ceil(length / clampedVisible);
   const cloneCount = canSlide && !isFinite ? clampedVisible : 0;
@@ -20,8 +97,8 @@ export const getCarouselLayout = (
     ? virtualLength + cloneCount * 2
     : length;
   const dataKey = slidesData
-    .map((slideData) =>
-      `${slideData.id}-${typeof slideData.content === "string" ? slideData.content : "obj"}`,
+    .map(({ slideData, slideKey }) =>
+      `${slideKey}-${getSlideContentKey(slideData)}`,
     )
     .join("|");
   const minScrollIndex = 0;

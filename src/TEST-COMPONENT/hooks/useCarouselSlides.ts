@@ -6,9 +6,9 @@ import {
   getSlideA11y,
   getSlideVisibility,
   type CarouselLayout,
+  type ResolvedCarouselSlide,
   type VirtualSlide,
 } from "../utilites";
-import type { Slide } from "../Carousel.types";
 
 interface SlidesProps {
   current: number;
@@ -17,7 +17,7 @@ interface SlidesProps {
   isMoving: boolean;
   targetIndex: number;
   layout: CarouselLayout;
-  slidesData: Slide[];
+  slidesData: ResolvedCarouselSlide[];
 }
 
 interface SlidesResult {
@@ -85,8 +85,8 @@ export function useCarouselSlides({
 
     return Array.from({ length }).map((_, offset) => {
       const vIndex = renderWindow.start + offset;
-      const originalIndex = getLoopedSlideIndex(vIndex, totalSlides);
-      const slideData = slidesData[originalIndex]!;
+      const slideIndex = getLoopedSlideIndex(vIndex, totalSlides);
+      const resolvedSlide = slidesData[slideIndex]!;
       const isClone =
         layout.canSlide &&
         !layout.isFinite &&
@@ -100,18 +100,23 @@ export function useCarouselSlides({
         isMoving,
       );
 
-      const a11yProps = getSlideA11y({ originalIndex }, isActual, totalSlides);
+      const a11yProps = getSlideA11y(
+        { slideIndex: resolvedSlide.positionIndex },
+        isActual,
+        totalSlides,
+      );
 
       return {
         vIndex,
-        originalIndex,
-        slideData,
+        slideIndex: resolvedSlide.positionIndex,
+        sourceIndex: resolvedSlide.sourceIndex,
+        slideData: resolvedSlide.slideData,
         isClone,
         isActive,
         isActual,
         slideKey: isClone
-          ? `clone:${String(slideData.id)}:${vIndex}`
-          : `slide:${String(slideData.id)}`,
+          ? `clone:${resolvedSlide.slideKey}:${vIndex}`
+          : resolvedSlide.slideKey,
         a11yProps,
       };
     });

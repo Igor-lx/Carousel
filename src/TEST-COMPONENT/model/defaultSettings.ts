@@ -2,6 +2,7 @@
 
 export const DEFAULT_SETTINGS = {
   visibleSlidesNr: 3,
+  isLayoutClamped: false,
   durationAutoplay: 3000,
   intervalAutoplay: 3000,
   durationStep: 2000,
