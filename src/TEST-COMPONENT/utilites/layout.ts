@@ -1,0 +1,119 @@
+import type { Slide } from "../Carousel.types";
+import type { CarouselLayout, RenderWindow } from "./types";
+import { clamp, mod, normalizePageIndex } from "./math";
+
+export const getPageStart = (pageIndex: number, visibleSlidesNr: number) =>
+  pageIndex * visibleSlidesNr;
+
+export const getCarouselLayout = (
+  slidesData: Slide[],
+  visibleSlidesNr: number,
+  isFinite: boolean,
+): CarouselLayout => {
+  const length = slidesData.length;
+  const clampedVisible = Math.max(1, Math.min(visibleSlidesNr, length));
+  const canSlide = length > clampedVisible;
+  const pageCount = Math.ceil(length / clampedVisible);
+  const cloneCount = canSlide && !isFinite ? clampedVisible : 0;
+  const virtualLength = canSlide && !isFinite ? pageCount * clampedVisible : length;
+  const totalVirtual = canSlide && !isFinite
+    ? virtualLength + cloneCount * 2
+    : length;
+  const dataKey = slidesData
+    .map((slideData) =>
+      `${slideData.id}-${typeof slideData.content === "string" ? slideData.content : "obj"}`,
+    )
+    .join("|");
+  const minScrollIndex = 0;
+  const maxScrollIndex = isFinite
+    ? Math.max(0, (pageCount - 1) * clampedVisible)
+    : totalVirtual - clampedVisible;
+
+  return {
+    length,
+    clampedVisible,
+    cloneCount,
+    virtualLength,
+    totalVirtual,
+    pageCount,
+    canSlide,
+    dataKey,
+    isFinite,
+    minScrollIndex,
+    maxScrollIndex,
+  };
+};
+
+export const getAlignedVirtualIndex = (
+  pageIndex: number,
+  referenceVirtualIndex: number,
+  layout: CarouselLayout,
+) => {
+  const normalizedPageIndex = normalizePageIndex(pageIndex, layout.pageCount);
+  const pageStart = getPageStart(normalizedPageIndex, layout.clampedVisible);
+
+  if (layout.isFinite || layout.virtualLength <= 0) {
+    return pageStart;
+  }
+
+  const laneOffset = Math.round(
+    (referenceVirtualIndex - pageStart) / layout.virtualLength,
+  );
+
+  return pageStart + laneOffset * layout.virtualLength;
+};
+
+export const getRenderWindow = (
+  fromVirtualIndex: number,
+  toVirtualIndex: number,
+  layout: CarouselLayout,
+): RenderWindow => {
+  if (!layout.canSlide) {
+    return {
+      start: 0,
+      end: Math.max(0, layout.length - 1),
+    };
+  }
+
+  const segmentStart = Math.floor(Math.min(fromVirtualIndex, toVirtualIndex));
+  const segmentEnd =
+    Math.ceil(Math.max(fromVirtualIndex, toVirtualIndex)) +
+    layout.clampedVisible -
+    1;
+  const buffer = layout.clampedVisible * 2;
+
+  if (layout.isFinite) {
+    return {
+      start: clamp(segmentStart - buffer, 0, Math.max(0, layout.length - 1)),
+      end: clamp(segmentEnd + buffer, 0, Math.max(0, layout.length - 1)),
+    };
+  }
+
+  return {
+    start: segmentStart - buffer,
+    end: segmentEnd + buffer,
+  };
+};
+
+export const getReconciledPageIndex = (
+  currentIndex: number,
+  prevLayout: CarouselLayout,
+  nextLayout: CarouselLayout,
+) => {
+  if (prevLayout.pageCount <= 1 || nextLayout.pageCount <= 1) return 0;
+
+  const oldMaxIndex = Math.max(1, prevLayout.pageCount - 1);
+  const progress = clamp(currentIndex, 0, oldMaxIndex) / oldMaxIndex;
+  const nextMaxIndex = Math.max(1, nextLayout.pageCount - 1);
+
+  return clamp(
+    Math.round(progress * nextMaxIndex),
+    0,
+    nextLayout.pageCount - 1,
+  );
+};
+
+export const getLoopedSlideIndex = (
+  virtualIndex: number,
+  totalSlides: number,
+) => mod(virtualIndex, totalSlides);

@@ -1,3 +1,5 @@
+import type { Slide } from "../Carousel.types";
+
 export interface CarouselLayout {
   length: number;
   clampedVisible: number;
@@ -7,7 +9,7 @@ export interface CarouselLayout {
   pageCount: number;
   canSlide: boolean;
   dataKey: string;
-  isInfinite: boolean;
+  isFinite: boolean;
   minScrollIndex: number;
   maxScrollIndex: number;
 }
@@ -21,6 +23,7 @@ export interface SlideA11yProps {
 export interface VirtualSlide {
   vIndex: number;
   originalIndex: number;
+  slideData: Slide;
   isClone: boolean;
   slideKey: string;
   isActive: boolean;

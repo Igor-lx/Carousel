@@ -30,29 +30,34 @@ import {
 } from "../shared";
 
 import { SlideItem } from "./components";
-import { getAnimStatus, initialState, reducer } from "./model/reducer";
+import {
+  getAnimStatus,
+  initialState,
+  reconcileStateToLayout,
+  reducer,
+} from "./model/reducer";
 import { VISIBILITY_THRESHOLD, CAROUSEL_SLOTS } from "./model/constants";
 import { DEFAULT_SETTINGS } from "./model/defaultSettings";
 import { CarouselContext } from "./model/context";
-import { SLIDE_KEYS, type CarouseProps } from "./Carousel.types";
+import { SLIDE_KEYS, type CarouselProps } from "./Carousel.types";
 import { getCarouselLayout, type CarouselLayout } from "./utilites";
 import type { CarouselExternalController } from "./model/context/types";
 
-const Carousel = memo((props: CarouseProps) => {
+const Carousel = memo((props: CarouselProps) => {
   const {
-    slides = [],
-    visibleSlides = DEFAULT_SETTINGS.visibleSlides,
-    speedAuto: speedAutoBase = DEFAULT_SETTINGS.speedAutoBase,
-    delayAuto = DEFAULT_SETTINGS.delayAuto,
-    speedManualStep = DEFAULT_SETTINGS.speedManualStep,
-    speedManualJump = DEFAULT_SETTINGS.speedManualJump,
-    isImg = DEFAULT_SETTINGS.isImg,
+    slidesData = [],
+    visibleSlidesNr = DEFAULT_SETTINGS.visibleSlidesNr,
+    durationAutoplay = DEFAULT_SETTINGS.durationAutoplay,
+    intervalAutoplay = DEFAULT_SETTINGS.intervalAutoplay,
+    durationStep = DEFAULT_SETTINGS.durationStep,
+    durationJump = DEFAULT_SETTINGS.durationJump,
+    isContentImg = DEFAULT_SETTINGS.isContentImg,
     errAltPlaceholder = DEFAULT_SETTINGS.errAltPlaceholder,
     isAuto = DEFAULT_SETTINGS.isAuto,
-    isPaginated = DEFAULT_SETTINGS.isPaginated,
+    isPaginationOn = DEFAULT_SETTINGS.isPaginationOn,
     isPaginationDynamic = DEFAULT_SETTINGS.isPaginationDynamic,
     isInteractive = DEFAULT_SETTINGS.isInteractive,
-    isInfinite = DEFAULT_SETTINGS.isInfinite,
+    isFinite = DEFAULT_SETTINGS.isFinite,
     isControlsOn = DEFAULT_SETTINGS.isControlsOn,
     className,
     isInstantMotion,
@@ -61,7 +66,7 @@ const Carousel = memo((props: CarouseProps) => {
     children,
   } = props;
 
-  const length = slides.length;
+  const totalSlides = slidesData.length;
   const containerRef = useRef<HTMLDivElement>(null);
   const movingRef = useRef<HTMLDivElement>(null);
   const resetMotion = useCallback(() => {}, []);
@@ -82,41 +87,44 @@ const Carousel = memo((props: CarouseProps) => {
   );
 
   const {
-    speedAuto: safeSpeedAuto,
-    speedStep: safeSpeedStep,
-    speedJump: safeSpeedJump,
-    delay: safeDelayAuto,
+    durationAutoplay: safeDurationAutoplay,
+    durationStep: safeDurationStep,
+    durationJump: safeDurationJump,
+    intervalAutoplay: safeIntervalAutoplay,
     errAltPlaceholder: actualErrAltPlaceholder,
   } = useSafeSettings({
-    speedAuto: speedAutoBase,
-    speedStep: speedManualStep,
-    speedJump: speedManualJump,
-    delay: delayAuto,
+    durationAutoplay,
+    durationStep,
+    durationJump,
+    intervalAutoplay,
     errAltPlaceholder,
   });
 
   const nextLayout = useMemo<CarouselLayout>(
-    () => getCarouselLayout(slides, visibleSlides, isInfinite),
-    [slides, visibleSlides, isInfinite],
+    () => getCarouselLayout(slidesData, visibleSlidesNr, isFinite),
+    [slidesData, visibleSlidesNr, isFinite],
   );
 
   const [state, baseDispatch] = useReducer(reducer, nextLayout, initialState);
+  const syncedState = useMemo(
+    () => reconcileStateToLayout(state, nextLayout),
+    [state, nextLayout],
+  );
 
   const {
     targetIndex,
     virtualIndex,
     fromVirtualIndex,
-    currentLayout,
     animMode,
     moveReason,
     pendingTransition,
-  } = state;
+  } = syncedState;
 
-  const { canSlide, pageCount, clampedVisible } = currentLayout;
+  const { canSlide, pageCount, clampedVisible } = nextLayout;
 
   usePerfectLayoutNotice({
-    length: length,
-    visibleSlides: clampedVisible,
+    length: totalSlides,
+    visibleSlidesNr: clampedVisible,
   });
 
   const { isMoving, isAnimating, isJumping, isInstant, isIdle } = useMemo(
@@ -136,9 +144,8 @@ const Carousel = memo((props: CarouseProps) => {
     renderTarget: pendingTransition?.virtualIndex ?? virtualIndex,
     isMoving: isAnimating,
     targetIndex,
-    layout: currentLayout,
-    data: slides,
-    count: length,
+    layout: nextLayout,
+    slidesData,
   });
 
   const { dispatch: componentDispatch, finalize: componentFinalize } =
@@ -146,8 +153,7 @@ const Carousel = memo((props: CarouseProps) => {
       dispatch: baseDispatch,
       isInstantMode: isReducedMotion,
       isMoving,
-      currentLayout,
-      nextLayout,
+      layout: nextLayout,
     });
 
   const {
@@ -156,7 +162,7 @@ const Carousel = memo((props: CarouseProps) => {
     dragStart: executeDragStart,
     dragSnap: executeDragSnap,
     finalize: safeFinalizeMove,
-    activeSpeed,
+    activeDuration,
   } = useCarouselController({
     dispatch: componentDispatch,
     finalize: componentFinalize,
@@ -164,11 +170,11 @@ const Carousel = memo((props: CarouseProps) => {
     enabled: canSlide,
     externalController: externalRef,
     isMoving,
-    baseSpeed: safeSpeedStep,
+    baseDuration: safeDurationStep,
     measureRef: containerRef,
     movingRef,
-    layout: currentLayout,
-    state,
+    layout: nextLayout,
+    state: syncedState,
     windowStart,
   });
 
@@ -202,23 +208,23 @@ const Carousel = memo((props: CarouseProps) => {
   const { onHover } = useCarouselAutoPlay({
     enabled: isAuto,
     ignoreHover: isTouch,
-    delay: safeDelayAuto,
+    intervalAutoplay: safeIntervalAutoplay,
     isPaused: isPaused,
     isAtEnd: isFiniteAndAtEnd,
     onGoTo: executeGoTo,
     onMove: executeMove,
   });
 
-  const actualSpeed = useCarouselSpeed({
+  const actualDuration = useCarouselSpeed({
     velocity,
     reason: moveReason,
     animMode: animMode,
     isInteractive: isDragging,
     isInstant,
     viewportRef: containerRef,
-    speedAuto: safeSpeedAuto,
-    speedStep: activeSpeed,
-    speedJump: safeSpeedJump,
+    durationAutoplay: safeDurationAutoplay,
+    durationStep: activeDuration,
+    durationJump: safeDurationJump,
   });
 
   const {
@@ -230,7 +236,7 @@ const Carousel = memo((props: CarouseProps) => {
     size: clampedVisible,
     animMode: animMode,
     isInteractive: isDragging,
-    duration: actualSpeed,
+    duration: actualDuration,
     enabled: canSlide,
     reason: moveReason,
     dragOffset: offset,
@@ -268,8 +274,8 @@ const Carousel = memo((props: CarouseProps) => {
   }, [isReducedMotion, externalRef]);
 
   useIsomorphicLayoutEffect(() => {
-    externalRef.current?.setDuration(actualSpeed);
-  }, [actualSpeed, externalRef]);
+    externalRef.current?.setDuration(actualDuration);
+  }, [actualDuration, externalRef]);
 
   const contextValue = useMemo(
     () => ({
@@ -278,7 +284,7 @@ const Carousel = memo((props: CarouseProps) => {
       isMoving,
       isJumping,
       moveReason,
-      actualSpeed,
+      actualDuration,
       isPaginationDynamic,
       handleDotClick,
       handlePrev: handleMovePrevClick,
@@ -294,7 +300,7 @@ const Carousel = memo((props: CarouseProps) => {
       isMoving,
       isJumping,
       moveReason,
-      actualSpeed,
+      actualDuration,
       isPaginationDynamic,
       handleDotClick,
       handleMovePrevClick,
@@ -318,7 +324,7 @@ const Carousel = memo((props: CarouseProps) => {
 
   const slideItemStyles = usePickStyles(mergedStyles, SLIDE_KEYS);
 
-  if (length === 0) return null;
+  if (totalSlides === 0) return null;
 
   return (
     <CarouselContext.Provider value={contextValue}>
@@ -347,10 +353,10 @@ const Carousel = memo((props: CarouseProps) => {
               return (
                 <SlideItem
                   key={vs.slideKey}
-                  slide={slides[vs.originalIndex]}
+                  slideData={vs.slideData}
                   className={slideItemStyles}
                   style={slideWrapperTechStyle}
-                  isImg={isImg}
+                  isContentImg={isContentImg}
                   errAltPlaceholder={actualErrAltPlaceholder}
                   onSlideClick={handleSlideClick}
                   isInteractive={isInteractive}
@@ -363,7 +369,7 @@ const Carousel = memo((props: CarouseProps) => {
           </div>
           {isControlsOn && canSlide && slots.controls}
         </div>
-        {isPaginated && slots.pagination}
+        {isPaginationOn && slots.pagination}
       </div>
     </CarouselContext.Provider>
   );

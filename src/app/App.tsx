@@ -46,9 +46,9 @@ import { Controls, Pagination } from "../TEST-COMPONENT/components";
 
 //=====================================================================================================================================
 
-const handleSlideClick = (dataUnit: Slide) => {
-  const data = dataUnit.content;
-  window.open(String(data), "_blank");
+const handleSlideClick = (slideData: Slide) => {
+  const content = slideData.content;
+  window.open(String(content), "_blank");
 };
 
 const CAROUSEL_DATA = [
@@ -64,7 +64,6 @@ const CAROUSEL_DATA = [
   { id: "10", DESKTOP: d10, MOBILE: m10 },
   { id: "11", DESKTOP: d11, MOBILE: m11 },
   { id: "12", DESKTOP: d12, MOBILE: m12 },
-
 ];
 
 const VIS_CONFIG = {
@@ -94,7 +93,7 @@ function App() {
 
   const visibleSlidesNr = VIS_CONFIG[device];
 
-  const slides = useMemo(
+  const slidesData = useMemo(
     () =>
       CAROUSEL_DATA.map((s) => ({
         id: s.id,
@@ -124,17 +123,17 @@ function App() {
 
         <div className={appStyles.component}>
           <Carousel
-            visibleSlides={visibleSlidesNr}
-            slides={slides}
+            visibleSlidesNr={visibleSlidesNr}
+            slidesData={slidesData}
             isAuto={isAutoOn}
-            isPaginated={true}
+            isPaginationOn={true}
             // isInstantMotion = {true}
             isPaginationDynamic={true}
             isInteractive={true}
-            speedAuto={8000}
-            speedManualStep={4000}
-            speedManualJump={2000}
-            delayAuto={3000}
+            durationAutoplay={8000}
+            durationStep={4000}
+            durationJump={2000}
+            intervalAutoplay={3000}
             isTouchDevice={isTouch}
             onSlideClick={handleSlideClick}
           >

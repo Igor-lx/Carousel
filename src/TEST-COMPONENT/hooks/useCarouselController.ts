@@ -14,7 +14,7 @@ interface ControllerProps {
   enabled: boolean;
   externalController: React.RefObject<CarouselExternalController | null>;
   isMoving: boolean;
-  baseSpeed: number;
+  baseDuration: number;
   measureRef: React.RefObject<HTMLDivElement | null>;
   movingRef: React.RefObject<HTMLDivElement | null>;
   layout: CarouselLayout;
@@ -28,7 +28,7 @@ interface ControllerResult {
   dragStart: () => void;
   dragSnap: () => void;
   finalize: () => void;
-  activeSpeed: number;
+  activeDuration: number;
 }
 
 export function useCarouselController({
@@ -38,22 +38,22 @@ export function useCarouselController({
   enabled,
   externalController,
   isMoving,
-  baseSpeed,
+  baseDuration,
   measureRef,
   movingRef,
   layout,
   state,
   windowStart,
 }: ControllerProps): ControllerResult {
-  const durationRef = useRef(baseSpeed);
+  const durationRef = useRef(baseDuration);
   const lastActionTimeRef = useRef(0);
 
   useEffect(() => {
     if (!isMoving) {
-      durationRef.current = baseSpeed;
+      durationRef.current = baseDuration;
       lastActionTimeRef.current = 0;
     }
-  }, [isMoving, baseSpeed]);
+  }, [isMoving, baseDuration]);
 
   const action = useCallback(
     (actionFn: () => void) => {
@@ -103,7 +103,7 @@ export function useCarouselController({
           fromVirtualIndex: getCurrentVirtualIndexFromDOM({
             track: movingRef.current,
             viewport: measureRef.current,
-            visibleSlides: layout.clampedVisible,
+            visibleSlidesNr: layout.clampedVisible,
             windowStart,
             fallback: state.virtualIndex,
           }),
@@ -125,7 +125,7 @@ export function useCarouselController({
           fromVirtualIndex: getCurrentVirtualIndexFromDOM({
             track: movingRef.current,
             viewport: measureRef.current,
-            visibleSlides: layout.clampedVisible,
+            visibleSlidesNr: layout.clampedVisible,
             windowStart,
             fallback: state.virtualIndex,
           }),
@@ -136,20 +136,20 @@ export function useCarouselController({
   );
 
   const dragStart = useCallback(() => {
-    durationRef.current = baseSpeed;
+    durationRef.current = baseDuration;
     action(() =>
       dispatch({
         type: "START_DRAG",
         fromVirtualIndex: getCurrentVirtualIndexFromDOM({
           track: movingRef.current,
           viewport: measureRef.current,
-          visibleSlides: layout.clampedVisible,
+          visibleSlidesNr: layout.clampedVisible,
           windowStart,
           fallback: state.virtualIndex,
         }),
       }),
     );
-  }, [action, baseSpeed, dispatch, movingRef, measureRef, layout.clampedVisible, windowStart, state.virtualIndex]);
+  }, [action, baseDuration, dispatch, movingRef, measureRef, layout.clampedVisible, windowStart, state.virtualIndex]);
 
   const dragSnap = useCallback(
     () => {
@@ -158,7 +158,7 @@ export function useCarouselController({
         fromVirtualIndex: getCurrentVirtualIndexFromDOM({
           track: movingRef.current,
           viewport: measureRef.current,
-          visibleSlides: layout.clampedVisible,
+          visibleSlidesNr: layout.clampedVisible,
           windowStart,
           fallback: state.virtualIndex,
         }),
@@ -178,6 +178,6 @@ export function useCarouselController({
     dragStart,
     dragSnap,
     finalize: safeFinalize,
-    activeSpeed: durationRef.current,
+    activeDuration: durationRef.current,
   };
 }

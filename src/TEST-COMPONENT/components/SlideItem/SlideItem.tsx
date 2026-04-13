@@ -4,8 +4,8 @@ import type { SlideItemProps } from "./types";
 
 export const SlideItem = memo(
   ({
-    slide,
-    isImg,
+    slideData,
+    isContentImg,
     errAltPlaceholder,
     style,
     isActual,
@@ -15,11 +15,11 @@ export const SlideItem = memo(
     className,
     ...a11yProps
   }: SlideItemProps) => {
-    if (!slide) return null;
+    if (!slideData) return null;
 
     const [isBroken, setIsBroken] = useState(false);
 
-    useEffect(() => setIsBroken(false), [slide.id, slide.content]);
+    useEffect(() => setIsBroken(false), [slideData.id, slideData.content]);
 
     useEffect(() => {
       if (isActual) {
@@ -39,26 +39,26 @@ export const SlideItem = memo(
         className={clsx(
           className.slide,
           isBroken && className.slideError,
-          !isImg && className.slideText,
+          !isContentImg && className.slideText,
           isClickable && className.slideInteractive,
         )}
         {...(isClickable && { type: "button" })}
-        onClick={isClickable ? () => onSlideClick?.(slide) : undefined}
+        onClick={isClickable ? () => onSlideClick?.(slideData) : undefined}
       >
-        {isImg && typeof slide.content === "string" ? (
+        {isContentImg && typeof slideData.content === "string" ? (
           !isBroken ? (
             <img
-              src={slide.content}
+              src={slideData.content}
               loading="lazy"
-              alt={slide.alt || ""}
+              alt={slideData.alt || ""}
               draggable={false}
               onError={() => setIsBroken(true)}
             />
           ) : (
-            slide.alt || errAltPlaceholder
+            slideData.alt || errAltPlaceholder
           )
         ) : (
-          slide.content
+          slideData.content
         )}
       </Tag>
     );

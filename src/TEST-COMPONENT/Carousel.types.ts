@@ -54,19 +54,19 @@ const OnSlideClickSchema = z.function({
 });
 
 export const CarouselPropsSchema = z.object({
-  slides: z.array(SlideSchema),
-  visibleSlides: z.number().optional(),
-  speedAuto: z.number().optional(),
-  delayAuto: z.number().optional(),
-  speedManualStep: z.number().optional(),
-  speedManualJump: z.number().optional(),
-  isImg: z.boolean().optional(),
+  slidesData: z.array(SlideSchema),
+  visibleSlidesNr: z.number().optional(),
+  durationAutoplay: z.number().optional(),
+  intervalAutoplay: z.number().optional(),
+  durationStep: z.number().optional(),
+  durationJump: z.number().optional(),
+  isContentImg: z.boolean().optional(),
   isAuto: z.boolean().optional(),
-  isPaginated: z.boolean().optional(),
+  isPaginationOn: z.boolean().optional(),
   isControlsOn: z.boolean().optional(),
   isPaginationDynamic: z.boolean().optional(),
   isInteractive: z.boolean().optional(),
-  isInfinite: z.boolean().optional(),
+  isFinite: z.boolean().optional(),
   isInstantMotion: z.boolean().optional(),
   isTouchDevice: z.boolean().optional(),
   className: ClassNameMapSchema.optional(),
@@ -74,10 +74,10 @@ export const CarouselPropsSchema = z.object({
   errAltPlaceholder: z.string().optional(),
 });
 
-export interface CarouseProps extends z.infer<typeof CarouselPropsSchema> {
+export interface CarouselProps extends z.infer<typeof CarouselPropsSchema> {
   children?: ReactNode;
 }
 
 //-------------------------------------------------------------------------------------------------
 
-export const CarouselSlideDataSchema = CarouselPropsSchema.shape.slides;
+export const CarouselSlidesDataSchema = CarouselPropsSchema.shape.slidesData;

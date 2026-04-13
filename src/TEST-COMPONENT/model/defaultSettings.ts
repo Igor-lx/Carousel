@@ -1,17 +1,17 @@
 
 
 export const DEFAULT_SETTINGS = {
-  visibleSlides: 3,
-  speedAutoBase: 3000,
-  delayAuto: 3000,
-  speedManualStep: 2000,
-  speedManualJump: 800,
+  visibleSlidesNr: 3,
+  durationAutoplay: 3000,
+  intervalAutoplay: 3000,
+  durationStep: 2000,
+  durationJump: 800,
   errAltPlaceholder: "Ошибка загрузки.",
-  isImg: true,
+  isContentImg: true,
   isAuto: true,
-  isPaginated: true,
+  isPaginationOn: true,
   isPaginationDynamic: true,
   isInteractive: true,
-  isInfinite: true,
+  isFinite: false,
   isControlsOn: true,
 } as const;

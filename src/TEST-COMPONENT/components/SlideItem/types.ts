@@ -1,13 +1,13 @@
 import type { Slide, SlideItemClassMap } from "../../Carousel.types";
 
 export interface SlideItemProps {
-  isImg?: boolean;
+  isContentImg?: boolean;
   errAltPlaceholder?: string;
   style: React.CSSProperties;
-  slide: Slide;
+  slideData: Slide;
   isInteractive?: boolean;
   isActive?: boolean;
   isActual?: boolean;
-  onSlideClick?: (slide: Slide) => void;
+  onSlideClick?: (slideData: Slide) => void;
   className: SlideItemClassMap;
 }

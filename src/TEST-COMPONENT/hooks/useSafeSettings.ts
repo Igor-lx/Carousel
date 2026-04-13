@@ -3,18 +3,18 @@ import { MIN_SPEED, MIN_DELAY } from "../model/constants";
 import { DEFAULT_SETTINGS } from "../model/defaultSettings";
 
 interface SafeSettingsProps {
-  speedAuto?: number;
-  speedStep?: number;
-  speedJump?: number;
-  delay?: number;
+  durationAutoplay?: number;
+  durationStep?: number;
+  durationJump?: number;
+  intervalAutoplay?: number;
   errAltPlaceholder?: string;
 }
 
 interface SafeSettingsResult {
-  speedAuto: number;
-  speedStep: number;
-  speedJump: number;
-  delay: number;
+  durationAutoplay: number;
+  durationStep: number;
+  durationJump: number;
+  intervalAutoplay: number;
   errAltPlaceholder: string;
 }
 
@@ -31,45 +31,57 @@ const getSafeDuration = (value: number | undefined, fallback: number) => {
 };
 
 export const useSafeSettings = ({
-  speedAuto,
-  speedStep,
-  speedJump,
-  delay,
+  durationAutoplay,
+  durationStep,
+  durationJump,
+  intervalAutoplay,
   errAltPlaceholder, 
 }: SafeSettingsProps): SafeSettingsResult => {
   return useMemo(() => {
-    const safeSpeedAuto = getSafeDuration(
-      speedAuto,
-      DEFAULT_SETTINGS.speedAutoBase,
+    const safeDurationAutoplay = getSafeDuration(
+      durationAutoplay,
+      DEFAULT_SETTINGS.durationAutoplay,
     );
 
-    const stepInput = getSafeDuration(
-      speedStep,
-      DEFAULT_SETTINGS.speedManualStep,
+    const durationStepInput = getSafeDuration(
+      durationStep,
+      DEFAULT_SETTINGS.durationStep,
     );
-    const safeSpeedStep = Math.min(safeSpeedAuto, stepInput);
-
-    const jumpInput = getSafeDuration(
-      speedJump,
-      DEFAULT_SETTINGS.speedManualJump,
+    const safeDurationStep = Math.min(
+      safeDurationAutoplay,
+      durationStepInput,
     );
-    const safeSpeedJump = Math.min(safeSpeedStep, jumpInput);
 
-    const safeDelay =
-      delay !== undefined
-        ? Math.max(MIN_DELAY, delay)
-        : DEFAULT_SETTINGS.delayAuto;
+    const durationJumpInput = getSafeDuration(
+      durationJump,
+      DEFAULT_SETTINGS.durationJump,
+    );
+    const safeDurationJump = Math.min(
+      safeDurationStep,
+      durationJumpInput,
+    );
+
+    const safeIntervalAutoplay =
+      intervalAutoplay !== undefined
+        ? Math.max(MIN_DELAY, intervalAutoplay)
+        : DEFAULT_SETTINGS.intervalAutoplay;
 
     const safeErrAltPlaceholder = errAltPlaceholder?.trim()
       ? errAltPlaceholder
       : DEFAULT_SETTINGS.errAltPlaceholder;
 
     return {
-      speedAuto: safeSpeedAuto,
-      speedStep: safeSpeedStep,
-      speedJump: safeSpeedJump,
-      delay: safeDelay,
+      durationAutoplay: safeDurationAutoplay,
+      durationStep: safeDurationStep,
+      durationJump: safeDurationJump,
+      intervalAutoplay: safeIntervalAutoplay,
       errAltPlaceholder: safeErrAltPlaceholder,
     };
-  }, [speedAuto, speedStep, speedJump, delay, errAltPlaceholder]);
+  }, [
+    durationAutoplay,
+    durationStep,
+    durationJump,
+    intervalAutoplay,
+    errAltPlaceholder,
+  ]);
 };

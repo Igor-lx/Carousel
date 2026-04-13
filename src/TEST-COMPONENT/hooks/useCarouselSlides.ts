@@ -1,9 +1,9 @@
 import { useMemo, useRef } from "react";
 
 import {
+  getLoopedSlideIndex,
   getRenderWindow,
   getSlideA11y,
-  getSlideMetadata,
   getSlideVisibility,
   type CarouselLayout,
   type VirtualSlide,
@@ -17,8 +17,7 @@ interface SlidesProps {
   isMoving: boolean;
   targetIndex: number;
   layout: CarouselLayout;
-  data: Slide[];
-  count: number;
+  slidesData: Slide[];
 }
 
 interface SlidesResult {
@@ -36,8 +35,7 @@ export function useCarouselSlides({
   isMoving,
   targetIndex,
   layout,
-  data,
-  count,
+  slidesData,
 }: SlidesProps): SlidesResult {
   const renderWindowRef = useRef(getRenderWindow(prev, renderTarget, layout));
 
@@ -70,26 +68,29 @@ export function useCarouselSlides({
   }, [prev, renderTarget, layout, isMoving]);
 
   const { isAtStart, isAtEnd } = useMemo(() => {
-    if (layout.isInfinite) {
+    if (!layout.isFinite) {
       return { isAtStart: false, isAtEnd: false };
     }
     return {
       isAtStart: targetIndex <= 0,
       isAtEnd: targetIndex >= layout.pageCount - 1,
     };
-  }, [
-    layout.isInfinite,
-    layout.pageCount,
-    targetIndex,
-  ]);
+  }, [layout.isFinite, layout.pageCount, targetIndex]);
 
   const virtualData = useMemo((): VirtualSlide[] => {
+    const totalSlides = slidesData.length;
+    if (totalSlides === 0) return [];
+
     const length = Math.max(0, renderWindow.end - renderWindow.start + 1);
 
     return Array.from({ length }).map((_, offset) => {
       const vIndex = renderWindow.start + offset;
-      const metadata = getSlideMetadata(vIndex, layout);
-      const { originalIndex, isClone } = metadata;
+      const originalIndex = getLoopedSlideIndex(vIndex, totalSlides);
+      const slideData = slidesData[originalIndex]!;
+      const isClone =
+        layout.canSlide &&
+        !layout.isFinite &&
+        (vIndex < 0 || vIndex >= totalSlides);
 
       const { isActual, isActive } = getSlideVisibility(
         vIndex,
@@ -99,19 +100,22 @@ export function useCarouselSlides({
         isMoving,
       );
 
-      const a11yProps = getSlideA11y(metadata, isActual, count);
+      const a11yProps = getSlideA11y({ originalIndex }, isActual, totalSlides);
 
       return {
         vIndex,
         originalIndex,
+        slideData,
         isClone,
         isActive,
         isActual,
-        slideKey: `${isClone ? "clone" : "orig"}-${vIndex}-${data[originalIndex]?.id ?? originalIndex}`,
+        slideKey: isClone
+          ? `clone:${String(slideData.id)}:${vIndex}`
+          : `slide:${String(slideData.id)}`,
         a11yProps,
       };
     });
-  }, [layout, current, prev, isMoving, data, count, renderWindow]);
+  }, [layout, current, prev, isMoving, slidesData, renderWindow]);
 
   return {
     data: virtualData,

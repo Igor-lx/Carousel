@@ -1,11 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { HOVER_TRESHOLD } from "../model/constants";
+import { HOVER_THRESHOLD } from "../model/constants";
 import type { MoveReason } from "../model/reducer";
 
 
 interface AutoPlayProps {
   enabled: boolean;
-  delay: number;
+  intervalAutoplay: number;
   isPaused: boolean;
   ignoreHover: boolean;
   isAtEnd: boolean;
@@ -20,7 +20,7 @@ interface AutoPlayResult {
 
 export function useCarouselAutoPlay({
   enabled,
-  delay,
+  intervalAutoplay,
   isPaused,
   ignoreHover,
   isAtEnd,
@@ -37,7 +37,7 @@ export function useCarouselAutoPlay({
       if (active && withDelay) {
         hoverTimerRef.current = setTimeout(
           () => setIsInternalPaused(true),
-          HOVER_TRESHOLD,
+          HOVER_THRESHOLD,
         );
       } else {
         setIsInternalPaused(active);
@@ -63,9 +63,17 @@ export function useCarouselAutoPlay({
       } else {
         onMove(1, "autoplay");
       }
-    }, delay);
+    }, intervalAutoplay);
     return () => clearTimeout(timeout);
-  }, [enabled, isPaused, isInternalPaused, isAtEnd, delay, onGoTo, onMove]);
+  }, [
+    enabled,
+    isPaused,
+    isInternalPaused,
+    isAtEnd,
+    intervalAutoplay,
+    onGoTo,
+    onMove,
+  ]);
 
   return {
     onHover,

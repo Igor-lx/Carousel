@@ -2,8 +2,8 @@ import type { MoveReason } from "../model/reducer";
 
 interface UsePaginationSyncProps {
   targetIndex: number;
-  speed: number;
-  conditions: MoveReason;
+  duration: number;
+  moveReason: MoveReason;
   isInstant: boolean;
 }
 

@@ -10,13 +10,13 @@ const SPEED_CONFIG = {
 
 interface GestureSpeedProps {
   velocity: number;
-  baseSpeed: number;
+  baseDuration: number;
   containerWidth: number | undefined;
 }
 
 export function useCarouselGestureSpeed({
   velocity,
-  baseSpeed,
+  baseDuration,
   containerWidth,
 }: GestureSpeedProps): number {
   return useMemo(() => {
@@ -24,7 +24,7 @@ export function useCarouselGestureSpeed({
       !containerWidth ||
       velocity <= SPEED_CONFIG.GESTURE_VELOCITY_THRESHOLD
     ) {
-      return baseSpeed;
+      return baseDuration;
     }
 
     const rawPhysicalDuration =
@@ -40,8 +40,12 @@ export function useCarouselGestureSpeed({
       1,
     );
 
-    const mixedSpeed = baseSpeed * (1 - weight) + rawPhysicalDuration * weight;
+    const mixedDuration =
+      baseDuration * (1 - weight) + rawPhysicalDuration * weight;
 
-    return Math.max(SPEED_CONFIG.MIN_ALLOWED, Math.min(mixedSpeed, baseSpeed));
-  }, [velocity, baseSpeed, containerWidth]);
+    return Math.max(
+      SPEED_CONFIG.MIN_ALLOWED,
+      Math.min(mixedDuration, baseDuration),
+    );
+  }, [velocity, baseDuration, containerWidth]);
 }

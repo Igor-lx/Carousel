@@ -5,13 +5,13 @@ import type { Slide } from "../Carousel.types";
 interface ClickProps {
   onMove: (step: number, reason: MoveReason) => void;
   onGoTo: (target: number, reason: MoveReason) => void;
-  onClick?: (slide: Slide) => void;
+  onClick?: (slideData: Slide) => void;
 }
 
 interface ClickResult {
   handleMove: (step: number) => void;
   handleDot: (index: number) => void;
-  handleSlide: (slide: Slide) => void;
+  handleSlide: (slideData: Slide) => void;
   handlePrev: () => void;
   handleNext: () => void;
 }
@@ -44,7 +44,7 @@ export function useCarouselClick({
   );
 
   const handleSlide = useCallback(
-    (slide: Slide) => onClick?.(slide),
+    (slideData: Slide) => onClick?.(slideData),
     [onClick],
   );
 

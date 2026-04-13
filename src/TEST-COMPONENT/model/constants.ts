@@ -12,7 +12,7 @@ export const SNAP_BACK_TIME = 800;
 
 export const ANIMATION_SAFETY_MARGIN = 30;
 
-export const HOVER_TRESHOLD = 150;
+export const HOVER_THRESHOLD = 150;
 
 export const VISIBILITY_THRESHOLD = 0.2;
 

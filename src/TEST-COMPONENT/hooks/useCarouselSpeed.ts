@@ -10,9 +10,9 @@ interface SpeedProps {
   isInstant: boolean;
   velocity: number;
   viewportRef: RefObject<HTMLElement | null>;
-  speedAuto: number;
-  speedStep: number;
-  speedJump: number;
+  durationAutoplay: number;
+  durationStep: number;
+  durationJump: number;
 }
 
 export function useCarouselSpeed({
@@ -22,51 +22,58 @@ export function useCarouselSpeed({
   isInstant,
   velocity,
   viewportRef,
-  speedAuto,
-  speedStep,
-  speedJump,
+  durationAutoplay,
+  durationStep,
+  durationJump,
 }: SpeedProps): number {
   const containerWidth = viewportRef.current?.offsetWidth;
 
-  const baseSpeed = useMemo(() => {
+  const baseDuration = useMemo(() => {
     if (animMode === "snap") return SNAP_BACK_TIME;
 
-    if (isInstant || animMode === "jump") return speedJump;
+    if (isInstant || animMode === "jump") return durationJump;
 
     switch (reason) {
       case "click":
-        return speedStep;
+        return durationStep;
       case "autoplay":
-        return speedAuto;
+        return durationAutoplay;
       case "gesture":
-        return speedStep;
+        return durationStep;
       default:
-        return speedAuto;
+        return durationAutoplay;
     }
-  }, [reason, animMode, isInstant, speedStep, speedAuto, speedJump]);
+  }, [
+    reason,
+    animMode,
+    isInstant,
+    durationStep,
+    durationAutoplay,
+    durationJump,
+  ]);
 
-  const dynamicSpeed = useCarouselGestureSpeed({
+  const dynamicDuration = useCarouselGestureSpeed({
     velocity,
-    baseSpeed,
+    baseDuration,
     containerWidth,
   });
 
   return useMemo(() => {
     if (isInteractive) return 0;
 
-    if (animMode === "snap") return baseSpeed;
+    if (animMode === "snap") return baseDuration;
 
-    if (isInstant || animMode === "jump") return speedJump;
-    if (reason === "gesture") return dynamicSpeed;
+    if (isInstant || animMode === "jump") return durationJump;
+    if (reason === "gesture") return dynamicDuration;
 
-    return baseSpeed;
+    return baseDuration;
   }, [
     isInteractive,
     isInstant,
     reason,
     animMode,
-    dynamicSpeed,
-    baseSpeed,
-    speedJump,
+    dynamicDuration,
+    baseDuration,
+    durationJump,
   ]);
 }

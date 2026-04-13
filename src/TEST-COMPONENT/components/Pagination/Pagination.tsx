@@ -17,7 +17,7 @@ export const Pagination = memo(({ className }: PaginationProps) => {
     isJumping,
     isReducedMotion,
     moveReason,
-    actualSpeed,
+    actualDuration,
   } = useCarouselContext();
 
   if (pageCount <= 1) return null;
@@ -33,8 +33,8 @@ export const Pagination = memo(({ className }: PaginationProps) => {
   const visualIndex = usePaginationSync({
     targetIndex: activeDotIndex,
     isInstant: isInstantSync,
-    conditions: moveReason,
-    speed: actualSpeed,
+    moveReason,
+    duration: actualDuration,
   });
 
   return (
