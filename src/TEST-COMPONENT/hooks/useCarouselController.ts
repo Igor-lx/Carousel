@@ -4,6 +4,7 @@ import type { Action, MoveReason, State } from "../model/reducer";
 import { MIN_DURATION, VELOCITY_COEFFICIENT } from "../model/constants";
 import {
   getCurrentVirtualIndexFromDOM,
+  getVirtualIndexFromDragOffset,
   type CarouselLayout,
 } from "../utilites";
 
@@ -23,10 +24,10 @@ interface ControllerProps {
 }
 
 interface ControllerResult {
-  move: (step: number, moveReason?: MoveReason) => void;
+  move: (step: number, moveReason?: MoveReason, dragOffset?: number) => void;
   goTo: (index: number, moveReason?: MoveReason) => void;
   dragStart: () => void;
-  dragSnap: () => void;
+  dragSnap: (dragOffset?: number) => void;
   finalize: () => void;
   activeDuration: number;
 }
@@ -81,8 +82,41 @@ export function useCarouselController({
     [isMoving],
   );
 
+  const resolveFromVirtualIndex = useCallback(
+    (dragOffset?: number) => {
+      if (typeof dragOffset === "number") {
+        return getVirtualIndexFromDragOffset({
+          baseVirtualIndex: state.virtualIndex,
+          dragOffset,
+          viewport: measureRef.current,
+          visibleSlidesNr: layout.clampedVisible,
+          fallback: state.virtualIndex,
+        });
+      }
+
+      return getCurrentVirtualIndexFromDOM({
+        track: movingRef.current,
+        viewport: measureRef.current,
+        visibleSlidesNr: layout.clampedVisible,
+        windowStart,
+        fallback: state.virtualIndex,
+      });
+    },
+    [
+      movingRef,
+      measureRef,
+      layout.clampedVisible,
+      windowStart,
+      state.virtualIndex,
+    ],
+  );
+
   const move = useCallback(
-    (step: number, moveReason: MoveReason = "unknown") => {
+    (
+      step: number,
+      moveReason: MoveReason = "unknown",
+      dragOffset?: number,
+    ) => {
       if (!enabled) return;
 
       updateDuration(moveReason);
@@ -100,17 +134,11 @@ export function useCarouselController({
           type: "MOVE",
           step,
           moveReason,
-          fromVirtualIndex: getCurrentVirtualIndexFromDOM({
-            track: movingRef.current,
-            viewport: measureRef.current,
-            visibleSlidesNr: layout.clampedVisible,
-            windowStart,
-            fallback: state.virtualIndex,
-          }),
+          fromVirtualIndex: resolveFromVirtualIndex(dragOffset),
         }),
       );
     },
-    [enabled, isMoving, action, dispatch, externalController, movingRef, measureRef, layout.clampedVisible, windowStart, state.virtualIndex, updateDuration],
+    [enabled, action, dispatch, externalController, resolveFromVirtualIndex, updateDuration],
   );
 
   const goTo = useCallback(
@@ -122,17 +150,11 @@ export function useCarouselController({
           type: "GO_TO",
           target: index,
           moveReason,
-          fromVirtualIndex: getCurrentVirtualIndexFromDOM({
-            track: movingRef.current,
-            viewport: measureRef.current,
-            visibleSlidesNr: layout.clampedVisible,
-            windowStart,
-            fallback: state.virtualIndex,
-          }),
+          fromVirtualIndex: resolveFromVirtualIndex(),
         }),
       );
     },
-    [enabled, action, dispatch, movingRef, measureRef, layout.clampedVisible, windowStart, state.virtualIndex, updateDuration],
+    [enabled, action, dispatch, resolveFromVirtualIndex, updateDuration],
   );
 
   const dragStart = useCallback(() => {
@@ -152,19 +174,13 @@ export function useCarouselController({
   }, [action, baseDuration, dispatch, movingRef, measureRef, layout.clampedVisible, windowStart, state.virtualIndex]);
 
   const dragSnap = useCallback(
-    () => {
+    (dragOffset?: number) => {
       dispatch({
         type: "END_DRAG_SNAP",
-        fromVirtualIndex: getCurrentVirtualIndexFromDOM({
-          track: movingRef.current,
-          viewport: measureRef.current,
-          visibleSlidesNr: layout.clampedVisible,
-          windowStart,
-          fallback: state.virtualIndex,
-        }),
+        fromVirtualIndex: resolveFromVirtualIndex(dragOffset),
       });
     },
-    [dispatch, movingRef, measureRef, layout.clampedVisible, windowStart, state.virtualIndex],
+    [dispatch, resolveFromVirtualIndex],
   );
 
   const safeFinalize = useCallback(() => {

@@ -14,7 +14,6 @@ export interface CarouselContextValue {
   isJumping: boolean;
   actualDuration: number;
   moveReason: MoveReason;
-  isPaginationDynamic: boolean;
   handlePrev: () => void;
   handleNext: () => void;
   handleDotClick: (index: number) => void;

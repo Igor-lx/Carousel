@@ -13,7 +13,6 @@ export const Pagination = memo(({ className }: PaginationProps) => {
     pageCount,
     activeDotIndex,
     handleDotClick,
-    isPaginationDynamic,
     isJumping,
     isReducedMotion,
     moveReason,
@@ -28,12 +27,11 @@ export const Pagination = memo(({ className }: PaginationProps) => {
   }, [className]);
 
   const isInstantSync =
-    !isPaginationDynamic || isJumping || isReducedMotion;
+    moveReason !== "autoplay" || isJumping || isReducedMotion;
 
   const visualIndex = usePaginationSync({
     targetIndex: activeDotIndex,
     isInstant: isInstantSync,
-    moveReason,
     duration: actualDuration,
   });
 

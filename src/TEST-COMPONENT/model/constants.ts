@@ -16,9 +16,7 @@ export const HOVER_THRESHOLD = 150;
 
 export const VISIBILITY_THRESHOLD = 0.2;
 
-export const PAGINATION_SWITCH_COEFFICIENT_AUTO = 0.5;
-export const PAGINATION_SWITCH_COEFFICIENT_GESTURE = 0.35;
-export const PAGINATION_SWITCH_COEFFICIENT_STEP = 0.33;
+export const AUTOPLAY_PAGINATION_FACTOR = 0.4;
 
 export const CAROUSEL_SLOTS = ["pagination", "controls"] as const;
 

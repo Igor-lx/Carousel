@@ -11,7 +11,6 @@ export const DEFAULT_SETTINGS = {
   isContentImg: true,
   isAuto: true,
   isPaginationOn: true,
-  isPaginationDynamic: true,
   isInteractive: true,
   isFinite: false,
   isControlsOn: true,

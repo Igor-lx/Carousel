@@ -77,7 +77,7 @@ export function useDrag({
           target?.offsetWidth ?? 0,
           settingsRef.current,
         );
-        onDragEnd?.(result, state.velocity);
+        onDragEnd?.(result, state.velocity, state.offset);
 
         lockUntilRef.current = now + settingsRef.current.COOLDOWN_MS;
         dispatch({ type: "SET_COOLDOWN" });

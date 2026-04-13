@@ -4,9 +4,9 @@ import { type DragListeners, useDrag } from "../../shared";
 import { GESTURE_CONFIG } from "../model/constants";
 
 interface GestureProps {
-  onMove: (step: number, reason: MoveReason) => void;
+  onMove: (step: number, reason: MoveReason, dragOffset?: number) => void;
   onDragStart: () => void;
-  onDragSnap: () => void;
+  onDragSnap: (dragOffset?: number) => void;
   enabled: boolean;
   measureRef: RefObject<HTMLDivElement | null>;
 }
@@ -30,13 +30,13 @@ export function useCarouselGesture({
     measureRef,
     onDragStart,
     config: GESTURE_CONFIG,
-    onDragEnd: (result) => {
+    onDragEnd: (result, _velocity, dragOffset) => {
       if (result === "LEFT") {
-        onMove(1, "gesture");
+        onMove(1, "gesture", dragOffset);
       } else if (result === "RIGHT") {
-        onMove(-1, "gesture");
+        onMove(-1, "gesture", dragOffset);
       } else {
-        onDragSnap();
+        onDragSnap(dragOffset);
       }
     },
   });

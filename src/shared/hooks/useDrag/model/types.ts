@@ -39,7 +39,7 @@ export interface DragConfig {
 
 export interface DragProps {
   onDragStart?: () => void;
-  onDragEnd?: (result: SwipeDirection, velocity: number) => void;
+  onDragEnd?: (result: SwipeDirection, velocity: number, dragOffset: number) => void;
   enabled?: boolean;
   measureRef: React.RefObject<HTMLElement | null>;
   config?: DragConfig;

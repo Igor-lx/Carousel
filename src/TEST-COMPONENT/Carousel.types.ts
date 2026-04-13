@@ -65,7 +65,6 @@ export const CarouselPropsSchema = z.object({
   isAuto: z.boolean().optional(),
   isPaginationOn: z.boolean().optional(),
   isControlsOn: z.boolean().optional(),
-  isPaginationDynamic: z.boolean().optional(),
   isInteractive: z.boolean().optional(),
   isFinite: z.boolean().optional(),
   isInstantMotion: z.boolean().optional(),

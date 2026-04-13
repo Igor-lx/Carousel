@@ -70,3 +70,26 @@ export const getCurrentVirtualIndexFromDOM = ({
 
   return windowStart + -translateX / slotSize;
 };
+
+interface VirtualIndexFromDragOffsetParams {
+  baseVirtualIndex: number;
+  dragOffset: number;
+  viewport: HTMLElement | null;
+  visibleSlidesNr: number;
+  fallback: number;
+}
+
+export const getVirtualIndexFromDragOffset = ({
+  baseVirtualIndex,
+  dragOffset,
+  viewport,
+  visibleSlidesNr,
+  fallback,
+}: VirtualIndexFromDragOffsetParams) => {
+  if (!viewport) return fallback;
+
+  const slotSize = getTrackSlotSize(viewport, visibleSlidesNr);
+  if (slotSize <= 0) return fallback;
+
+  return baseVirtualIndex - dragOffset / slotSize;
+};
