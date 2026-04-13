@@ -8,7 +8,7 @@ import {
   MOVE_CLICK_BEZIER,
 } from "../model/constants";
 import type { AnimationMode, MoveReason } from "../model/reducer";
-import { getCarouselTransform, getSlideFlexStyle } from "../utilites";
+import { getCarouselTransform, getSlideFlexStyle } from "../utilities";
 
 interface TechStylesProps {
   current: number;

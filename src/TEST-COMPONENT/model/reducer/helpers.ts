@@ -7,7 +7,7 @@ import {
   getShortestDistance,
   normalizePageIndex,
   type CarouselLayout,
-} from "../../utilites";
+} from "../../utilities";
 
 export const initialState = (currentLayout: CarouselLayout): State => ({
   currentLayout,

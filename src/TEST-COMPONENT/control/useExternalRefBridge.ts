@@ -35,7 +35,7 @@ export const useExternalRefBridge = (children: ReactNode) => {
         originalRef.current = node;
       }
     },
-    [],
+    [externalRef],
   );
 
   const connectedChildren = useMemo(() => {

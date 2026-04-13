@@ -1,12 +1,5 @@
 import type { MoveReason } from "../reducer";
 
-export interface CarouselExternalController {
-  moveRight: () => void;
-  moveLeft: () => void;
-  toggleFreezed: (isFreezed: boolean) => void;
-  setDuration: (val: number | null) => void;
-}
-
 export interface CarouselContextValue {
   pageCount: number;
   activeDotIndex: number;

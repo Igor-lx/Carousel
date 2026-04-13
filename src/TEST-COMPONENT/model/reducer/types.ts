@@ -1,4 +1,4 @@
-import type { CarouselLayout } from "../../utilites/types";
+import type { CarouselLayout } from "../../utilities/types";
 
 
 export type AnimationMode = "normal" | "jump" | "instant" | "snap" | "rebase" | "none";

@@ -26,7 +26,6 @@ const createResolvedSlide = (
   slideData,
   sourceIndex,
   positionIndex,
-  isLayoutClone,
   slideKey: isLayoutClone
     ? `slide:${String(slideData.id)}:layout-clone:${positionIndex}`
     : `slide:${String(slideData.id)}`,
@@ -101,23 +100,16 @@ export const getCarouselLayout = (
       `${slideKey}-${getSlideContentKey(slideData)}`,
     )
     .join("|");
-  const minScrollIndex = 0;
-  const maxScrollIndex = isFinite
-    ? Math.max(0, (pageCount - 1) * clampedVisible)
-    : totalVirtual - clampedVisible;
 
   return {
     length,
     clampedVisible,
-    cloneCount,
     virtualLength,
     totalVirtual,
     pageCount,
     canSlide,
     dataKey,
     isFinite,
-    minScrollIndex,
-    maxScrollIndex,
   };
 };
 

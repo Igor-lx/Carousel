@@ -8,7 +8,7 @@ import {
   type CarouselLayout,
   type ResolvedCarouselSlide,
   type VirtualSlide,
-} from "../utilites";
+} from "../utilities";
 
 interface SlidesProps {
   current: number;

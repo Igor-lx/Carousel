@@ -9,7 +9,6 @@ interface ClickProps {
 }
 
 interface ClickResult {
-  handleMove: (step: number) => void;
   handleDot: (index: number) => void;
   handleSlide: (slideData: Slide) => void;
   handlePrev: () => void;
@@ -49,7 +48,6 @@ export function useCarouselClick({
   );
 
   return {
-    handleMove,
     handlePrev,
     handleNext,
     handleDot,

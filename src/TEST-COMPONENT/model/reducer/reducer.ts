@@ -2,7 +2,7 @@ import type { ReducerAction, State } from ".";
 import {
   getAlignedVirtualIndex,
   getPageStart,
-} from "../../utilites";
+} from "../../utilities";
 import {
   getAnimStatus,
   reconcileStateToLayout,

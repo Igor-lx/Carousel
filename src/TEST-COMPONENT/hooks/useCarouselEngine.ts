@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import type { Action, ReducerAction } from "../model/reducer";
-import type { CarouselLayout } from "../utilites";
+import type { CarouselLayout } from "../utilities";
 
 interface EngineProps {
   dispatch: React.Dispatch<ReducerAction>;

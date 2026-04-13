@@ -15,7 +15,6 @@ interface AutoPlayProps {
 
 interface AutoPlayResult {
   onHover: (active: boolean) => void;
-  setPause: (active: boolean) => void;
 }
 
 export function useCarouselAutoPlay({
@@ -98,6 +97,5 @@ export function useCarouselAutoPlay({
 
   return {
     onHover,
-    setPause: toggleInternalPause,
   };
 }

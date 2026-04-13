@@ -1,4 +1,4 @@
-import { useMemo, memo, useReducer, useCallback, useRef, useEffect } from "react";
+import { useMemo, memo, useReducer, useRef } from "react";
 
 import styles from "./Carousel.module.scss";
 import controlsVariables from "./styles/Controls.variables.module.scss";
@@ -8,8 +8,10 @@ import {
   useCarouselAutoPlay,
   useCarouselClick,
   useCarouselController,
+  useCarouselContextValue,
   useCarouselEngine,
   useCarouselGesture,
+  useCarouselOrchestration,
   useCarouselSlides,
   useCarouselSpeed,
   useCarouselTechStyles,
@@ -26,7 +28,6 @@ import {
   useIsTouchDevice,
   resolveSlots,
   usePickStyles,
-  useExternalRefBridge,
 } from "../shared";
 
 import { SlideItem } from "./components";
@@ -39,6 +40,10 @@ import {
 import { VISIBILITY_THRESHOLD, CAROUSEL_SLOTS } from "./model/constants";
 import { DEFAULT_SETTINGS } from "./model/defaultSettings";
 import { CarouselContext } from "./model/context";
+import {
+  useCarouselExternalControllerSync,
+  useExternalRefBridge,
+} from "./control";
 import { SLIDE_KEYS, type CarouselProps } from "./Carousel.types";
 import {
   clampSlidesData,
@@ -46,8 +51,7 @@ import {
   hasImperfectLayout,
   resolveSlidesData,
   type CarouselLayout,
-} from "./utilites";
-import type { CarouselExternalController } from "./model/context/types";
+} from "./utilities";
 
 const Carousel = memo((props: CarouselProps) => {
   const {
@@ -75,7 +79,6 @@ const Carousel = memo((props: CarouselProps) => {
   const totalSlides = slidesData.length;
   const containerRef = useRef<HTMLDivElement>(null);
   const movingRef = useRef<HTMLDivElement>(null);
-  const resetMotion = useCallback(() => {}, []);
 
   const isReducedMotion = isInstantMotion ?? useIsReducedMotion();
   const isTouch = isTouchDevice ?? useIsTouchDevice();
@@ -83,14 +86,6 @@ const Carousel = memo((props: CarouselProps) => {
     elementRef: containerRef,
     threshold: VISIBILITY_THRESHOLD,
   });
-
-  const { instanceRef: externalRef, connectedChildren } =
-    useExternalRefBridge<CarouselExternalController>(children);
-
-  const slots = useMemo(
-    () => resolveSlots(connectedChildren, CAROUSEL_SLOTS),
-    [connectedChildren],
-  );
 
   const {
     durationAutoplay: safeDurationAutoplay,
@@ -105,6 +100,9 @@ const Carousel = memo((props: CarouselProps) => {
     intervalAutoplay,
     errAltPlaceholder,
   });
+
+  const { externalRef: externalControllerRef, connectedChildren } =
+    useExternalRefBridge(children);
 
   const needsLayoutClamp = hasImperfectLayout(totalSlides, visibleSlidesNr);
   const shouldClampLayout = isLayoutClamped && needsLayoutClamp;
@@ -132,6 +130,7 @@ const Carousel = memo((props: CarouselProps) => {
   );
 
   const [state, baseDispatch] = useReducer(reducer, nextLayout, initialState);
+
   const syncedState = useMemo(
     () => reconcileStateToLayout(state, nextLayout),
     [state, nextLayout],
@@ -195,9 +194,8 @@ const Carousel = memo((props: CarouselProps) => {
   } = useCarouselController({
     dispatch: componentDispatch,
     finalize: componentFinalize,
-    onReset: resetMotion,
     enabled: canSlide,
-    externalController: externalRef,
+    externalController: externalControllerRef,
     isMoving,
     baseDuration: safeDurationStep,
     measureRef: containerRef,
@@ -256,6 +254,27 @@ const Carousel = memo((props: CarouselProps) => {
     durationJump: safeDurationJump,
   });
 
+  useCarouselExternalControllerSync({
+    externalControllerRef,
+    isReducedMotion,
+    actualDuration,
+  });
+
+  const slots = useMemo(
+    () => resolveSlots(connectedChildren, CAROUSEL_SLOTS),
+    [connectedChildren],
+  );
+
+  const { handleTransitionEnd } = useCarouselOrchestration({
+    pendingTransition,
+    dispatch: componentDispatch,
+    finalize: safeFinalizeMove,
+    isInstant,
+    isReducedMotion,
+    isAnimating,
+    actualDuration,
+  });
+
   const {
     containerStyle: containerTechStyle,
     itemStyle: slideWrapperTechStyle,
@@ -271,73 +290,27 @@ const Carousel = memo((props: CarouselProps) => {
     dragOffset: offset,
   });
 
-  const handleTransitionEnd = useCallback(
-    (e: React.TransitionEvent<HTMLDivElement>) => {
-      if (e.propertyName === "transform" && e.target === e.currentTarget) {
-        safeFinalizeMove();
-      }
-    },
-    [safeFinalizeMove],
-  );
-
-  useIsomorphicLayoutEffect(() => {
-    if (isInstant || (isReducedMotion && isAnimating)) {
-      safeFinalizeMove();
-    }
-  }, [isInstant, isReducedMotion, isAnimating, safeFinalizeMove]);
-
-  useEffect(() => {
-    if (pendingTransition) {
-      componentDispatch({ type: "COMMIT_REBASE" });
-    }
-  }, [pendingTransition, componentDispatch]);
-
   useIsomorphicLayoutEffect(() => {
     if (isIdle) {
       manageFocusShift(containerRef.current);
     }
   }, [isIdle, targetIndex]);
 
-  useIsomorphicLayoutEffect(() => {
-    externalRef.current?.toggleFreezed(isReducedMotion);
-  }, [isReducedMotion, externalRef]);
-
-  useIsomorphicLayoutEffect(() => {
-    externalRef.current?.setDuration(actualDuration);
-  }, [actualDuration, externalRef]);
-
-  const contextValue = useMemo(
-    () => ({
-      pageCount,
-      activeDotIndex,
-      isMoving,
-      isJumping,
-      moveReason,
-      actualDuration,
-      handleDotClick,
-      handlePrev: handleMovePrevClick,
-      handleNext: handleMoveNextClick,
-      showAtStart: !isFiniteAndAtStart,
-      showAtEnd: !isFiniteAndAtEnd,
-      isTouch,
-      isReducedMotion,
-    }),
-    [
-      pageCount,
-      activeDotIndex,
-      isMoving,
-      isJumping,
-      moveReason,
-      actualDuration,
-      handleDotClick,
-      handleMovePrevClick,
-      handleMoveNextClick,
-      isFiniteAndAtStart,
-      isFiniteAndAtEnd,
-      isTouch,
-      isReducedMotion,
-    ],
-  );
+  const contextValue = useCarouselContextValue({
+    pageCount,
+    activeDotIndex,
+    isMoving,
+    isJumping,
+    moveReason,
+    actualDuration,
+    handleDotClick,
+    handlePrev: handleMovePrevClick,
+    handleNext: handleMoveNextClick,
+    isFiniteAndAtStart,
+    isFiniteAndAtEnd,
+    isTouch,
+    isReducedMotion,
+  });
 
   const mergedStyles = useMemo(() => {
     const internalStyles = mergeStyles(

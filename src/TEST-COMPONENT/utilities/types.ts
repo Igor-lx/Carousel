@@ -3,15 +3,12 @@ import type { Slide } from "../Carousel.types";
 export interface CarouselLayout {
   length: number;
   clampedVisible: number;
-  cloneCount: number;
   virtualLength: number;
   totalVirtual: number;
   pageCount: number;
   canSlide: boolean;
   dataKey: string;
   isFinite: boolean;
-  minScrollIndex: number;
-  maxScrollIndex: number;
 }
 
 export interface ResolvedCarouselSlide {
@@ -19,7 +16,6 @@ export interface ResolvedCarouselSlide {
   sourceIndex: number;
   positionIndex: number;
   slideKey: string;
-  isLayoutClone: boolean;
 }
 
 export interface SlideA11yProps {

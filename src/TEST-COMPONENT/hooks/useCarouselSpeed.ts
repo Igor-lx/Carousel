@@ -1,5 +1,5 @@
 import { useMemo, type RefObject } from "react";
-import { useCarouselGestureSpeed } from ".";
+import { useCarouselGestureSpeed } from "./useCarouselGestureSpeed";
 import { SNAP_BACK_TIME } from "../model/constants";
 import type { MoveReason, AnimationMode } from "../model/reducer";
 
