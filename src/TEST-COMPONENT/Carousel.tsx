@@ -236,7 +236,7 @@ const Carousel = memo((props: CarouselProps) => {
 
   const isPaused = !isVisible || isDragging || isMoving;
   const { onHover } = useCarouselAutoPlay({
-    enabled: isAuto,
+    enabled: isAuto && canSlide,
     ignoreHover: isTouch,
     intervalAutoplay: safeIntervalAutoplay,
     isPaused: isPaused,

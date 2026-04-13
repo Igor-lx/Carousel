@@ -63,7 +63,7 @@ const CAROUSEL_DATA = [
   { id: "9", DESKTOP: d9, MOBILE: m9 },
   { id: "10", DESKTOP: d10, MOBILE: m10 },
   { id: "11", DESKTOP: d11, MOBILE: m11 },
-
+  { id: "12", DESKTOP: d12, MOBILE: m12 },
 ];
 
 const VIS_CONFIG = {

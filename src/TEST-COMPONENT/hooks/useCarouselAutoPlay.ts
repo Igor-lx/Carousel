@@ -30,9 +30,16 @@ export function useCarouselAutoPlay({
   const [isInternalPaused, setIsInternalPaused] = useState(false);
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const clearHoverTimer = useCallback(() => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+  }, []);
+
   const toggleInternalPause = useCallback(
     (active: boolean, withDelay = false) => {
-      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+      clearHoverTimer();
 
       if (active && withDelay) {
         hoverTimerRef.current = setTimeout(
@@ -43,7 +50,7 @@ export function useCarouselAutoPlay({
         setIsInternalPaused(active);
       }
     },
-    [],
+    [clearHoverTimer],
   );
 
   const onHover = useCallback(
@@ -53,6 +60,13 @@ export function useCarouselAutoPlay({
     },
     [enabled, ignoreHover, toggleInternalPause],
   );
+
+  useEffect(() => {
+    if (enabled && !ignoreHover) return;
+
+    clearHoverTimer();
+    setIsInternalPaused(false);
+  }, [enabled, ignoreHover, clearHoverTimer]);
 
   useEffect(() => {
     if (!enabled || isPaused || isInternalPaused) return;
@@ -74,6 +88,13 @@ export function useCarouselAutoPlay({
     onGoTo,
     onMove,
   ]);
+
+  useEffect(
+    () => () => {
+      clearHoverTimer();
+    },
+    [clearHoverTimer],
+  );
 
   return {
     onHover,
