@@ -17,7 +17,7 @@ export const SNAP_BACK_BEZIER = "cubic-bezier(0.18, 0.82, 0.28, 1)";
 
 export const CAROUSEL_SLOTS = ["pagination", "controls"] as const;
 
-export const GESTURE_CONFIG = {
+export const DRAG_SETTINGS_CONFIG = {
   RESISTANCE: 0.8,
   RESISTANCE_CURVATURE: 0.005,
   INTENT_THRESHOLD: 10,
@@ -26,7 +26,7 @@ export const GESTURE_CONFIG = {
   SWIPE_THRESHOLD_RATIO: 0.2,
 } as const;
 
-export const GESTURE_SPEED_CONFIG = {
+export const DRAG_SPEED_CONFIG = {
   velocityThreshold: 0.65,
   rampEnd: 2.1,
   minDurationRatio: 0.3,

@@ -6,6 +6,7 @@ export * from "./hooks/useIsTouchDevice";
 export * from "./hooks/useMatchMedia";
 export * from "./hooks/useDrag/useDrag";
 export * from "./hooks/useDrag/model/types";
+export * from "./hooks/useDrag/shared-utils/mapVelocityToDuration";
 export * from "./hooks/useIsomorphicLayoutEffect";
 export * from "./hooks/usePickStyles";
 export * from "./hooks/useTimer";

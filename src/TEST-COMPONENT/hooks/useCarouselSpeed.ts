@@ -1,54 +1,7 @@
 import { useMemo, type RefObject } from "react";
-import { GESTURE_SPEED_CONFIG, SNAP_BACK_TIME } from "../model/constants";
+import { DRAG_SPEED_CONFIG, SNAP_BACK_TIME } from "../model/constants";
 import type { MoveReason, AnimationMode } from "../model/reducer";
-
-const smoothstep = (progress: number) =>
-  progress * progress * (3 - 2 * progress);
-
-const getVelocityModifierWeight = (velocity: number) => {
-  if (velocity <= GESTURE_SPEED_CONFIG.velocityThreshold) return 0;
-  if (velocity >= GESTURE_SPEED_CONFIG.rampEnd) return 1;
-
-  const progress =
-    (velocity - GESTURE_SPEED_CONFIG.velocityThreshold) /
-    (GESTURE_SPEED_CONFIG.rampEnd - GESTURE_SPEED_CONFIG.velocityThreshold);
-
-  return smoothstep(progress);
-};
-
-const getGestureDuration = ({
-  velocity,
-  baseDuration,
-}: {
-  velocity: number;
-  baseDuration: number;
-}) => {
-  if (!Number.isFinite(baseDuration) || baseDuration <= 0) {
-    return baseDuration;
-  }
-
-  if (velocity <= GESTURE_SPEED_CONFIG.velocityThreshold) {
-    return baseDuration;
-  }
-
-  const minGestureDuration = Math.min(
-    baseDuration,
-    Math.max(
-      GESTURE_SPEED_CONFIG.minDuration,
-      baseDuration * GESTURE_SPEED_CONFIG.minDurationRatio,
-    ),
-  );
-
-  if (minGestureDuration >= baseDuration) {
-    return baseDuration;
-  }
-
-  const weight = getVelocityModifierWeight(velocity);
-  const scaledDuration =
-    baseDuration - (baseDuration - minGestureDuration) * weight;
-
-  return Math.max(minGestureDuration, Math.min(scaledDuration, baseDuration));
-};
+import { mapVelocityToDuration } from "../../shared";
 
 interface SpeedProps {
   reason: MoveReason;
@@ -99,9 +52,10 @@ export function useCarouselSpeed({
 
   const dynamicDuration = useMemo(
     () =>
-      getGestureDuration({
+      mapVelocityToDuration({
         velocity,
         baseDuration,
+        dragSpeedConfig: DRAG_SPEED_CONFIG,
       }),
     [baseDuration, velocity],
   );

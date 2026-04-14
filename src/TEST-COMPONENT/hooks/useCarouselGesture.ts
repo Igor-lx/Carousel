@@ -1,7 +1,7 @@
 import { type RefObject } from "react";
 import type { MoveReason } from "../model/reducer";
 import { type DragListeners, useDrag } from "../../shared";
-import { GESTURE_CONFIG } from "../model/constants";
+import { DRAG_SETTINGS_CONFIG } from "../model/constants";
 
 interface GestureProps {
   onMove: (step: number, reason: MoveReason, dragOffset?: number) => void;
@@ -29,7 +29,7 @@ export function useCarouselGesture({
     enabled,
     measureRef,
     onDragStart,
-    config: GESTURE_CONFIG,
+    config: DRAG_SETTINGS_CONFIG,
     onDragEnd: (result, _velocity, dragOffset) => {
       if (result === "LEFT") {
         onMove(1, "gesture", dragOffset);
