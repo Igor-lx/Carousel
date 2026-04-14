@@ -1,48 +1,53 @@
 import { useMemo, type RefObject } from "react";
-import { SNAP_BACK_TIME } from "../model/constants";
+import { GESTURE_SPEED_CONFIG, SNAP_BACK_TIME } from "../model/constants";
 import type { MoveReason, AnimationMode } from "../model/reducer";
 
-const GESTURE_SPEED_CONFIG = {
-  minDuration: 150,
-  velocityThreshold: 0.1,
-  inertiaFactor: 1.2,
-  rampStart: 0.5,
-  rampEnd: 2.0,
-} as const;
+const smoothstep = (progress: number) =>
+  progress * progress * (3 - 2 * progress);
 
-const getVelocityBlendWeight = (velocity: number) =>
-  Math.min(
-    Math.max(
-      (velocity - GESTURE_SPEED_CONFIG.rampStart) /
-        (GESTURE_SPEED_CONFIG.rampEnd - GESTURE_SPEED_CONFIG.rampStart),
-      0,
-    ),
-    1,
-  );
+const getVelocityModifierWeight = (velocity: number) => {
+  if (velocity <= GESTURE_SPEED_CONFIG.velocityThreshold) return 0;
+  if (velocity >= GESTURE_SPEED_CONFIG.rampEnd) return 1;
+
+  const progress =
+    (velocity - GESTURE_SPEED_CONFIG.velocityThreshold) /
+    (GESTURE_SPEED_CONFIG.rampEnd - GESTURE_SPEED_CONFIG.velocityThreshold);
+
+  return smoothstep(progress);
+};
 
 const getGestureDuration = ({
   velocity,
   baseDuration,
-  containerWidth,
 }: {
   velocity: number;
   baseDuration: number;
-  containerWidth: number | undefined;
 }) => {
-  if (!containerWidth || velocity <= GESTURE_SPEED_CONFIG.velocityThreshold) {
+  if (!Number.isFinite(baseDuration) || baseDuration <= 0) {
     return baseDuration;
   }
 
-  const rawPhysicalDuration =
-    (containerWidth / velocity) * GESTURE_SPEED_CONFIG.inertiaFactor;
-  const weight = getVelocityBlendWeight(velocity);
-  const mixedDuration =
-    baseDuration * (1 - weight) + rawPhysicalDuration * weight;
+  if (velocity <= GESTURE_SPEED_CONFIG.velocityThreshold) {
+    return baseDuration;
+  }
 
-  return Math.max(
-    GESTURE_SPEED_CONFIG.minDuration,
-    Math.min(mixedDuration, baseDuration),
+  const minGestureDuration = Math.min(
+    baseDuration,
+    Math.max(
+      GESTURE_SPEED_CONFIG.minDuration,
+      baseDuration * GESTURE_SPEED_CONFIG.minDurationRatio,
+    ),
   );
+
+  if (minGestureDuration >= baseDuration) {
+    return baseDuration;
+  }
+
+  const weight = getVelocityModifierWeight(velocity);
+  const scaledDuration =
+    baseDuration - (baseDuration - minGestureDuration) * weight;
+
+  return Math.max(minGestureDuration, Math.min(scaledDuration, baseDuration));
 };
 
 interface SpeedProps {
@@ -63,13 +68,11 @@ export function useCarouselSpeed({
   isInteractive,
   isInstant,
   velocity,
-  viewportRef,
+  viewportRef: _viewportRef,
   autoplayDuration,
   stepDuration,
   jumpDuration,
 }: SpeedProps): number {
-  const viewportWidth = viewportRef.current?.offsetWidth;
-
   const baseDuration = useMemo(() => {
     if (animMode === "snap") return SNAP_BACK_TIME;
 
@@ -99,9 +102,8 @@ export function useCarouselSpeed({
       getGestureDuration({
         velocity,
         baseDuration,
-        containerWidth: viewportWidth,
       }),
-    [baseDuration, velocity, viewportWidth],
+    [baseDuration, velocity],
   );
 
   return useMemo(() => {

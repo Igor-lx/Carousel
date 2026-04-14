@@ -9,11 +9,11 @@ export const HOVER_THRESHOLD = 150;
 export const VISIBILITY_THRESHOLD = 0.2;
 export const AUTOPLAY_PAGINATION_FACTOR = 0.4;
 
-export const JUMP_BEZIER = "cubic-bezier(0.1, 1, 0.3, 1)";
-export const MOVE_CLICK_BEZIER = "cubic-bezier(0.25, 0.9, 0.5, 1)";
-export const MOVE_AUTO_BEZIER = "ease-in-out";
-export const MOVE_SWIPE_BEZIER = "cubic-bezier(0.6, 0, 0.1, 1)";
-export const SNAP_BACK_BEZIER = "cubic-bezier(0.25, 0.9, 0.5, 1)";
+export const JUMP_BEZIER = "cubic-bezier(0.16, 1, 0.3, 1)";
+export const MOVE_CLICK_BEZIER = "cubic-bezier(0.2, 0.9, 0.32, 1)";
+export const MOVE_AUTO_BEZIER = "cubic-bezier(0.28, 0.72, 0.38, 1)";
+export const MOVE_SWIPE_BEZIER = "cubic-bezier(0.14, 0.92, 0.24, 1)";
+export const SNAP_BACK_BEZIER = "cubic-bezier(0.18, 0.82, 0.28, 1)";
 
 export const CAROUSEL_SLOTS = ["pagination", "controls"] as const;
 
@@ -22,6 +22,13 @@ export const GESTURE_CONFIG = {
   RESISTANCE_CURVATURE: 0.005,
   INTENT_THRESHOLD: 10,
   MAX_VELOCITY: 4,
-  EMA_ALPHA: 0.6,
+  EMA_ALPHA: 0.72,
   SWIPE_THRESHOLD_RATIO: 0.2,
+} as const;
+
+export const GESTURE_SPEED_CONFIG = {
+  velocityThreshold: 0.65,
+  rampEnd: 2.1,
+  minDurationRatio: 0.3,
+  minDuration: 240,
 } as const;
