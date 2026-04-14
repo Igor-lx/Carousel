@@ -22,7 +22,6 @@ interface SlidesProps {
 
 interface SlidesResult {
   slides: VirtualSlide[];
-  activePageIndex: number;
   isAtStart: boolean;
   isAtEnd: boolean;
   windowStart: number;
@@ -124,7 +123,6 @@ export function useCarouselSlides({
 
   return {
     slides: virtualData,
-    activePageIndex: targetIndex,
     isAtStart,
     isAtEnd,
     windowStart: renderWindow.start,

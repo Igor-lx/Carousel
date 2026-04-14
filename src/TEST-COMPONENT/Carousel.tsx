@@ -16,7 +16,6 @@ import {
   useCarouselSpeed,
   useCarouselTechStyles,
   usePerfectLayoutNotice,
-  useSafeSettings,
 } from "./hooks";
 
 import {
@@ -24,6 +23,7 @@ import {
   mergeStyles,
   resolveSlots,
   useComponentVisibility,
+  useExternalRefBridge,
   useIsomorphicLayoutEffect,
   useIsReducedMotion,
   useIsTouchDevice,
@@ -41,17 +41,24 @@ import { VISIBILITY_THRESHOLD, CAROUSEL_SLOTS } from "./model/constants";
 import { DEFAULT_SETTINGS } from "./model/defaultSettings";
 import { CarouselContext } from "./model/context";
 import {
+  type CarouselExternalController,
   useCarouselExternalControllerSync,
-  useExternalRefBridge,
 } from "./control";
 import { SLIDE_KEYS, type CarouselProps } from "./Carousel.types";
 import {
   clampSlidesData,
   getCarouselLayout,
   hasImperfectLayout,
+  resolveSafeSettings,
   resolveSlidesData,
   type CarouselLayout,
 } from "./utilities";
+
+const INTERNAL_CLASS_NAMES = mergeStyles(
+  styles,
+  controlsVariables,
+  paginationVariables,
+);
 
 const Carousel = memo((props: CarouselProps) => {
   const {
@@ -93,7 +100,7 @@ const Carousel = memo((props: CarouselProps) => {
     jumpDuration,
     autoplayInterval,
     errorAltPlaceholder,
-  } = useSafeSettings({
+  } = resolveSafeSettings({
     durationAutoplay,
     durationStep,
     durationJump,
@@ -101,8 +108,8 @@ const Carousel = memo((props: CarouselProps) => {
     errAltPlaceholder,
   });
 
-  const { externalRef: externalControllerRef, connectedChildren } =
-    useExternalRefBridge(children);
+  const { instanceRef: externalControllerRef, connectedChildren } =
+    useExternalRefBridge<CarouselExternalController>(children);
 
   const hasLayoutMismatch = hasImperfectLayout(totalSlides, visibleSlidesNr);
   const shouldClampLayout = isLayoutClamped && hasLayoutMismatch;
@@ -117,11 +124,7 @@ const Carousel = memo((props: CarouselProps) => {
       shouldClampLayout
         ? clampSlidesData(resolvedSlidesData, visibleSlidesNr)
         : resolvedSlidesData,
-    [
-      resolvedSlidesData,
-      shouldClampLayout,
-      shouldClampLayout ? visibleSlidesNr : null,
-    ],
+    [resolvedSlidesData, shouldClampLayout, visibleSlidesNr],
   );
 
   const nextLayout = useMemo<CarouselLayout>(
@@ -162,7 +165,6 @@ const Carousel = memo((props: CarouselProps) => {
 
   const {
     slides: virtualSlides,
-    activePageIndex,
     isAtStart,
     isAtEnd,
     windowStart,
@@ -296,7 +298,7 @@ const Carousel = memo((props: CarouselProps) => {
 
   const contextValue = useCarouselContextValue({
     pageCount,
-    activePageIndex,
+    activePageIndex: targetIndex,
     isMoving,
     isJumping,
     moveReason,
@@ -310,15 +312,13 @@ const Carousel = memo((props: CarouselProps) => {
     isReducedMotion,
   });
 
-  const classNames = useMemo(() => {
-    const internalClassNames = mergeStyles(
-      styles,
-      controlsVariables,
-      paginationVariables,
-    );
-    if (!className) return internalClassNames;
-    return mergeStyles(internalClassNames, className);
-  }, [className]);
+  const classNames = useMemo(
+    () =>
+      className
+        ? mergeStyles(INTERNAL_CLASS_NAMES, className)
+        : INTERNAL_CLASS_NAMES,
+    [className],
+  );
 
   const slideClassNames = usePickStyles(classNames, SLIDE_KEYS);
 

@@ -1,7 +1,49 @@
 import { useMemo, type RefObject } from "react";
-import { useCarouselGestureSpeed } from "./useCarouselGestureSpeed";
 import { SNAP_BACK_TIME } from "../model/constants";
 import type { MoveReason, AnimationMode } from "../model/reducer";
+
+const GESTURE_SPEED_CONFIG = {
+  minDuration: 150,
+  velocityThreshold: 0.1,
+  inertiaFactor: 1.2,
+  rampStart: 0.5,
+  rampEnd: 2.0,
+} as const;
+
+const getVelocityBlendWeight = (velocity: number) =>
+  Math.min(
+    Math.max(
+      (velocity - GESTURE_SPEED_CONFIG.rampStart) /
+        (GESTURE_SPEED_CONFIG.rampEnd - GESTURE_SPEED_CONFIG.rampStart),
+      0,
+    ),
+    1,
+  );
+
+const getGestureDuration = ({
+  velocity,
+  baseDuration,
+  containerWidth,
+}: {
+  velocity: number;
+  baseDuration: number;
+  containerWidth: number | undefined;
+}) => {
+  if (!containerWidth || velocity <= GESTURE_SPEED_CONFIG.velocityThreshold) {
+    return baseDuration;
+  }
+
+  const rawPhysicalDuration =
+    (containerWidth / velocity) * GESTURE_SPEED_CONFIG.inertiaFactor;
+  const weight = getVelocityBlendWeight(velocity);
+  const mixedDuration =
+    baseDuration * (1 - weight) + rawPhysicalDuration * weight;
+
+  return Math.max(
+    GESTURE_SPEED_CONFIG.minDuration,
+    Math.min(mixedDuration, baseDuration),
+  );
+};
 
 interface SpeedProps {
   reason: MoveReason;
@@ -52,11 +94,15 @@ export function useCarouselSpeed({
     stepDuration,
   ]);
 
-  const dynamicDuration = useCarouselGestureSpeed({
-    velocity,
-    baseDuration,
-    containerWidth: viewportWidth,
-  });
+  const dynamicDuration = useMemo(
+    () =>
+      getGestureDuration({
+        velocity,
+        baseDuration,
+        containerWidth: viewportWidth,
+      }),
+    [baseDuration, velocity, viewportWidth],
+  );
 
   return useMemo(() => {
     if (isInteractive) return 0;

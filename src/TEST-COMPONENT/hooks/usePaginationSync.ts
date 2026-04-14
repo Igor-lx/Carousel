@@ -27,15 +27,11 @@ export const usePaginationSync = ({
   const [visualIndex, setVisualIndex] = useState(targetIndex);
   const timeoutRef = useRef<number | null>(null);
 
-  const clearScheduledSync = () => {
+  useEffect(() => {
     if (timeoutRef.current !== null) {
       window.clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-  };
-
-  useEffect(() => {
-    clearScheduledSync();
 
     const delay = isInstant
       ? 0
@@ -51,15 +47,13 @@ export const usePaginationSync = ({
       setVisualIndex((prev) => (prev === targetIndex ? prev : targetIndex));
     }, delay);
 
-    return clearScheduledSync;
+    return () => {
+      if (timeoutRef.current !== null) {
+        window.clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
   }, [targetIndex, duration, isInstant]);
-
-  useEffect(
-    () => () => {
-      clearScheduledSync();
-    },
-    [],
-  );
 
   return visualIndex;
 };

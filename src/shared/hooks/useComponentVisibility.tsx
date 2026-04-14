@@ -2,9 +2,8 @@ import {
   type RefObject,
   useState,
   useRef,
-  useEffect,
-  useLayoutEffect,
 } from "react";
+import { useIsomorphicLayoutEffect } from "./useIsomorphicLayoutEffect";
 
 interface VisibilityProps {
   elementRef?: RefObject<HTMLElement | null>;
@@ -17,9 +16,6 @@ interface VisibilityResult {
 }
 
 const DEFAULT_VIS_THRESHOLD = 0.2;
-
-const useIsomorphicLayoutEffect =
-  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 export function useComponentVisibility({
   elementRef,

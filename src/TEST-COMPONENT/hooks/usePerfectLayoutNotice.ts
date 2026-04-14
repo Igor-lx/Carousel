@@ -41,9 +41,9 @@ export function usePerfectLayoutNotice({
     );
   }, [
     hasImperfectLayout,
-    hasImperfectLayout ? originalLength : null,
-    hasImperfectLayout ? normalizedLength : null,
-    hasImperfectLayout ? visibleSlidesNr : null,
-    hasImperfectLayout ? isLayoutClamped : null,
+    originalLength,
+    normalizedLength,
+    visibleSlidesNr,
+    isLayoutClamped,
   ]);
 }

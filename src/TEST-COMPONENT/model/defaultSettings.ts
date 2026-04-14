@@ -5,7 +5,7 @@ export const DEFAULT_SETTINGS = {
   intervalAutoplay: 3000,
   durationStep: 2000,
   durationJump: 800,
-  errAltPlaceholder: "Ошибка загрузки.",
+  errAltPlaceholder: "Downloading Error",
   isContentImg: true,
   isAuto: true,
   isPaginationOn: true,

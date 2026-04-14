@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { memo, useState, useEffect } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import type { SlideItemProps } from "./types";
 
 export const SlideItem = memo(
@@ -16,16 +16,48 @@ export const SlideItem = memo(
     ...a11yProps
   }: SlideItemProps) => {
     const [isBroken, setIsBroken] = useState(false);
+    const wasActualRef = useRef(Boolean(isActual));
+    const imageSource =
+      isContentImg && typeof slideData?.content === "string"
+        ? slideData.content
+        : null;
 
     useEffect(() => {
       setIsBroken(false);
-    }, [slideData?.id, slideData?.content]);
+    }, [imageSource]);
 
     useEffect(() => {
-      if (isActual) {
-        setIsBroken(false);
+      const didBecomeActual = Boolean(isActual) && !wasActualRef.current;
+
+      wasActualRef.current = Boolean(isActual);
+
+      if (!didBecomeActual || !isBroken || !imageSource) {
+        return;
       }
-    }, [isActual]);
+
+      let isDisposed = false;
+      const probe = new Image();
+
+      probe.onload = () => {
+        if (!isDisposed) {
+          setIsBroken(false);
+        }
+      };
+
+      probe.onerror = () => {
+        if (!isDisposed) {
+          setIsBroken(true);
+        }
+      };
+
+      probe.src = imageSource;
+
+      return () => {
+        isDisposed = true;
+        probe.onload = null;
+        probe.onerror = null;
+      };
+    }, [imageSource, isActual, isBroken]);
 
     if (!slideData) return null;
 
@@ -54,6 +86,7 @@ export const SlideItem = memo(
               loading="lazy"
               alt={slideData.alt || ""}
               draggable={false}
+              onLoad={() => setIsBroken(false)}
               onError={() => setIsBroken(true)}
             />
           ) : (

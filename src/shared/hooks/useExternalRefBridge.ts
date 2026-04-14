@@ -10,10 +10,20 @@ import {
   type RefObject,
 } from "react";
 
-const canAcceptRef = (type: any): boolean => {
-  if (!type || typeof type !== "object") return false;
-  if (typeof type.render === "function") return true;
-  if (type.type) return canAcceptRef(type.type);
+const canAcceptRef = (type: unknown): boolean => {
+  if (!type) return false;
+
+  if (typeof type === "function") {
+    return Boolean(
+      (type as { prototype?: { isReactComponent?: unknown } }).prototype
+        ?.isReactComponent,
+    );
+  }
+
+  if (typeof type !== "object") return false;
+  if (typeof (type as { render?: unknown }).render === "function") return true;
+  if ("type" in type) return canAcceptRef((type as { type?: unknown }).type);
+
   return false;
 };
 
@@ -24,6 +34,7 @@ interface BridgeResult<T> {
 
 export function useExternalRefBridge<T>(children: ReactNode): BridgeResult<T> {
   const instanceRef = useRef<T | null>(null);
+  const didWarnAboutAmbiguityRef = useRef(false);
 
   const setBridgeRef = useCallback((node: T | null, originalRef: any) => {
     instanceRef.current = node;
@@ -39,8 +50,9 @@ export function useExternalRefBridge<T>(children: ReactNode): BridgeResult<T> {
 
   const connectedChildren = useMemo(() => {
     let refAttached = false;
+    let refTargetCount = 0;
 
-    return Children.map(children, (child) => {
+    const nextChildren = Children.map(children, (child) => {
       if (!isValidElement(child)) return child;
 
       const type = child.type;
@@ -48,7 +60,14 @@ export function useExternalRefBridge<T>(children: ReactNode): BridgeResult<T> {
       if (typeof type === "string" || type === Fragment) {
         return child;
       }
-      if (!canAcceptRef(type) || refAttached) {
+
+      if (!canAcceptRef(type)) {
+        return child;
+      }
+
+      refTargetCount += 1;
+
+      if (refAttached) {
         return child;
       }
 
@@ -59,6 +78,21 @@ export function useExternalRefBridge<T>(children: ReactNode): BridgeResult<T> {
         ref: (node: T | null) => setBridgeRef(node, originalRef),
       });
     });
+
+    if (
+      import.meta.env.DEV &&
+      refTargetCount > 1 &&
+      !didWarnAboutAmbiguityRef.current
+    ) {
+      didWarnAboutAmbiguityRef.current = true;
+      console.warn(
+        "[useExternalRefBridge]: Multiple ref-capable children detected. " +
+          "The hook will attach to the first matching child, so attachment " +
+          "order is significant.",
+      );
+    }
+
+    return nextChildren;
   }, [children, setBridgeRef]);
 
   return {
