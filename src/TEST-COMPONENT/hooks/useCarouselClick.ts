@@ -9,10 +9,10 @@ interface ClickProps {
 }
 
 interface ClickResult {
-  handleDot: (index: number) => void;
-  handleSlide: (slideData: Slide) => void;
   handlePrev: () => void;
   handleNext: () => void;
+  handlePageSelect: (index: number) => void;
+  handleSlideClick: (slideData: Slide) => void;
 }
 
 export function useCarouselClick({
@@ -35,14 +35,14 @@ export function useCarouselClick({
     handleMove(1);
   }, [handleMove]);
 
-  const handleDot = useCallback(
+  const handlePageSelect = useCallback(
     (index: number) => {
       onGoTo(index, "click");
     },
     [onGoTo],
   );
 
-  const handleSlide = useCallback(
+  const handleSlideClick = useCallback(
     (slideData: Slide) => onClick?.(slideData),
     [onClick],
   );
@@ -50,7 +50,7 @@ export function useCarouselClick({
   return {
     handlePrev,
     handleNext,
-    handleDot,
-    handleSlide,
+    handlePageSelect,
+    handleSlideClick,
   };
 }

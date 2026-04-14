@@ -4,7 +4,7 @@ export interface SlideItemProps {
   isContentImg?: boolean;
   errAltPlaceholder?: string;
   style: React.CSSProperties;
-  slideData: Slide;
+  slideData: Slide | null | undefined;
   isInteractive?: boolean;
   isActive?: boolean;
   isActual?: boolean;

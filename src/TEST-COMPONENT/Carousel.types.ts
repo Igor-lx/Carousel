@@ -1,5 +1,5 @@
-import { z } from "zod";
 import { type ReactElement, type ReactNode } from "react";
+import { z } from "zod";
 
 const ReactElementSchema = z.custom<ReactElement>(
   (val) =>
@@ -62,22 +62,20 @@ export const CarouselPropsSchema = z.object({
   durationStep: z.number().optional(),
   durationJump: z.number().optional(),
   isContentImg: z.boolean().optional(),
+  errAltPlaceholder: z.string().optional(),
   isAuto: z.boolean().optional(),
   isPaginationOn: z.boolean().optional(),
-  isControlsOn: z.boolean().optional(),
   isInteractive: z.boolean().optional(),
   isFinite: z.boolean().optional(),
+  isControlsOn: z.boolean().optional(),
+  className: ClassNameMapSchema.optional(),
   isInstantMotion: z.boolean().optional(),
   isTouchDevice: z.boolean().optional(),
-  className: ClassNameMapSchema.optional(),
   onSlideClick: OnSlideClickSchema.optional(),
-  errAltPlaceholder: z.string().optional(),
 });
 
 export interface CarouselProps extends z.infer<typeof CarouselPropsSchema> {
   children?: ReactNode;
 }
-
-//-------------------------------------------------------------------------------------------------
 
 export const CarouselSlidesDataSchema = CarouselPropsSchema.shape.slidesData;

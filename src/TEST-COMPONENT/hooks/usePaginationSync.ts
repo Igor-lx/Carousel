@@ -7,7 +7,7 @@ interface UsePaginationSyncProps {
   isInstant: boolean;
 }
 
-const getValidPaginationDelay = (duration: number, factor: number) => {
+const resolvePaginationDelay = (duration: number, factor: number) => {
   if (!Number.isFinite(duration) || duration <= 0) {
     return 0;
   }
@@ -23,7 +23,7 @@ export const usePaginationSync = ({
   targetIndex,
   duration,
   isInstant,
-}: UsePaginationSyncProps) => {
+}: UsePaginationSyncProps): number => {
   const [visualIndex, setVisualIndex] = useState(targetIndex);
   const timeoutRef = useRef<number | null>(null);
 
@@ -39,7 +39,7 @@ export const usePaginationSync = ({
 
     const delay = isInstant
       ? 0
-      : getValidPaginationDelay(duration, AUTOPLAY_PAGINATION_FACTOR);
+      : resolvePaginationDelay(duration, AUTOPLAY_PAGINATION_FACTOR);
 
     if (delay <= 0) {
       setVisualIndex((prev) => (prev === targetIndex ? prev : targetIndex));

@@ -6,8 +6,8 @@ import type { Action, PendingTransition } from "../model/reducer";
 
 interface OrchestrationProps {
   pendingTransition: PendingTransition | null;
-  dispatch: React.Dispatch<Action>;
-  finalize: () => void;
+  dispatchAction: React.Dispatch<Action>;
+  finalizeStep: () => void;
   isInstant: boolean;
   isReducedMotion: boolean;
   isAnimating: boolean;
@@ -20,8 +20,8 @@ interface OrchestrationResult {
 
 export function useCarouselOrchestration({
   pendingTransition,
-  dispatch,
-  finalize,
+  dispatchAction,
+  finalizeStep,
   isInstant,
   isReducedMotion,
   isAnimating,
@@ -30,17 +30,17 @@ export function useCarouselOrchestration({
   const handleTransitionEnd = useCallback(
     (e: React.TransitionEvent<HTMLDivElement>) => {
       if (e.propertyName === "transform" && e.target === e.currentTarget) {
-        finalize();
+        finalizeStep();
       }
     },
-    [finalize],
+    [finalizeStep],
   );
 
   useIsomorphicLayoutEffect(() => {
     if (isInstant || (isReducedMotion && isAnimating)) {
-      finalize();
+      finalizeStep();
     }
-  }, [isInstant, isReducedMotion, isAnimating, finalize]);
+  }, [finalizeStep, isAnimating, isInstant, isReducedMotion]);
 
   useEffect(() => {
     if (!isAnimating || actualDuration <= 0) {
@@ -48,17 +48,17 @@ export function useCarouselOrchestration({
     }
 
     const timeout = window.setTimeout(() => {
-      finalize();
+      finalizeStep();
     }, actualDuration + ANIMATION_SAFETY_MARGIN);
 
     return () => window.clearTimeout(timeout);
-  }, [isAnimating, actualDuration, finalize]);
+  }, [actualDuration, finalizeStep, isAnimating]);
 
   useEffect(() => {
     if (pendingTransition) {
-      dispatch({ type: "COMMIT_REBASE" });
+      dispatchAction({ type: "COMMIT_REBASE" });
     }
-  }, [pendingTransition, dispatch]);
+  }, [dispatchAction, pendingTransition]);
 
   return {
     handleTransitionEnd,

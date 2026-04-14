@@ -8,4 +8,3 @@ export const useCarouselContext = () => {
   if (!context) throw new Error("Must be used within Carousel");
   return context;
 };
-

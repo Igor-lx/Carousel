@@ -3,21 +3,26 @@ import type { PaginationViewProps } from "../types";
 import { Dot } from "./Dot";
 
 export const PaginationView = memo(
-  ({ pageCount, visualIndex, handleDotClick, styles }: PaginationViewProps) => {
-    const dots = useMemo(
-      () => Array.from({ length: pageCount }, (_, i) => i),
+  ({
+    pageCount,
+    visualIndex,
+    onPageSelect,
+    classNames,
+  }: PaginationViewProps) => {
+    const pageIndexes = useMemo(
+      () => Array.from({ length: pageCount }, (_, index) => index),
       [pageCount],
     );
 
     return (
-      <div className={styles.paginationWrapper} aria-hidden="true">
-        {dots.map((idx) => (
+      <div className={classNames.paginationWrapper} aria-hidden="true">
+        {pageIndexes.map((index) => (
           <Dot
-            key={idx}
-            idx={idx}
-            styles={styles}
+            key={index}
+            index={index}
+            classNames={classNames}
             visualIndex={visualIndex}
-            onDotClick={handleDotClick}
+            onPageSelect={onPageSelect}
           />
         ))}
       </div>

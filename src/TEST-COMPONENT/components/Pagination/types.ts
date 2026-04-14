@@ -7,18 +7,18 @@ export interface PaginationClassMap {
 
 export interface PaginationProps {
   className?: PaginationClassMap;
-};
+}
 
 export interface PaginationViewProps {
   pageCount: number;
   visualIndex: number;
-  handleDotClick: (index: number) => void;
-  styles: PaginationClassMap;
+  onPageSelect: (index: number) => void;
+  classNames: PaginationClassMap;
 }
 
 export interface PaginationDotProps {
-  idx: number;
+  index: number;
   visualIndex: number;
-  onDotClick: (index: number) => void;
-  styles: PaginationClassMap;
+  onPageSelect: (index: number) => void;
+  classNames: PaginationClassMap;
 }

@@ -1,4 +1,4 @@
-import { useMemo, memo, useReducer, useRef } from "react";
+import { memo, useMemo, useReducer, useRef } from "react";
 
 import styles from "./Carousel.module.scss";
 import controlsVariables from "./styles/Controls.variables.module.scss";
@@ -22,11 +22,11 @@ import {
 import {
   manageFocusShift,
   mergeStyles,
+  resolveSlots,
   useComponentVisibility,
   useIsomorphicLayoutEffect,
   useIsReducedMotion,
   useIsTouchDevice,
-  resolveSlots,
   usePickStyles,
 } from "../shared";
 
@@ -88,11 +88,11 @@ const Carousel = memo((props: CarouselProps) => {
   });
 
   const {
-    durationAutoplay: safeDurationAutoplay,
-    durationStep: safeDurationStep,
-    durationJump: safeDurationJump,
-    intervalAutoplay: safeIntervalAutoplay,
-    errAltPlaceholder: actualErrAltPlaceholder,
+    autoplayDuration,
+    stepDuration,
+    jumpDuration,
+    autoplayInterval,
+    errorAltPlaceholder,
   } = useSafeSettings({
     durationAutoplay,
     durationStep,
@@ -104,29 +104,29 @@ const Carousel = memo((props: CarouselProps) => {
   const { externalRef: externalControllerRef, connectedChildren } =
     useExternalRefBridge(children);
 
-  const needsLayoutClamp = hasImperfectLayout(totalSlides, visibleSlidesNr);
-  const shouldClampLayout = isLayoutClamped && needsLayoutClamp;
+  const hasLayoutMismatch = hasImperfectLayout(totalSlides, visibleSlidesNr);
+  const shouldClampLayout = isLayoutClamped && hasLayoutMismatch;
 
-  const baseResolvedSlidesData = useMemo(
+  const resolvedSlidesData = useMemo(
     () => resolveSlidesData(slidesData),
     [slidesData],
   );
 
-  const resolvedSlidesData = useMemo(
+  const layoutSlidesData = useMemo(
     () =>
       shouldClampLayout
-        ? clampSlidesData(baseResolvedSlidesData, visibleSlidesNr)
-        : baseResolvedSlidesData,
+        ? clampSlidesData(resolvedSlidesData, visibleSlidesNr)
+        : resolvedSlidesData,
     [
-      baseResolvedSlidesData,
+      resolvedSlidesData,
       shouldClampLayout,
       shouldClampLayout ? visibleSlidesNr : null,
     ],
   );
 
   const nextLayout = useMemo<CarouselLayout>(
-    () => getCarouselLayout(resolvedSlidesData, visibleSlidesNr, isFinite),
-    [resolvedSlidesData, visibleSlidesNr, isFinite],
+    () => getCarouselLayout(layoutSlidesData, visibleSlidesNr, isFinite),
+    [layoutSlidesData, visibleSlidesNr, isFinite],
   );
 
   const [state, baseDispatch] = useReducer(reducer, nextLayout, initialState);
@@ -148,9 +148,9 @@ const Carousel = memo((props: CarouselProps) => {
   const { canSlide, pageCount, clampedVisible } = nextLayout;
 
   usePerfectLayoutNotice({
-    hasImperfectLayout: needsLayoutClamp,
+    hasImperfectLayout: hasLayoutMismatch,
     originalLength: totalSlides,
-    normalizedLength: resolvedSlidesData.length,
+    normalizedLength: layoutSlidesData.length,
     visibleSlidesNr: clampedVisible,
     isLayoutClamped: shouldClampLayout,
   });
@@ -161,10 +161,10 @@ const Carousel = memo((props: CarouselProps) => {
   );
 
   const {
-    data: virtualSlides,
-    activeDot: activeDotIndex,
-    isAtStart: isFiniteAndAtStart,
-    isAtEnd: isFiniteAndAtEnd,
+    slides: virtualSlides,
+    activePageIndex,
+    isAtStart,
+    isAtEnd,
     windowStart,
   } = useCarouselSlides({
     current: virtualIndex,
@@ -173,10 +173,10 @@ const Carousel = memo((props: CarouselProps) => {
     isMoving: isAnimating,
     targetIndex,
     layout: nextLayout,
-    slidesData: resolvedSlidesData,
+    slidesData: layoutSlidesData,
   });
 
-  const { dispatch: componentDispatch, finalize: componentFinalize } =
+  const { dispatchAction, finalizeStep: finalizeEngineStep } =
     useCarouselEngine({
       dispatch: baseDispatch,
       isInstantMode: isReducedMotion,
@@ -185,19 +185,19 @@ const Carousel = memo((props: CarouselProps) => {
     });
 
   const {
-    move: executeMove,
-    goTo: executeGoTo,
-    dragStart: executeDragStart,
-    dragSnap: executeDragSnap,
-    finalize: safeFinalizeMove,
-    activeDuration,
+    move,
+    goTo,
+    startDrag,
+    snapDrag,
+    finalizeStep,
+    activeStepDuration,
   } = useCarouselController({
-    dispatch: componentDispatch,
-    finalize: componentFinalize,
+    dispatchAction,
+    finalizeStep: finalizeEngineStep,
     enabled: canSlide,
     externalController: externalControllerRef,
     isMoving,
-    baseDuration: safeDurationStep,
+    stepDuration,
     measureRef: containerRef,
     movingRef,
     layout: nextLayout,
@@ -205,29 +205,27 @@ const Carousel = memo((props: CarouselProps) => {
     windowStart,
   });
 
-  const isGestureEnabled = canSlide;
-
   const {
     isDragging,
     velocity,
-    dragListeners: bindDragListeners,
+    dragListeners,
     offset,
   } = useCarouselGesture({
-    onDragStart: executeDragStart,
-    onDragSnap: executeDragSnap,
-    onMove: executeMove,
-    enabled: isGestureEnabled,
+    onDragStart: startDrag,
+    onDragSnap: snapDrag,
+    onMove: move,
+    enabled: canSlide,
     measureRef: containerRef,
   });
 
   const {
-    handlePrev: handleMovePrevClick,
-    handleNext: handleMoveNextClick,
-    handleDot: handleDotClick,
-    handleSlide: handleSlideClick,
+    handlePrev,
+    handleNext,
+    handlePageSelect,
+    handleSlideClick,
   } = useCarouselClick({
-    onMove: executeMove,
-    onGoTo: executeGoTo,
+    onMove: move,
+    onGoTo: goTo,
     onClick: onSlideClick,
   });
 
@@ -235,23 +233,23 @@ const Carousel = memo((props: CarouselProps) => {
   const { onHover } = useCarouselAutoPlay({
     enabled: isAuto && canSlide,
     ignoreHover: isTouch,
-    intervalAutoplay: safeIntervalAutoplay,
-    isPaused: isPaused,
-    isAtEnd: isFiniteAndAtEnd,
-    onGoTo: executeGoTo,
-    onMove: executeMove,
+    autoplayInterval,
+    isPaused,
+    isAtEnd,
+    onGoTo: goTo,
+    onMove: move,
   });
 
   const actualDuration = useCarouselSpeed({
     velocity,
     reason: moveReason,
-    animMode: animMode,
+    animMode,
     isInteractive: isDragging,
     isInstant,
     viewportRef: containerRef,
-    durationAutoplay: safeDurationAutoplay,
-    durationStep: activeDuration,
-    durationJump: safeDurationJump,
+    autoplayDuration,
+    stepDuration: activeStepDuration,
+    jumpDuration,
   });
 
   useCarouselExternalControllerSync({
@@ -267,8 +265,8 @@ const Carousel = memo((props: CarouselProps) => {
 
   const { handleTransitionEnd } = useCarouselOrchestration({
     pendingTransition,
-    dispatch: componentDispatch,
-    finalize: safeFinalizeMove,
+    dispatchAction,
+    finalizeStep,
     isInstant,
     isReducedMotion,
     isAnimating,
@@ -276,13 +274,13 @@ const Carousel = memo((props: CarouselProps) => {
   });
 
   const {
-    containerStyle: containerTechStyle,
-    itemStyle: slideWrapperTechStyle,
+    trackStyle,
+    slideStyle,
   } = useCarouselTechStyles({
     current: virtualIndex,
     windowStart,
     size: clampedVisible,
-    animMode: animMode,
+    animMode,
     isInteractive: isDragging,
     duration: actualDuration,
     enabled: canSlide,
@@ -298,38 +296,38 @@ const Carousel = memo((props: CarouselProps) => {
 
   const contextValue = useCarouselContextValue({
     pageCount,
-    activeDotIndex,
+    activePageIndex,
     isMoving,
     isJumping,
     moveReason,
     actualDuration,
-    handleDotClick,
-    handlePrev: handleMovePrevClick,
-    handleNext: handleMoveNextClick,
-    isFiniteAndAtStart,
-    isFiniteAndAtEnd,
+    handlePageSelect,
+    handlePrev,
+    handleNext,
+    isAtStart,
+    isAtEnd,
     isTouch,
     isReducedMotion,
   });
 
-  const mergedStyles = useMemo(() => {
-    const internalStyles = mergeStyles(
+  const classNames = useMemo(() => {
+    const internalClassNames = mergeStyles(
       styles,
       controlsVariables,
       paginationVariables,
     );
-    if (!className) return internalStyles;
-    return mergeStyles(internalStyles, className);
+    if (!className) return internalClassNames;
+    return mergeStyles(internalClassNames, className);
   }, [className]);
 
-  const slideItemStyles = usePickStyles(mergedStyles, SLIDE_KEYS);
+  const slideClassNames = usePickStyles(classNames, SLIDE_KEYS);
 
   if (totalSlides === 0) return null;
 
   return (
     <CarouselContext.Provider value={contextValue}>
       <div
-        className={mergedStyles.outerContainer}
+        className={classNames.outerContainer}
         role="region"
         aria-roledescription="carousel"
         data-touch={isTouch}
@@ -338,31 +336,31 @@ const Carousel = memo((props: CarouselProps) => {
         <div
           ref={containerRef}
           tabIndex={-1}
-          className={mergedStyles.innerContainer}
+          className={classNames.innerContainer}
           onMouseEnter={() => onHover(true)}
           onMouseLeave={() => onHover(false)}
-          {...bindDragListeners}
+          {...dragListeners}
         >
           <div
             ref={movingRef}
-            className={mergedStyles.slideContainer}
+            className={classNames.slideContainer}
             onTransitionEnd={handleTransitionEnd}
-            style={containerTechStyle}
+            style={trackStyle}
           >
-            {virtualSlides.map((vs) => {
+            {virtualSlides.map((slide) => {
               return (
                 <SlideItem
-                  key={vs.slideKey}
-                  slideData={vs.slideData}
-                  className={slideItemStyles}
-                  style={slideWrapperTechStyle}
+                  key={slide.slideKey}
+                  slideData={slide.slideData}
+                  className={slideClassNames}
+                  style={slideStyle}
                   isContentImg={isContentImg}
-                  errAltPlaceholder={actualErrAltPlaceholder}
+                  errAltPlaceholder={errorAltPlaceholder}
                   onSlideClick={handleSlideClick}
                   isInteractive={isInteractive}
-                  isActive={vs.isActive}
-                  isActual={vs.isActual}
-                  {...vs.a11yProps}
+                  isActive={slide.isActive}
+                  isActual={slide.isActual}
+                  {...slide.a11yProps}
                 />
               );
             })}

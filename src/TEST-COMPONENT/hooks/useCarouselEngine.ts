@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import type { Action, ReducerAction } from "../model/reducer";
+import type { Action, ReducerAction, StepAction } from "../model/reducer";
 import type { CarouselLayout } from "../utilities";
 
 interface EngineProps {
@@ -9,37 +9,46 @@ interface EngineProps {
   layout: CarouselLayout;
 }
 
+interface EngineResult {
+  dispatchAction: (action: Action) => void;
+  finalizeStep: () => void;
+}
+
+const isStepAction = (action: Action): action is StepAction =>
+  action.type === "MOVE" || action.type === "GO_TO";
+
 export function useCarouselEngine({
   dispatch,
   isMoving,
   isInstantMode,
   layout,
-}: EngineProps) {
-  const componentDispatch = useCallback(
+}: EngineProps): EngineResult {
+  const dispatchAction = useCallback(
     (action: Action) => {
-      if (action.type === "MOVE" || action.type === "GO_TO") {
+      if (isStepAction(action)) {
         dispatch({
           ...action,
           layout,
-          isInstant: !!(isInstantMode || action.isInstant),
+          isInstant: Boolean(isInstantMode || action.isInstant),
         });
-      } else {
-        dispatch({
-          ...action,
-          layout,
-        });
+        return;
       }
+
+      dispatch({
+        ...action,
+        layout,
+      });
     },
-    [isInstantMode, dispatch, layout],
+    [dispatch, isInstantMode, layout],
   );
 
-  const finalize = useCallback(() => {
+  const finalizeStep = useCallback(() => {
     if (!isMoving) return;
-    componentDispatch({ type: "END_STEP" });
-  }, [isMoving, componentDispatch]);
+    dispatchAction({ type: "END_STEP" });
+  }, [dispatchAction, isMoving]);
 
   return {
-    dispatch: componentDispatch,
-    finalize,
+    dispatchAction,
+    finalizeStep,
   };
 }

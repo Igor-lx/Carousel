@@ -2,16 +2,16 @@ import type { MoveReason } from "../reducer";
 
 export interface CarouselContextValue {
   pageCount: number;
-  activeDotIndex: number;
+  activePageIndex: number;
   isMoving: boolean;
   isJumping: boolean;
-  actualDuration: number;
   moveReason: MoveReason;
+  actualDuration: number;
   handlePrev: () => void;
   handleNext: () => void;
-  handleDotClick: (index: number) => void;
-  showAtStart: boolean;
-  showAtEnd: boolean;
+  handlePageSelect: (index: number) => void;
+  canMovePrev: boolean;
+  canMoveNext: boolean;
   isTouch: boolean;
   isReducedMotion: boolean;
 }

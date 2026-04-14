@@ -22,6 +22,17 @@ interface TechStylesProps {
   dragOffset: number;
 }
 
+interface TechStylesResult {
+  trackStyle: React.CSSProperties | undefined;
+  slideStyle: { flex: string };
+}
+
+const getNormalModeBezier = (reason: MoveReason) => {
+  if (reason === "gesture") return MOVE_SWIPE_BEZIER;
+  if (reason === "autoplay") return MOVE_AUTO_BEZIER;
+  return MOVE_CLICK_BEZIER;
+};
+
 export function useCarouselTechStyles({
   current,
   windowStart,
@@ -32,8 +43,8 @@ export function useCarouselTechStyles({
   enabled,
   reason,
   dragOffset,
-}: TechStylesProps) {
-  const containerStyle = useMemo(() => {
+}: TechStylesProps): TechStylesResult {
+  const trackStyle = useMemo(() => {
     if (!enabled) return undefined;
 
     const relativeIndex = current - windowStart;
@@ -66,9 +77,7 @@ export function useCarouselTechStyles({
 
       case "normal":
       default:
-        if (reason === "gesture") bezier = MOVE_SWIPE_BEZIER;
-        else if (reason === "autoplay") bezier = MOVE_AUTO_BEZIER;
-        else bezier = MOVE_CLICK_BEZIER;
+        bezier = getNormalModeBezier(reason);
         break;
     }
 
@@ -86,10 +95,12 @@ export function useCarouselTechStyles({
     enabled,
     reason,
     dragOffset,
-    animMode,
   ]);
 
-  const itemStyle = useMemo(() => getSlideFlexStyle(size), [size]);
+  const slideStyle = useMemo(() => getSlideFlexStyle(size), [size]);
 
-  return { containerStyle, itemStyle };
+  return {
+    trackStyle,
+    slideStyle,
+  };
 }

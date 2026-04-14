@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { CarouselExternalController } from "../control";
 import type { Action, MoveReason, State } from "../model/reducer";
 import { MIN_DURATION, VELOCITY_COEFFICIENT } from "../model/constants";
@@ -9,12 +9,12 @@ import {
 } from "../utilities";
 
 interface ControllerProps {
-  dispatch: React.Dispatch<Action>;
-  finalize: () => void;
+  dispatchAction: React.Dispatch<Action>;
+  finalizeStep: () => void;
   enabled: boolean;
   externalController: React.RefObject<CarouselExternalController | null>;
   isMoving: boolean;
-  baseDuration: number;
+  stepDuration: number;
   measureRef: React.RefObject<HTMLDivElement | null>;
   movingRef: React.RefObject<HTMLDivElement | null>;
   layout: CarouselLayout;
@@ -25,34 +25,34 @@ interface ControllerProps {
 interface ControllerResult {
   move: (step: number, moveReason?: MoveReason, dragOffset?: number) => void;
   goTo: (index: number, moveReason?: MoveReason) => void;
-  dragStart: () => void;
-  dragSnap: (dragOffset?: number) => void;
-  finalize: () => void;
-  activeDuration: number;
+  startDrag: () => void;
+  snapDrag: (dragOffset?: number) => void;
+  finalizeStep: () => void;
+  activeStepDuration: number;
 }
 
 export function useCarouselController({
-  dispatch,
-  finalize,
+  dispatchAction,
+  finalizeStep,
   enabled,
   externalController,
   isMoving,
-  baseDuration,
+  stepDuration,
   measureRef,
   movingRef,
   layout,
   state,
   windowStart,
 }: ControllerProps): ControllerResult {
-  const durationRef = useRef(baseDuration);
+  const durationRef = useRef(stepDuration);
   const lastActionTimeRef = useRef(0);
 
   useEffect(() => {
     if (!isMoving) {
-      durationRef.current = baseDuration;
+      durationRef.current = stepDuration;
       lastActionTimeRef.current = 0;
     }
-  }, [isMoving, baseDuration]);
+  }, [isMoving, stepDuration]);
 
   const updateDuration = useCallback(
     (moveReason: MoveReason) => {
@@ -72,6 +72,24 @@ export function useCarouselController({
     [isMoving],
   );
 
+  const getMeasuredVirtualIndex = useCallback(
+    () =>
+      getCurrentVirtualIndexFromDOM({
+        track: movingRef.current,
+        viewport: measureRef.current,
+        visibleSlidesNr: layout.clampedVisible,
+        windowStart,
+        fallback: state.virtualIndex,
+      }),
+    [
+      layout.clampedVisible,
+      measureRef,
+      movingRef,
+      state.virtualIndex,
+      windowStart,
+    ],
+  );
+
   const resolveFromVirtualIndex = useCallback(
     (dragOffset?: number) => {
       if (typeof dragOffset === "number") {
@@ -84,21 +102,28 @@ export function useCarouselController({
         });
       }
 
-      return getCurrentVirtualIndexFromDOM({
-        track: movingRef.current,
-        viewport: measureRef.current,
-        visibleSlidesNr: layout.clampedVisible,
-        windowStart,
-        fallback: state.virtualIndex,
-      });
+      return getMeasuredVirtualIndex();
     },
     [
-      movingRef,
-      measureRef,
+      getMeasuredVirtualIndex,
       layout.clampedVisible,
-      windowStart,
+      measureRef,
       state.virtualIndex,
     ],
+  );
+
+  const syncExternalController = useCallback(
+    (step: number) => {
+      if (step > 0) {
+        externalController.current?.moveRight?.();
+        return;
+      }
+
+      if (step < 0) {
+        externalController.current?.moveLeft?.();
+      }
+    },
+    [externalController],
   );
 
   const move = useCallback(
@@ -110,69 +135,62 @@ export function useCarouselController({
       if (!enabled) return;
 
       updateDuration(moveReason);
+      syncExternalController(step);
 
-      if (externalController.current) {
-        if (step > 0) {
-          externalController.current.moveRight?.();
-        } else if (step < 0) {
-          externalController.current.moveLeft?.();
-        }
-      }
-
-      dispatch({
+      dispatchAction({
         type: "MOVE",
         step,
         moveReason,
         fromVirtualIndex: resolveFromVirtualIndex(dragOffset),
       });
     },
-    [enabled, dispatch, externalController, resolveFromVirtualIndex, updateDuration],
+    [
+      dispatchAction,
+      enabled,
+      resolveFromVirtualIndex,
+      syncExternalController,
+      updateDuration,
+    ],
   );
 
   const goTo = useCallback(
     (index: number, moveReason: MoveReason = "unknown") => {
       if (!enabled) return;
       updateDuration(moveReason);
-      dispatch({
+      dispatchAction({
         type: "GO_TO",
         target: index,
         moveReason,
         fromVirtualIndex: resolveFromVirtualIndex(),
       });
     },
-    [enabled, dispatch, resolveFromVirtualIndex, updateDuration],
+    [dispatchAction, enabled, resolveFromVirtualIndex, updateDuration],
   );
 
-  const dragStart = useCallback(() => {
-    durationRef.current = baseDuration;
-    dispatch({
+  const startDrag = useCallback(() => {
+    durationRef.current = stepDuration;
+    dispatchAction({
       type: "START_DRAG",
-      fromVirtualIndex: getCurrentVirtualIndexFromDOM({
-        track: movingRef.current,
-        viewport: measureRef.current,
-        visibleSlidesNr: layout.clampedVisible,
-        windowStart,
-        fallback: state.virtualIndex,
-      }),
+      fromVirtualIndex: getMeasuredVirtualIndex(),
     });
-  }, [baseDuration, dispatch, movingRef, measureRef, layout.clampedVisible, windowStart, state.virtualIndex]);
+  }, [dispatchAction, getMeasuredVirtualIndex, stepDuration]);
 
-  const dragSnap = useCallback(
+  const snapDrag = useCallback(
     (dragOffset?: number) => {
-      dispatch({
+      dispatchAction({
         type: "END_DRAG_SNAP",
         fromVirtualIndex: resolveFromVirtualIndex(dragOffset),
       });
     },
-    [dispatch, resolveFromVirtualIndex],
+    [dispatchAction, resolveFromVirtualIndex],
   );
 
   return {
     move,
     goTo,
-    dragStart,
-    dragSnap,
-    finalize,
-    activeDuration: durationRef.current,
+    startDrag,
+    snapDrag,
+    finalizeStep,
+    activeStepDuration: durationRef.current,
   };
 }

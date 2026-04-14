@@ -4,19 +4,19 @@ import type { ControlsViewProps } from "../types";
 
 export const ControlsView = memo(
   ({
-    showAtStart,
-    showAtEnd,
+    canMovePrev,
+    canMoveNext,
     onPrev,
     onNext,
-    styles,
+    classNames,
   }: ControlsViewProps) => {
     return (
       <>
-        {showAtStart && (
-          <NavZone direction="left" onClick={onPrev} styles={styles} />
+        {canMovePrev && (
+          <NavZone direction="left" onClick={onPrev} classNames={classNames} />
         )}
-        {showAtEnd && (
-          <NavZone direction="right" onClick={onNext} styles={styles} />
+        {canMoveNext && (
+          <NavZone direction="right" onClick={onNext} classNames={classNames} />
         )}
       </>
     );

@@ -5,63 +5,63 @@ import type { MoveReason } from "../model/reducer";
 
 interface UseCarouselContextValueProps {
   pageCount: number;
-  activeDotIndex: number;
+  activePageIndex: number;
   isMoving: boolean;
   isJumping: boolean;
   moveReason: MoveReason;
   actualDuration: number;
-  handleDotClick: (index: number) => void;
+  handlePageSelect: (index: number) => void;
   handlePrev: () => void;
   handleNext: () => void;
-  isFiniteAndAtStart: boolean;
-  isFiniteAndAtEnd: boolean;
+  isAtStart: boolean;
+  isAtEnd: boolean;
   isTouch: boolean;
   isReducedMotion: boolean;
 }
 
 export function useCarouselContextValue({
   pageCount,
-  activeDotIndex,
+  activePageIndex,
   isMoving,
   isJumping,
   moveReason,
   actualDuration,
-  handleDotClick,
+  handlePageSelect,
   handlePrev,
   handleNext,
-  isFiniteAndAtStart,
-  isFiniteAndAtEnd,
+  isAtStart,
+  isAtEnd,
   isTouch,
   isReducedMotion,
 }: UseCarouselContextValueProps): CarouselContextValue {
   return useMemo(
     () => ({
       pageCount,
-      activeDotIndex,
+      activePageIndex,
       isMoving,
       isJumping,
       moveReason,
       actualDuration,
-      handleDotClick,
+      handlePageSelect,
       handlePrev,
       handleNext,
-      showAtStart: !isFiniteAndAtStart,
-      showAtEnd: !isFiniteAndAtEnd,
+      canMovePrev: !isAtStart,
+      canMoveNext: !isAtEnd,
       isTouch,
       isReducedMotion,
     }),
     [
       pageCount,
-      activeDotIndex,
+      activePageIndex,
       isMoving,
       isJumping,
       moveReason,
       actualDuration,
-      handleDotClick,
+      handlePageSelect,
       handlePrev,
       handleNext,
-      isFiniteAndAtStart,
-      isFiniteAndAtEnd,
+      isAtStart,
+      isAtEnd,
       isTouch,
       isReducedMotion,
     ],

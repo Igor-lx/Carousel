@@ -13,7 +13,7 @@ export function useCarouselExternalControllerSync({
   externalControllerRef,
   isReducedMotion,
   actualDuration,
-}: ExternalControllerSyncProps) {
+}: ExternalControllerSyncProps): void {
   useIsomorphicLayoutEffect(() => {
     externalControllerRef.current?.toggleFreezed(isReducedMotion);
   }, [isReducedMotion, externalControllerRef]);

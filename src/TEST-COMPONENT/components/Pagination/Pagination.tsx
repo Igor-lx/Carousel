@@ -10,37 +10,37 @@ import { PaginationView } from "./components/PaginationView";
 
 export const Pagination = memo(({ className }: PaginationProps) => {
   const {
-    pageCount,
-    activeDotIndex,
-    handleDotClick,
+    actualDuration,
+    activePageIndex,
+    handlePageSelect,
     isJumping,
     isReducedMotion,
     moveReason,
-    actualDuration,
+    pageCount,
   } = useCarouselContext();
 
-  if (pageCount <= 1) return null;
-
-  const mergedStyles = useMemo(() => {
+  const classNames = useMemo(() => {
     if (!className) return styles;
     return mergeStyles(styles, className);
   }, [className]);
 
-  const isInstantSync =
+  const shouldSyncInstantly =
     moveReason !== "autoplay" || isJumping || isReducedMotion;
 
   const visualIndex = usePaginationSync({
-    targetIndex: activeDotIndex,
-    isInstant: isInstantSync,
+    targetIndex: activePageIndex,
+    isInstant: shouldSyncInstantly,
     duration: actualDuration,
   });
+
+  if (pageCount <= 1) return null;
 
   return (
     <PaginationView
       pageCount={pageCount}
       visualIndex={visualIndex}
-      handleDotClick={handleDotClick}
-      styles={mergedStyles}
+      onPageSelect={handlePageSelect}
+      classNames={classNames}
     />
   );
 });

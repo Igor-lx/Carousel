@@ -15,17 +15,19 @@ export const SlideItem = memo(
     className,
     ...a11yProps
   }: SlideItemProps) => {
-    if (!slideData) return null;
-
     const [isBroken, setIsBroken] = useState(false);
 
-    useEffect(() => setIsBroken(false), [slideData.id, slideData.content]);
+    useEffect(() => {
+      setIsBroken(false);
+    }, [slideData?.id, slideData?.content]);
 
     useEffect(() => {
       if (isActual) {
         setIsBroken(false);
       }
     }, [isActual]);
+
+    if (!slideData) return null;
 
     const isClickable = !!onSlideClick && isInteractive && !isBroken;
     const Tag = isClickable ? "button" : "div";

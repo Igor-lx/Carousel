@@ -6,21 +6,21 @@ import styles from "./Controls.module.scss";
 import { mergeStyles } from "../../../shared";
 
 export const Controls = memo(({ className }: ControlsProps) => {
-  const { handlePrev, handleNext, showAtStart, showAtEnd } =
+  const { canMovePrev, canMoveNext, handlePrev, handleNext } =
     useCarouselContext();
 
-  const mergedStyles = useMemo(() => {
+  const classNames = useMemo(() => {
     if (!className) return styles;
     return mergeStyles(styles, className);
   }, [className]);
 
   return (
     <ControlsView
-      showAtStart={showAtStart}
-      showAtEnd={showAtEnd}
+      canMovePrev={canMovePrev}
+      canMoveNext={canMoveNext}
       onPrev={handlePrev}
       onNext={handleNext}
-      styles={mergedStyles}
+      classNames={classNames}
     />
   );
 });

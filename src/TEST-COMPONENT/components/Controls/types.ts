@@ -4,24 +4,22 @@ export interface ControlsClassMap {
   navZoneL?: string;
   navZoneR?: string;
   navButton?: string;
-  touch?: string;
-  reducedMotion?: string;
 }
 
 export interface NavZoneProps {
   direction: "left" | "right";
   onClick: () => void;
-  styles: ControlsClassMap;
+  classNames: ControlsClassMap;
 }
 
 export interface ControlsViewProps {
-  showAtStart: boolean;
-  showAtEnd: boolean;
+  canMovePrev: boolean;
+  canMoveNext: boolean;
   onPrev: () => void;
   onNext: () => void;
-  styles: ControlsClassMap;
+  classNames: ControlsClassMap;
 }
 
 export interface ControlsProps {
   className?: ControlsClassMap;
-};
+}

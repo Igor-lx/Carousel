@@ -1,5 +1,3 @@
-
-
 export const DEFAULT_SETTINGS = {
   visibleSlidesNr: 3,
   isLayoutClamped: false,

@@ -11,11 +11,11 @@ interface SafeSettingsProps {
 }
 
 interface SafeSettingsResult {
-  durationAutoplay: number;
-  durationStep: number;
-  durationJump: number;
-  intervalAutoplay: number;
-  errAltPlaceholder: string;
+  autoplayDuration: number;
+  stepDuration: number;
+  jumpDuration: number;
+  autoplayInterval: number;
+  errorAltPlaceholder: string;
 }
 
 const getSafeDuration = (value: number | undefined, fallback: number) => {
@@ -30,52 +30,46 @@ const getSafeDuration = (value: number | undefined, fallback: number) => {
   return MIN_SPEED;
 };
 
-export const useSafeSettings = ({
+export function useSafeSettings({
   durationAutoplay,
   durationStep,
   durationJump,
   intervalAutoplay,
-  errAltPlaceholder, 
-}: SafeSettingsProps): SafeSettingsResult => {
+  errAltPlaceholder,
+}: SafeSettingsProps): SafeSettingsResult {
   return useMemo(() => {
-    const safeDurationAutoplay = getSafeDuration(
+    const autoplayDuration = getSafeDuration(
       durationAutoplay,
       DEFAULT_SETTINGS.durationAutoplay,
     );
 
-    const durationStepInput = getSafeDuration(
+    const resolvedStepDuration = getSafeDuration(
       durationStep,
       DEFAULT_SETTINGS.durationStep,
     );
-    const safeDurationStep = Math.min(
-      safeDurationAutoplay,
-      durationStepInput,
-    );
+    const stepDuration = Math.min(autoplayDuration, resolvedStepDuration);
 
-    const durationJumpInput = getSafeDuration(
+    const resolvedJumpDuration = getSafeDuration(
       durationJump,
       DEFAULT_SETTINGS.durationJump,
     );
-    const safeDurationJump = Math.min(
-      safeDurationStep,
-      durationJumpInput,
-    );
+    const jumpDuration = Math.min(stepDuration, resolvedJumpDuration);
 
-    const safeIntervalAutoplay =
+    const autoplayInterval =
       intervalAutoplay !== undefined
         ? Math.max(MIN_DELAY, intervalAutoplay)
         : DEFAULT_SETTINGS.intervalAutoplay;
 
-    const safeErrAltPlaceholder = errAltPlaceholder?.trim()
+    const errorAltPlaceholder = errAltPlaceholder?.trim()
       ? errAltPlaceholder
       : DEFAULT_SETTINGS.errAltPlaceholder;
 
     return {
-      durationAutoplay: safeDurationAutoplay,
-      durationStep: safeDurationStep,
-      durationJump: safeDurationJump,
-      intervalAutoplay: safeIntervalAutoplay,
-      errAltPlaceholder: safeErrAltPlaceholder,
+      autoplayDuration,
+      stepDuration,
+      jumpDuration,
+      autoplayInterval,
+      errorAltPlaceholder,
     };
   }, [
     durationAutoplay,
@@ -84,4 +78,4 @@ export const useSafeSettings = ({
     intervalAutoplay,
     errAltPlaceholder,
   ]);
-};
+}
