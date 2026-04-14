@@ -28,7 +28,7 @@ export const DRAG_SETTINGS_CONFIG = {
 
 export const DRAG_SPEED_CONFIG = {
   velocityThreshold: 0.65,
-  rampEnd: 2.1,
-  minDurationRatio: 0.3,
-  minDuration: 240,
+  rampEnd: 1.9,
+  minDurationRatio: 0.2,
+  minDuration: 160,
 } as const;
