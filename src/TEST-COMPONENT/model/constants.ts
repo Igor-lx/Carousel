@@ -1,6 +1,6 @@
 export const MIN_SPEED = 100;
-export const MIN_DURATION = 600;
-export const VELOCITY_COEFFICIENT = 0.65;
+export const MIN_DURATION = 300;
+export const VELOCITY_COEFFICIENT = 0.9;
 export const MIN_DELAY = 100;
 
 export const ANIMATION_SAFETY_MARGIN = 30;
