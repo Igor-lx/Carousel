@@ -7,6 +7,7 @@ export * from "./useCarouselGesture";
 export * from "./useCarouselMotion";
 export * from "./useCarouselSlides";
 export * from "./useCarouselSpeed";
+export * from "./useCarouselStepDuration";
 export * from "./useCarouselTechStyles";
 export * from "./usePaginationSync";
 export * from "./usePerfectLayoutNotice";

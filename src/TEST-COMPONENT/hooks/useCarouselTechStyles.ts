@@ -5,8 +5,7 @@ interface TechStylesProps {
   current: number;
   windowStart: number;
   size: number;
-  isInteractive: boolean;
-  enabled: boolean;
+  isDragging: boolean;
   dragOffset: number;
 }
 
@@ -19,28 +18,20 @@ export function useCarouselTechStyles({
   current,
   windowStart,
   size,
-  isInteractive,
-  enabled,
+  isDragging,
   dragOffset,
 }: TechStylesProps): TechStylesResult {
   const trackStyle = useMemo(() => {
-    if (!enabled) return undefined;
+    if (!isDragging) return undefined;
 
     const relativeIndex = current - windowStart;
     const transform = `${getCarouselTransform(relativeIndex, size)} translateX(${dragOffset}px)`;
-
-    if (isInteractive) {
-      return {
-        transform,
-        transition: "none",
-      };
-    }
 
     return {
       transform,
       transition: "none",
     };
-  }, [current, windowStart, size, isInteractive, enabled, dragOffset]);
+  }, [current, windowStart, size, isDragging, dragOffset]);
 
   const slideStyle = useMemo(() => getSlideFlexStyle(size), [size]);
 

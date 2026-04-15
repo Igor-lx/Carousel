@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback } from "react";
 import type { CarouselExternalController } from "../control";
-import type { Action, MoveReason, State } from "../model/reducer";
-import { MIN_DURATION, VELOCITY_COEFFICIENT } from "../model/constants";
+import type { Action, MoveReason } from "../model/reducer";
 import {
   getVirtualIndexFromDragOffset,
   type CarouselLayout,
@@ -9,15 +8,14 @@ import {
 
 interface ControllerProps {
   dispatchAction: React.Dispatch<Action>;
-  finalizeStep: () => void;
   enabled: boolean;
   externalController: React.RefObject<CarouselExternalController | null>;
-  isMoving: boolean;
-  stepDuration: number;
   measureRef: React.RefObject<HTMLDivElement | null>;
   layout: CarouselLayout;
-  state: State;
-  getCurrentVirtualIndex: () => number;
+  baseVirtualIndex: number;
+  currentPositionRef: React.MutableRefObject<number>;
+  prepareStepDuration: (moveReason: MoveReason) => void;
+  resetStepDuration: () => void;
 }
 
 interface ControllerResult {
@@ -25,69 +23,38 @@ interface ControllerResult {
   goTo: (index: number, moveReason?: MoveReason) => void;
   startDrag: () => void;
   snapDrag: (dragOffset?: number) => void;
-  finalizeStep: () => void;
-  activeStepDuration: number;
 }
 
 export function useCarouselController({
   dispatchAction,
-  finalizeStep,
   enabled,
   externalController,
-  isMoving,
-  stepDuration,
   measureRef,
   layout,
-  state,
-  getCurrentVirtualIndex,
+  baseVirtualIndex,
+  currentPositionRef,
+  prepareStepDuration,
+  resetStepDuration,
 }: ControllerProps): ControllerResult {
-  const durationRef = useRef(stepDuration);
-  const lastActionTimeRef = useRef(0);
-
-  useEffect(() => {
-    if (!isMoving) {
-      durationRef.current = stepDuration;
-      lastActionTimeRef.current = 0;
-    }
-  }, [isMoving, stepDuration]);
-
-  const updateDuration = useCallback(
-    (moveReason: MoveReason) => {
-      const now = performance.now();
-      const isQuickInput =
-        now - lastActionTimeRef.current < durationRef.current + 50;
-
-      if ((isMoving || isQuickInput) && moveReason === "click") {
-        durationRef.current = Math.max(
-          durationRef.current * VELOCITY_COEFFICIENT,
-          MIN_DURATION,
-        );
-      }
-
-      lastActionTimeRef.current = now;
-    },
-    [isMoving],
-  );
-
   const resolveFromVirtualIndex = useCallback(
     (dragOffset?: number) => {
       if (typeof dragOffset === "number") {
         return getVirtualIndexFromDragOffset({
-          baseVirtualIndex: state.virtualIndex,
+          baseVirtualIndex,
           dragOffset,
           viewport: measureRef.current,
           visibleSlidesNr: layout.clampedVisible,
-          fallback: state.virtualIndex,
+          fallback: baseVirtualIndex,
         });
       }
 
-      return getCurrentVirtualIndex();
+      return currentPositionRef.current;
     },
     [
-      getCurrentVirtualIndex,
+      baseVirtualIndex,
+      currentPositionRef,
       layout.clampedVisible,
       measureRef,
-      state.virtualIndex,
     ],
   );
 
@@ -113,7 +80,7 @@ export function useCarouselController({
     ) => {
       if (!enabled) return;
 
-      updateDuration(moveReason);
+      prepareStepDuration(moveReason);
       syncExternalController(step);
 
       dispatchAction({
@@ -126,16 +93,16 @@ export function useCarouselController({
     [
       dispatchAction,
       enabled,
+      prepareStepDuration,
       resolveFromVirtualIndex,
       syncExternalController,
-      updateDuration,
     ],
   );
 
   const goTo = useCallback(
     (index: number, moveReason: MoveReason = "unknown") => {
       if (!enabled) return;
-      updateDuration(moveReason);
+      prepareStepDuration(moveReason);
       dispatchAction({
         type: "GO_TO",
         target: index,
@@ -143,16 +110,16 @@ export function useCarouselController({
         fromVirtualIndex: resolveFromVirtualIndex(),
       });
     },
-    [dispatchAction, enabled, resolveFromVirtualIndex, updateDuration],
+    [dispatchAction, enabled, prepareStepDuration, resolveFromVirtualIndex],
   );
 
   const startDrag = useCallback(() => {
-    durationRef.current = stepDuration;
+    resetStepDuration();
     dispatchAction({
       type: "START_DRAG",
-      fromVirtualIndex: getCurrentVirtualIndex(),
+      fromVirtualIndex: currentPositionRef.current,
     });
-  }, [dispatchAction, getCurrentVirtualIndex, stepDuration]);
+  }, [currentPositionRef, dispatchAction, resetStepDuration]);
 
   const snapDrag = useCallback(
     (dragOffset?: number) => {
@@ -169,7 +136,5 @@ export function useCarouselController({
     goTo,
     startDrag,
     snapDrag,
-    finalizeStep,
-    activeStepDuration: durationRef.current,
   };
 }

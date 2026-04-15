@@ -13,6 +13,7 @@ import { useIsomorphicLayoutEffect } from "../../shared";
 
 interface MotionProps {
   trackRef: React.RefObject<HTMLDivElement | null>;
+  currentPositionRef: React.MutableRefObject<number>;
   enabled: boolean;
   startVirtualIndex: number;
   currentVirtualIndex: number;
@@ -23,10 +24,6 @@ interface MotionProps {
   reason: MoveReason;
   duration: number;
   onComplete: () => void;
-}
-
-interface MotionResult {
-  getCurrentVirtualIndex: () => number;
 }
 
 type MotionSegment = {
@@ -163,6 +160,7 @@ const sampleSegment = (segment: MotionSegment, now: number) => {
 
 export function useCarouselMotion({
   trackRef,
+  currentPositionRef,
   enabled,
   startVirtualIndex,
   currentVirtualIndex,
@@ -173,17 +171,16 @@ export function useCarouselMotion({
   reason,
   duration,
   onComplete,
-}: MotionProps): MotionResult {
+}: MotionProps): void {
   const frameRef = useRef<number | null>(null);
   const completionFrameRef = useRef<number | null>(null);
   const activeSegmentRef = useRef<MotionSegment | null>(null);
-  const positionRef = useRef(startVirtualIndex);
   const velocityRef = useRef(0);
   const lastPlanRef = useRef<string>("");
 
   const applyPosition = useCallback(
     (position: number) => {
-      positionRef.current = position;
+      currentPositionRef.current = position;
 
       const track = trackRef.current;
       if (!track) return;
@@ -213,13 +210,13 @@ export function useCarouselMotion({
     const segment = activeSegmentRef.current;
     if (!segment) {
       return {
-        position: positionRef.current,
+        position: currentPositionRef.current,
         velocity: velocityRef.current,
       };
     }
 
     const sampled = sampleSegment(segment, performance.now());
-    positionRef.current = sampled.position;
+    currentPositionRef.current = sampled.position;
     velocityRef.current = sampled.velocity;
 
     if (sampled.progress >= 1) {
@@ -227,10 +224,10 @@ export function useCarouselMotion({
     }
 
     return {
-      position: positionRef.current,
+      position: currentPositionRef.current,
       velocity: velocityRef.current,
     };
-  }, []);
+  }, [currentPositionRef]);
 
   const finalizeMotion = useCallback(() => {
     cancelAnimation();
@@ -281,7 +278,7 @@ export function useCarouselMotion({
       `${enabled}:${isMoving}:${animMode}:${reason}:${duration}:${startVirtualIndex}:${currentVirtualIndex}`;
     if (lastPlanRef.current === planKey) {
       if (!isMoving) {
-        applyPosition(positionRef.current);
+        applyPosition(currentPositionRef.current);
       }
       return;
     }
@@ -362,8 +359,4 @@ export function useCarouselMotion({
     },
     [cancelAnimation, cancelCompletion],
   );
-
-  return {
-    getCurrentVirtualIndex: () => readCurrentState().position,
-  };
 }

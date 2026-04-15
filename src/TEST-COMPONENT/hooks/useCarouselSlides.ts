@@ -13,7 +13,6 @@ import {
 interface SlidesProps {
   current: number;
   prev: number;
-  renderTarget: number;
   isMoving: boolean;
   targetIndex: number;
   layout: CarouselLayout;
@@ -30,16 +29,15 @@ interface SlidesResult {
 export function useCarouselSlides({
   current,
   prev,
-  renderTarget,
   isMoving,
   targetIndex,
   layout,
   slidesData,
 }: SlidesProps): SlidesResult {
-  const renderWindowRef = useRef(getRenderWindow(prev, renderTarget, layout));
+  const renderWindowRef = useRef(getRenderWindow(prev, current, layout));
 
   const renderWindow = useMemo(() => {
-    const nextWindow = getRenderWindow(prev, renderTarget, layout);
+    const nextWindow = getRenderWindow(prev, current, layout);
 
     if (!layout.canSlide || !isMoving) {
       renderWindowRef.current = nextWindow;
@@ -47,9 +45,9 @@ export function useCarouselSlides({
     }
 
     const currentWindow = renderWindowRef.current;
-    const segmentStart = Math.floor(Math.min(prev, renderTarget));
+    const segmentStart = Math.floor(Math.min(prev, current));
     const segmentEnd =
-      Math.ceil(Math.max(prev, renderTarget)) + layout.clampedVisible - 1;
+      Math.ceil(Math.max(prev, current)) + layout.clampedVisible - 1;
     const containsSegment =
       currentWindow.start <= segmentStart && currentWindow.end >= segmentEnd;
 
@@ -64,7 +62,7 @@ export function useCarouselSlides({
 
     renderWindowRef.current = expandedWindow;
     return expandedWindow;
-  }, [prev, renderTarget, layout, isMoving]);
+  }, [prev, current, layout, isMoving]);
 
   const { isAtStart, isAtEnd } = useMemo(() => {
     if (!layout.isFinite) {

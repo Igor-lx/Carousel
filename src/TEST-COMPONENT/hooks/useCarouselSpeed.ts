@@ -1,4 +1,4 @@
-import { useMemo, type RefObject } from "react";
+import { useMemo } from "react";
 import { DRAG_SPEED_CONFIG, SNAP_BACK_TIME } from "../model/constants";
 import type { MoveReason, AnimationMode } from "../model/reducer";
 import { mapVelocityToDuration } from "../../shared";
@@ -6,10 +6,9 @@ import { mapVelocityToDuration } from "../../shared";
 interface SpeedProps {
   reason: MoveReason;
   animMode: AnimationMode;
-  isInteractive: boolean;
+  isDragging: boolean;
   isInstant: boolean;
   velocity: number;
-  viewportRef: RefObject<HTMLElement | null>;
   autoplayDuration: number;
   stepDuration: number;
   jumpDuration: number;
@@ -18,10 +17,9 @@ interface SpeedProps {
 export function useCarouselSpeed({
   reason,
   animMode,
-  isInteractive,
+  isDragging,
   isInstant,
   velocity,
-  viewportRef: _viewportRef,
   autoplayDuration,
   stepDuration,
   jumpDuration,
@@ -61,7 +59,7 @@ export function useCarouselSpeed({
   );
 
   return useMemo(() => {
-    if (isInteractive) return 0;
+    if (isDragging) return 0;
 
     if (animMode === "snap") return baseDuration;
 
@@ -73,7 +71,7 @@ export function useCarouselSpeed({
     animMode,
     baseDuration,
     dynamicDuration,
-    isInteractive,
+    isDragging,
     isInstant,
     jumpDuration,
     reason,
