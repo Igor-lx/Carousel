@@ -274,6 +274,7 @@ const Carousel = memo((props: CarouselProps) => {
     animMode,
     reason: moveReason,
     duration: actualDuration,
+    isRepeatedClickAdvance,
     followUpVirtualIndex,
     followUpDuration,
     onComplete: finalizeEngineStep,

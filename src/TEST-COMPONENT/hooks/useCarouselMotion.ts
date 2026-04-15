@@ -23,6 +23,7 @@ interface MotionProps {
   animMode: AnimationMode;
   reason: MoveReason;
   duration: number;
+  isRepeatedClickAdvance: boolean;
   followUpVirtualIndex: number | null;
   followUpDuration: number;
   onComplete: () => void;
@@ -136,6 +137,37 @@ const getInitialVelocity = (
   return desiredVelocity;
 };
 
+const resolveInitialVelocity = ({
+  currentVelocity,
+  distance,
+  duration,
+  animMode,
+  reason,
+  isRepeatedClickAdvance,
+  remainingDuration,
+}: {
+  currentVelocity: number;
+  distance: number;
+  duration: number;
+  animMode: AnimationMode;
+  reason: MoveReason;
+  isRepeatedClickAdvance: boolean;
+  remainingDuration: number | null;
+}) => {
+  if (isRepeatedClickAdvance) {
+    return getDesiredVelocity(distance, duration, animMode, reason);
+  }
+
+  return getInitialVelocity(
+    currentVelocity,
+    distance,
+    duration,
+    animMode,
+    reason,
+    remainingDuration,
+  );
+};
+
 const getDesiredVelocity = (
   distance: number,
   duration: number,
@@ -242,6 +274,7 @@ export function useCarouselMotion({
   animMode,
   reason,
   duration,
+  isRepeatedClickAdvance,
   followUpVirtualIndex,
   followUpDuration,
   onComplete,
@@ -360,7 +393,7 @@ export function useCarouselMotion({
 
   useIsomorphicLayoutEffect(() => {
     const planKey =
-      `${enabled}:${isMoving}:${animMode}:${reason}:${duration}:${startVirtualIndex}:${currentVirtualIndex}:${followUpVirtualIndex}:${followUpDuration}`;
+      `${enabled}:${isMoving}:${animMode}:${reason}:${duration}:${startVirtualIndex}:${currentVirtualIndex}:${isRepeatedClickAdvance}:${followUpVirtualIndex}:${followUpDuration}`;
     if (lastPlanRef.current === planKey) {
       if (!isMoving) {
         applyPosition(currentPositionRef.current);
@@ -407,6 +440,7 @@ export function useCarouselMotion({
         : null;
     const distance = currentVirtualIndex - nowState.position;
     const isSameTargetClickRetarget =
+      !isRepeatedClickAdvance &&
       reason === "click" &&
       previousTarget !== undefined &&
       Math.abs(previousTarget - currentVirtualIndex) < EPSILON;
@@ -421,14 +455,17 @@ export function useCarouselMotion({
       to: currentVirtualIndex,
       duration,
       startedAt: performance.now(),
-      initialVelocity: getInitialVelocity(
-        nowState.velocity,
+      initialVelocity: resolveInitialVelocity({
+        currentVelocity: nowState.velocity,
         distance,
         duration,
         animMode,
         reason,
-        isSameTargetClickRetarget ? previousRemainingDuration : null,
-      ),
+        isRepeatedClickAdvance,
+        remainingDuration: isSameTargetClickRetarget
+          ? previousRemainingDuration
+          : null,
+      }),
       terminalVelocity: getTerminalVelocity({
         distance,
         duration,
@@ -454,6 +491,7 @@ export function useCarouselMotion({
     finalizeMotion,
     followUpDuration,
     followUpVirtualIndex,
+    isRepeatedClickAdvance,
     isMoving,
     currentPositionRef,
     readCurrentState,
