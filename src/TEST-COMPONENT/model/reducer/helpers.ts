@@ -102,9 +102,9 @@ const getTransitionSource = (state: State, fromVirtualIndex: number) => {
   const isQueuedMotion = currentLayout.canSlide && state.animMode !== "none";
   const hasPendingTarget =
     currentLayout.canSlide && state.targetIndex !== state.activeIndex;
-  const currentLogicalIndex = hasPendingTarget
-    ? state.targetIndex
-    : state.activeIndex;
+  const currentLogicalIndex =
+    state.pendingTransition?.targetIndex ??
+    (hasPendingTarget ? state.targetIndex : state.activeIndex);
   const laneReference = isQueuedMotion ? state.virtualIndex : fromVirtualIndex;
   const currentPhysicalIndex = currentLayout.isFinite
     ? getPageStart(currentLogicalIndex, stepSize)

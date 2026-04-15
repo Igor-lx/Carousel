@@ -54,10 +54,18 @@ export function useCarouselOrchestration({
     return () => window.clearTimeout(timeout);
   }, [actualDuration, finalizeStep, isAnimating]);
 
-  useIsomorphicLayoutEffect(() => {
-    if (pendingTransition) {
-      dispatchAction({ type: "COMMIT_REBASE" });
+  useEffect(() => {
+    if (!pendingTransition) {
+      return;
     }
+
+    // Paint the neutral rebase frame first so the next transition starts
+    // from the updated DOM window on mobile as well.
+    const frame = window.requestAnimationFrame(() => {
+      dispatchAction({ type: "COMMIT_REBASE" });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
   }, [dispatchAction, pendingTransition]);
 
   return {
