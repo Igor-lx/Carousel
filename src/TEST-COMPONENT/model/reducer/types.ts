@@ -51,6 +51,8 @@ export interface State {
   targetIndex: number;
   fromVirtualIndex: number;
   virtualIndex: number;
+  followUpVirtualIndex: number | null;
+  isRepeatedClickAdvance: boolean;
   animMode: AnimationMode;
   moveReason: MoveReason;
 }

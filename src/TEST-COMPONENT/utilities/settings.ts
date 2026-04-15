@@ -1,4 +1,12 @@
-import { MIN_DELAY, MIN_SPEED } from "../model/constants";
+import {
+  MIN_DELAY,
+  MIN_DURATION,
+  MIN_SPEED,
+  REPEATED_CLICK_ADVANCE_DURATION,
+  REPEATED_CLICK_AFTER_THRESHOLD_DESTINATION_POSITION,
+  REPEATED_CLICK_BEFORE_THRESHOLD_DESTINATION_POSITION,
+  REPEATED_CLICK_THRESHOLD_POSITION,
+} from "../model/constants";
 import { DEFAULT_SETTINGS } from "../model/defaultSettings";
 
 interface SafeSettingsProps {
@@ -17,6 +25,13 @@ interface SafeSettingsResult {
   errorAltPlaceholder: string;
 }
 
+interface RepeatedClickSettingsResult {
+  advanceDuration: number;
+  thresholdPosition: number;
+  beforeThresholdDestinationPosition: number;
+  afterThresholdDestinationPosition: number;
+}
+
 const getSafeDuration = (value: number | undefined, fallback: number) => {
   if (typeof value === "number" && Number.isFinite(value) && value > 0) {
     return value;
@@ -28,6 +43,39 @@ const getSafeDuration = (value: number | undefined, fallback: number) => {
 
   return MIN_SPEED;
 };
+
+const clampUnitPosition = (value: number) => {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(1, value));
+};
+
+export const resolveRepeatedClickSettings =
+  (): RepeatedClickSettingsResult => {
+    const thresholdPosition = clampUnitPosition(
+      REPEATED_CLICK_THRESHOLD_POSITION,
+    );
+
+    return {
+      advanceDuration:
+        Number.isFinite(REPEATED_CLICK_ADVANCE_DURATION) &&
+        REPEATED_CLICK_ADVANCE_DURATION > 0
+          ? REPEATED_CLICK_ADVANCE_DURATION
+          : MIN_DURATION,
+      thresholdPosition,
+      beforeThresholdDestinationPosition: Math.max(
+        thresholdPosition,
+        clampUnitPosition(REPEATED_CLICK_BEFORE_THRESHOLD_DESTINATION_POSITION),
+      ),
+      afterThresholdDestinationPosition: clampUnitPosition(
+        REPEATED_CLICK_AFTER_THRESHOLD_DESTINATION_POSITION,
+      ),
+    };
+  };
+
+export const SAFE_REPEATED_CLICK_SETTINGS = resolveRepeatedClickSettings();
 
 export function resolveSafeSettings({
   durationAutoplay,

@@ -14,8 +14,6 @@ interface ControllerProps {
   layout: CarouselLayout;
   baseVirtualIndex: number;
   currentPositionRef: React.MutableRefObject<number>;
-  prepareStepDuration: (moveReason: MoveReason) => void;
-  resetStepDuration: () => void;
 }
 
 interface ControllerResult {
@@ -33,8 +31,6 @@ export function useCarouselController({
   layout,
   baseVirtualIndex,
   currentPositionRef,
-  prepareStepDuration,
-  resetStepDuration,
 }: ControllerProps): ControllerResult {
   const resolveFromVirtualIndex = useCallback(
     (dragOffset?: number) => {
@@ -80,29 +76,23 @@ export function useCarouselController({
     ) => {
       if (!enabled) return;
 
-      prepareStepDuration(moveReason);
+      const fromVirtualIndex = resolveFromVirtualIndex(dragOffset);
+
       syncExternalController(step);
 
       dispatchAction({
         type: "MOVE",
         step,
         moveReason,
-        fromVirtualIndex: resolveFromVirtualIndex(dragOffset),
+        fromVirtualIndex,
       });
     },
-    [
-      dispatchAction,
-      enabled,
-      prepareStepDuration,
-      resolveFromVirtualIndex,
-      syncExternalController,
-    ],
+    [dispatchAction, enabled, resolveFromVirtualIndex, syncExternalController],
   );
 
   const goTo = useCallback(
     (index: number, moveReason: MoveReason = "unknown") => {
       if (!enabled) return;
-      prepareStepDuration(moveReason);
       dispatchAction({
         type: "GO_TO",
         target: index,
@@ -110,16 +100,15 @@ export function useCarouselController({
         fromVirtualIndex: resolveFromVirtualIndex(),
       });
     },
-    [dispatchAction, enabled, prepareStepDuration, resolveFromVirtualIndex],
+    [dispatchAction, enabled, resolveFromVirtualIndex],
   );
 
   const startDrag = useCallback(() => {
-    resetStepDuration();
     dispatchAction({
       type: "START_DRAG",
       fromVirtualIndex: currentPositionRef.current,
     });
-  }, [currentPositionRef, dispatchAction, resetStepDuration]);
+  }, [currentPositionRef, dispatchAction]);
 
   const snapDrag = useCallback(
     (dragOffset?: number) => {

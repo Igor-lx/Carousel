@@ -6,6 +6,7 @@ import {
 import {
   getAnimStatus,
   reconcileStateToLayout,
+  resolveRepeatedClickPlan,
   resolveStepAction,
 } from "./helpers";
 
@@ -20,6 +21,8 @@ export function reducer(state: State, action: ReducerAction): State {
         ...syncedState,
         fromVirtualIndex: action.fromVirtualIndex ?? syncedState.virtualIndex,
         virtualIndex: action.fromVirtualIndex ?? syncedState.virtualIndex,
+        followUpVirtualIndex: null,
+        isRepeatedClickAdvance: false,
         animMode: "none",
       };
 
@@ -38,6 +41,8 @@ export function reducer(state: State, action: ReducerAction): State {
           ...syncedState,
           fromVirtualIndex: snapTarget,
           virtualIndex: snapTarget,
+          followUpVirtualIndex: null,
+          isRepeatedClickAdvance: false,
           animMode: "none",
           moveReason: "gesture",
         };
@@ -47,6 +52,8 @@ export function reducer(state: State, action: ReducerAction): State {
         ...syncedState,
         fromVirtualIndex: snapOrigin,
         virtualIndex: snapTarget,
+        followUpVirtualIndex: null,
+        isRepeatedClickAdvance: false,
         animMode: "snap",
         moveReason: "gesture",
       };
@@ -59,15 +66,35 @@ export function reducer(state: State, action: ReducerAction): State {
         nextVirtualIndex,
         mode,
       } = resolveStepAction(syncedState, action);
+      const repeatedClickPlan =
+        action.moveReason === "click" &&
+        !action.isInstant &&
+        action.type === "MOVE" &&
+        Math.abs(action.step) > 0
+          ? resolveRepeatedClickPlan({
+              state: syncedState,
+              fromVirtualIndex: nextFromVirtualIndex,
+              step: action.step,
+            })
+          : null;
+      const resolvedTargetIndex =
+        repeatedClickPlan?.nextTargetIndex ?? nextTargetIndex;
+      const followUpVirtualIndex = repeatedClickPlan?.followUpVirtualIndex ?? null;
+      const resolvedVirtualIndex =
+        repeatedClickPlan?.nextAdvanceVirtualIndex ?? nextVirtualIndex;
 
       if (
-        nextTargetIndex === syncedState.targetIndex &&
-        nextVirtualIndex === syncedState.virtualIndex
+        repeatedClickPlan === null &&
+        resolvedTargetIndex === syncedState.targetIndex &&
+        resolvedVirtualIndex === syncedState.virtualIndex &&
+        followUpVirtualIndex === null
       ) {
         if (action.moveReason === "gesture") {
           return {
             ...syncedState,
             fromVirtualIndex: nextFromVirtualIndex,
+            followUpVirtualIndex: null,
+            isRepeatedClickAdvance: false,
             animMode: "snap",
             moveReason: "gesture",
           };
@@ -75,7 +102,9 @@ export function reducer(state: State, action: ReducerAction): State {
         return {
           ...syncedState,
           fromVirtualIndex: nextFromVirtualIndex,
-          virtualIndex: nextVirtualIndex,
+          virtualIndex: resolvedVirtualIndex,
+          followUpVirtualIndex: null,
+          isRepeatedClickAdvance: false,
           animMode: action.isInstant ? "instant" : syncedState.animMode,
           moveReason: action.moveReason,
         };
@@ -83,9 +112,11 @@ export function reducer(state: State, action: ReducerAction): State {
 
       return {
         ...syncedState,
-        targetIndex: nextTargetIndex,
+        targetIndex: resolvedTargetIndex,
         fromVirtualIndex: nextFromVirtualIndex,
-        virtualIndex: nextVirtualIndex,
+        virtualIndex: resolvedVirtualIndex,
+        followUpVirtualIndex,
+        isRepeatedClickAdvance: repeatedClickPlan !== null,
         animMode: mode,
         moveReason: action.moveReason,
       };
@@ -94,10 +125,24 @@ export function reducer(state: State, action: ReducerAction): State {
     case "END_STEP": {
       if (status.isIdle) return syncedState;
 
+      if (syncedState.followUpVirtualIndex !== null) {
+        return {
+          ...syncedState,
+          fromVirtualIndex: syncedState.virtualIndex,
+          virtualIndex: syncedState.followUpVirtualIndex,
+          followUpVirtualIndex: null,
+          isRepeatedClickAdvance: false,
+          animMode: "normal",
+          moveReason: "click",
+        };
+      }
+
       return {
         ...syncedState,
         activeIndex: syncedState.targetIndex,
         fromVirtualIndex: syncedState.virtualIndex,
+        followUpVirtualIndex: null,
+        isRepeatedClickAdvance: false,
         animMode: "none",
       };
     }

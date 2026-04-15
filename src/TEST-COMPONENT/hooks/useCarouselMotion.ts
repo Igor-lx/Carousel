@@ -23,6 +23,8 @@ interface MotionProps {
   animMode: AnimationMode;
   reason: MoveReason;
   duration: number;
+  followUpVirtualIndex: number | null;
+  followUpDuration: number;
   onComplete: () => void;
 }
 
@@ -32,6 +34,7 @@ type MotionSegment = {
   duration: number;
   startedAt: number;
   initialVelocity: number;
+  terminalVelocity: number;
 };
 
 const EPSILON = 0.0001;
@@ -99,9 +102,29 @@ const getInitialVelocity = (
   duration: number,
   animMode: AnimationMode,
   reason: MoveReason,
+  remainingDuration: number | null = null,
 ) => {
   const carriedVelocity = clampRetargetVelocity(
     currentVelocity,
+    distance,
+    duration,
+  );
+
+  if (remainingDuration !== null && remainingDuration > EPSILON) {
+    const timeCompressionVelocity = clampRetargetVelocity(
+      currentVelocity * (remainingDuration / duration),
+      distance,
+      duration,
+    );
+
+    if (Math.abs(timeCompressionVelocity) > EPSILON) {
+      return timeCompressionVelocity;
+    }
+  }
+
+  const slope = getBezierStartSlope(getBezier(animMode, reason));
+  const desiredVelocity = clampRetargetVelocity(
+    (distance / duration) * slope,
     distance,
     duration,
   );
@@ -110,6 +133,15 @@ const getInitialVelocity = (
     return carriedVelocity;
   }
 
+  return desiredVelocity;
+};
+
+const getDesiredVelocity = (
+  distance: number,
+  duration: number,
+  animMode: AnimationMode,
+  reason: MoveReason,
+) => {
   const slope = getBezierStartSlope(getBezier(animMode, reason));
 
   return clampRetargetVelocity(
@@ -117,6 +149,42 @@ const getInitialVelocity = (
     distance,
     duration,
   );
+};
+
+const getTerminalVelocity = ({
+  distance,
+  duration,
+  animMode,
+  reason,
+  followUpVirtualIndex,
+  followUpDuration,
+  currentVirtualIndex,
+}: {
+  distance: number;
+  duration: number;
+  animMode: AnimationMode;
+  reason: MoveReason;
+  followUpVirtualIndex: number | null;
+  followUpDuration: number;
+  currentVirtualIndex: number;
+}) => {
+  if (
+    followUpVirtualIndex === null ||
+    followUpDuration <= EPSILON ||
+    duration <= EPSILON
+  ) {
+    return 0;
+  }
+
+  const followUpDistance = followUpVirtualIndex - currentVirtualIndex;
+  const desiredFollowUpVelocity = getDesiredVelocity(
+    followUpDistance,
+    followUpDuration,
+    animMode,
+    reason,
+  );
+
+  return clampRetargetVelocity(desiredFollowUpVelocity, distance, duration);
 };
 
 const sampleSegment = (segment: MotionSegment, now: number) => {
@@ -128,7 +196,7 @@ const sampleSegment = (segment: MotionSegment, now: number) => {
     return {
       progress,
       position: segment.to,
-      velocity: 0,
+      velocity: segment.terminalVelocity,
     };
   }
 
@@ -137,19 +205,23 @@ const sampleSegment = (segment: MotionSegment, now: number) => {
   const h00 = 2 * u * u * u - 3 * u * u + 1;
   const h10 = u * u * u - 2 * u * u + u;
   const h01 = -2 * u * u * u + 3 * u * u;
+  const h11 = u * u * u - u * u;
   const h00Prime = (6 * u * u - 6 * u) * invDuration;
   const h10Prime = 3 * u * u - 4 * u + 1;
   const h01Prime = (-6 * u * u + 6 * u) * invDuration;
+  const h11Prime = 3 * u * u - 2 * u;
 
   const position =
     h00 * segment.from +
     h10 * segment.duration * segment.initialVelocity +
-    h01 * segment.to;
+    h01 * segment.to +
+    h11 * segment.duration * segment.terminalVelocity;
 
   const velocity =
     h00Prime * segment.from +
     h10Prime * segment.initialVelocity +
-    h01Prime * segment.to;
+    h01Prime * segment.to +
+    h11Prime * segment.terminalVelocity;
 
   return {
     progress,
@@ -170,8 +242,11 @@ export function useCarouselMotion({
   animMode,
   reason,
   duration,
+  followUpVirtualIndex,
+  followUpDuration,
   onComplete,
 }: MotionProps): void {
+  const hasFollowUpStep = followUpVirtualIndex !== null;
   const frameRef = useRef<number | null>(null);
   const completionFrameRef = useRef<number | null>(null);
   const activeSegmentRef = useRef<MotionSegment | null>(null);
@@ -212,6 +287,7 @@ export function useCarouselMotion({
       return {
         position: currentPositionRef.current,
         velocity: velocityRef.current,
+        progress: 1,
       };
     }
 
@@ -226,15 +302,24 @@ export function useCarouselMotion({
     return {
       position: currentPositionRef.current,
       velocity: velocityRef.current,
+      progress: sampled.progress,
     };
   }, [currentPositionRef]);
 
-  const finalizeMotion = useCallback(() => {
+  const finalizeMotion = useCallback((handoffToFollowUp: boolean) => {
     cancelAnimation();
+    const segment = activeSegmentRef.current;
     activeSegmentRef.current = null;
-    velocityRef.current = 0;
     applyPosition(currentVirtualIndex);
     cancelCompletion();
+
+    if (handoffToFollowUp) {
+      velocityRef.current = segment ? segment.terminalVelocity : velocityRef.current;
+      onComplete();
+      return;
+    }
+
+    velocityRef.current = 0;
     completionFrameRef.current = window.requestAnimationFrame(() => {
       completionFrameRef.current = null;
       onComplete();
@@ -263,7 +348,7 @@ export function useCarouselMotion({
 
       if (sampled.progress >= 1) {
         frameRef.current = null;
-        finalizeMotion();
+        finalizeMotion(hasFollowUpStep);
         return;
       }
 
@@ -271,11 +356,11 @@ export function useCarouselMotion({
     };
 
     frameRef.current = window.requestAnimationFrame(step);
-  }, [applyPosition, cancelAnimation, finalizeMotion]);
+  }, [applyPosition, cancelAnimation, finalizeMotion, hasFollowUpStep]);
 
   useIsomorphicLayoutEffect(() => {
     const planKey =
-      `${enabled}:${isMoving}:${animMode}:${reason}:${duration}:${startVirtualIndex}:${currentVirtualIndex}`;
+      `${enabled}:${isMoving}:${animMode}:${reason}:${duration}:${startVirtualIndex}:${currentVirtualIndex}:${followUpVirtualIndex}:${followUpDuration}`;
     if (lastPlanRef.current === planKey) {
       if (!isMoving) {
         applyPosition(currentPositionRef.current);
@@ -303,20 +388,31 @@ export function useCarouselMotion({
     }
 
     if (animMode === "instant" || duration <= 0) {
-      finalizeMotion();
+      finalizeMotion(hasFollowUpStep);
       return;
     }
 
-    const nowState = activeSegmentRef.current
+    const previousSegment = activeSegmentRef.current;
+    const previousTarget = previousSegment?.to;
+    const nowState = previousSegment
       ? readCurrentState()
       : {
-          position: startVirtualIndex,
-          velocity: 0,
+          position: currentPositionRef.current,
+          velocity: velocityRef.current,
+          progress: 0,
         };
+    const previousRemainingDuration =
+      previousSegment && reason === "click"
+        ? Math.max(0, previousSegment.duration * (1 - nowState.progress))
+        : null;
     const distance = currentVirtualIndex - nowState.position;
+    const isSameTargetClickRetarget =
+      reason === "click" &&
+      previousTarget !== undefined &&
+      Math.abs(previousTarget - currentVirtualIndex) < EPSILON;
 
     if (Math.abs(distance) < EPSILON) {
-      finalizeMotion();
+      finalizeMotion(hasFollowUpStep);
       return;
     }
 
@@ -331,7 +427,17 @@ export function useCarouselMotion({
         duration,
         animMode,
         reason,
+        isSameTargetClickRetarget ? previousRemainingDuration : null,
       ),
+      terminalVelocity: getTerminalVelocity({
+        distance,
+        duration,
+        animMode,
+        reason,
+        followUpVirtualIndex,
+        followUpDuration,
+        currentVirtualIndex,
+      }),
     };
 
     applyPosition(nowState.position);
@@ -346,7 +452,10 @@ export function useCarouselMotion({
     duration,
     enabled,
     finalizeMotion,
+    followUpDuration,
+    followUpVirtualIndex,
     isMoving,
+    currentPositionRef,
     readCurrentState,
     reason,
     startVirtualIndex,

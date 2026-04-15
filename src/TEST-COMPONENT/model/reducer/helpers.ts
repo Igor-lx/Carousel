@@ -8,6 +8,7 @@ import {
   normalizePageIndex,
   type CarouselLayout,
 } from "../../utilities";
+import { SAFE_REPEATED_CLICK_SETTINGS } from "../../utilities";
 
 export const initialState = (currentLayout: CarouselLayout): State => ({
   currentLayout,
@@ -15,6 +16,8 @@ export const initialState = (currentLayout: CarouselLayout): State => ({
   targetIndex: 0,
   fromVirtualIndex: 0,
   virtualIndex: 0,
+  followUpVirtualIndex: null,
+  isRepeatedClickAdvance: false,
   animMode: "none",
   moveReason: "unknown",
 });
@@ -27,6 +30,8 @@ export const getAnimStatus = (mode: AnimationMode) => ({
   isSnap: mode === "snap",
   isAnimating: mode === "normal" || mode === "jump" || mode === "snap",
 });
+
+const REPEATED_CLICK_EPSILON = 0.0001;
 
 const hasSameLayout = (
   prevLayout: CarouselLayout,
@@ -85,6 +90,8 @@ export const reconcileStateToLayout = (
     targetIndex: nextTargetIndex,
     fromVirtualIndex: nextVirtualIndex,
     virtualIndex: nextVirtualIndex,
+    followUpVirtualIndex: null,
+    isRepeatedClickAdvance: false,
     animMode: "instant",
   };
 };
@@ -166,5 +173,117 @@ export const resolveStepAction = (state: State, action: StepAction) => {
     nextTargetIndex,
     nextVirtualIndex,
     mode: getStepAnimationMode(action),
+  };
+};
+
+const getRepeatedClickPositionWithinPage = (
+  position: number,
+  stepSize: number,
+  direction: number,
+) => {
+  if (stepSize <= REPEATED_CLICK_EPSILON || direction === 0) {
+    return 0;
+  }
+
+  if (direction > 0) {
+    const pageStart = Math.floor(position / stepSize) * stepSize;
+    return clamp((position - pageStart) / stepSize, 0, 1);
+  }
+
+  const pageStart = Math.ceil(position / stepSize) * stepSize;
+  return clamp((pageStart - position) / stepSize, 0, 1);
+};
+
+const clampRepeatedClickVirtualIndex = (
+  virtualIndex: number,
+  layout: CarouselLayout,
+) => {
+  if (!layout.isFinite) {
+    return virtualIndex;
+  }
+
+  const minVirtualIndex = 0;
+  const maxVirtualIndex = getPageStart(
+    layout.pageCount - 1,
+    layout.clampedVisible,
+  );
+
+  return clamp(virtualIndex, minVirtualIndex, maxVirtualIndex);
+};
+
+export const resolveRepeatedClickPlan = ({
+  state,
+  fromVirtualIndex,
+  step,
+}: {
+  state: State;
+  fromVirtualIndex: number;
+  step: number;
+}) => {
+  const { currentLayout: layout } = state;
+  const direction = Math.sign(step);
+  const stepSize = layout.clampedVisible;
+
+  if (direction === 0 || stepSize <= REPEATED_CLICK_EPSILON) {
+    return null;
+  }
+
+  const currentDirection = Math.sign(state.virtualIndex - state.fromVirtualIndex);
+  const isRepeatedSameDirectionClick =
+    state.animMode !== "none" &&
+    currentDirection !== 0 &&
+    currentDirection === direction;
+
+  if (!isRepeatedSameDirectionClick) {
+    return null;
+  }
+
+  const currentPositionWithinPage = getRepeatedClickPositionWithinPage(
+    fromVirtualIndex,
+    stepSize,
+    direction,
+  );
+  const {
+    thresholdPosition,
+    beforeThresholdDestinationPosition,
+    afterThresholdDestinationPosition,
+  } = SAFE_REPEATED_CLICK_SETTINGS;
+  const currentPageOrigin =
+    direction > 0
+      ? Math.floor(fromVirtualIndex / stepSize) * stepSize
+      : Math.ceil(fromVirtualIndex / stepSize) * stepSize;
+  const isAfterThresholdClick = currentPositionWithinPage >= thresholdPosition;
+  const boundaryVirtualIndex = currentPageOrigin + direction * stepSize;
+
+  const nextAdvanceVirtualIndex = clampRepeatedClickVirtualIndex(
+    isAfterThresholdClick
+      ? currentPageOrigin +
+          direction * (1 + afterThresholdDestinationPosition) * stepSize
+      : currentPageOrigin +
+          direction * beforeThresholdDestinationPosition * stepSize,
+    layout,
+  );
+
+  const nextTargetVirtualIndex = clampRepeatedClickVirtualIndex(
+    isAfterThresholdClick
+      ? currentPageOrigin + direction * 2 * stepSize
+      : boundaryVirtualIndex,
+    layout,
+  );
+
+  const targetPageIndex = Math.round(nextTargetVirtualIndex / stepSize);
+  const nextTargetIndex = layout.isFinite
+    ? clamp(targetPageIndex, 0, layout.pageCount - 1)
+    : normalizePageIndex(targetPageIndex, layout.pageCount);
+  const followUpVirtualIndex =
+    Math.abs(nextTargetVirtualIndex - nextAdvanceVirtualIndex) >=
+    REPEATED_CLICK_EPSILON
+      ? nextTargetVirtualIndex
+      : null;
+
+  return {
+    nextTargetIndex,
+    nextAdvanceVirtualIndex,
+    followUpVirtualIndex,
   };
 };

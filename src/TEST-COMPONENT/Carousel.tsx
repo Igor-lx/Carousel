@@ -14,7 +14,6 @@ import {
   useCarouselMotion,
   useCarouselSlides,
   useCarouselSpeed,
-  useCarouselStepDuration,
   useCarouselTechStyles,
   usePerfectLayoutNotice,
 } from "./hooks";
@@ -145,6 +144,8 @@ const Carousel = memo((props: CarouselProps) => {
     targetIndex,
     virtualIndex,
     fromVirtualIndex,
+    followUpVirtualIndex,
+    isRepeatedClickAdvance,
     animMode,
     moveReason,
   } = syncedState;
@@ -163,15 +164,6 @@ const Carousel = memo((props: CarouselProps) => {
     () => getAnimStatus(animMode),
     [animMode],
   );
-
-  const {
-    activeStepDuration,
-    prepareStepDuration,
-    resetStepDuration,
-  } = useCarouselStepDuration({
-    isMoving,
-    stepDuration,
-  });
 
   const {
     slides: virtualSlides,
@@ -208,8 +200,6 @@ const Carousel = memo((props: CarouselProps) => {
     layout: nextLayout,
     baseVirtualIndex: virtualIndex,
     currentPositionRef: motionPositionRef,
-    prepareStepDuration,
-    resetStepDuration,
   });
 
   const {
@@ -253,10 +243,24 @@ const Carousel = memo((props: CarouselProps) => {
     animMode,
     isDragging,
     isInstant,
+    isRepeatedClickAdvance,
+    segmentStartVirtualIndex: fromVirtualIndex,
+    targetVirtualIndex: virtualIndex,
+    stepSize: clampedVisible,
     autoplayDuration,
-    stepDuration: activeStepDuration,
+    stepDuration,
     jumpDuration,
   });
+
+  const followUpDuration = useMemo(() => {
+    if (followUpVirtualIndex === null || clampedVisible <= 0) {
+      return 0;
+    }
+
+    const stepSpan = Math.abs(followUpVirtualIndex - virtualIndex) / clampedVisible;
+
+    return stepDuration * Math.max(0, stepSpan);
+  }, [clampedVisible, followUpVirtualIndex, stepDuration, virtualIndex]);
 
   useCarouselMotion({
     trackRef: movingRef,
@@ -270,6 +274,8 @@ const Carousel = memo((props: CarouselProps) => {
     animMode,
     reason: moveReason,
     duration: actualDuration,
+    followUpVirtualIndex,
+    followUpDuration,
     onComplete: finalizeEngineStep,
   });
 
