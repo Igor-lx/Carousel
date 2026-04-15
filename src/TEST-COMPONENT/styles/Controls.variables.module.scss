@@ -42,13 +42,13 @@
   }
 
   @media (max-width: 1024px) {
-    --nav-size-w: 30px;
+    --nav-size-w: 50px;
     --nav-size-h: 115px;
     --nav-radius: 8%;
     --nav-offset: 4px;
 
     &[data-touch="true"] {
-      --nav-offset: 4px;
+      --nav-offset: 8px;
     }
   }
 
