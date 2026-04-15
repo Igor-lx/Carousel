@@ -171,7 +171,10 @@ const Carousel = memo((props: CarouselProps) => {
   } = useCarouselSlides({
     current: virtualIndex,
     prev: fromVirtualIndex,
-    renderTarget: pendingTransition?.virtualIndex ?? virtualIndex,
+    renderTarget:
+      pendingTransition?.phase === "ready"
+        ? pendingTransition.renderVirtualIndex
+        : virtualIndex,
     isMoving,
     targetIndex,
     layout: nextLayout,
@@ -273,6 +276,11 @@ const Carousel = memo((props: CarouselProps) => {
     isReducedMotion,
     isAnimating,
     actualDuration,
+    trackRef: movingRef,
+    viewportRef: containerRef,
+    visibleSlidesNr: clampedVisible,
+    windowStart,
+    fallbackVirtualIndex: virtualIndex,
   });
 
   const {

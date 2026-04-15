@@ -6,11 +6,14 @@ export type MoveReason = "click" | "gesture" | "autoplay" | "unknown";
 
 type PendingAnimationMode = Extract<AnimationMode, "normal" | "jump">;
 
+export type PendingTransitionPhase = "capture" | "ready";
+
 export interface PendingTransition {
   targetIndex: number;
-  virtualIndex: number;
+  renderVirtualIndex: number;
   animMode: PendingAnimationMode;
   moveReason: MoveReason;
+  phase: PendingTransitionPhase;
 }
 
 type VirtualIndexSource = {
@@ -48,11 +51,19 @@ export type CommitRebaseAction = {
   type: "COMMIT_REBASE";
 };
 
+export type ApplyRebaseOriginAction = {
+  type: "APPLY_REBASE_ORIGIN";
+  fromVirtualIndex: number;
+};
+
 export type EndStepAction = {
   type: "END_STEP";
 };
 
-export type LifecycleAction = CommitRebaseAction | EndStepAction;
+export type LifecycleAction =
+  | ApplyRebaseOriginAction
+  | CommitRebaseAction
+  | EndStepAction;
 
 export type Action = StepAction | DragAction | LifecycleAction;
 

@@ -3,6 +3,7 @@ import { useCallback, useEffect } from "react";
 import { useIsomorphicLayoutEffect } from "../../shared";
 import { ANIMATION_SAFETY_MARGIN } from "../model/constants";
 import type { Action, PendingTransition } from "../model/reducer";
+import { getCurrentVirtualIndexFromDOM } from "../utilities";
 
 interface OrchestrationProps {
   pendingTransition: PendingTransition | null;
@@ -12,6 +13,11 @@ interface OrchestrationProps {
   isReducedMotion: boolean;
   isAnimating: boolean;
   actualDuration: number;
+  trackRef: React.RefObject<HTMLDivElement | null>;
+  viewportRef: React.RefObject<HTMLDivElement | null>;
+  visibleSlidesNr: number;
+  windowStart: number;
+  fallbackVirtualIndex: number;
 }
 
 interface OrchestrationResult {
@@ -26,6 +32,11 @@ export function useCarouselOrchestration({
   isReducedMotion,
   isAnimating,
   actualDuration,
+  trackRef,
+  viewportRef,
+  visibleSlidesNr,
+  windowStart,
+  fallbackVirtualIndex,
 }: OrchestrationProps): OrchestrationResult {
   const handleTransitionEnd = useCallback(
     (e: React.TransitionEvent<HTMLDivElement>) => {
@@ -54,8 +65,33 @@ export function useCarouselOrchestration({
     return () => window.clearTimeout(timeout);
   }, [actualDuration, finalizeStep, isAnimating]);
 
+  useIsomorphicLayoutEffect(() => {
+    if (!pendingTransition || pendingTransition.phase !== "capture") {
+      return;
+    }
+
+    dispatchAction({
+      type: "APPLY_REBASE_ORIGIN",
+      fromVirtualIndex: getCurrentVirtualIndexFromDOM({
+        track: trackRef.current,
+        viewport: viewportRef.current,
+        visibleSlidesNr,
+        windowStart,
+        fallback: fallbackVirtualIndex,
+      }),
+    });
+  }, [
+    dispatchAction,
+    fallbackVirtualIndex,
+    pendingTransition,
+    trackRef,
+    viewportRef,
+    visibleSlidesNr,
+    windowStart,
+  ]);
+
   useEffect(() => {
-    if (!pendingTransition) {
+    if (!pendingTransition || pendingTransition.phase !== "ready") {
       return;
     }
 

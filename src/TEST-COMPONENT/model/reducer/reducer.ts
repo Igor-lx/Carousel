@@ -73,15 +73,12 @@ export function reducer(state: State, action: ReducerAction): State {
 
         return {
           ...syncedState,
-          fromVirtualIndex: nextFromVirtualIndex,
-          virtualIndex: nextFromVirtualIndex,
-          animMode: "rebase",
-          moveReason: action.moveReason,
           pendingTransition: {
             targetIndex: nextTargetIndex,
-            virtualIndex: nextVirtualIndex,
+            renderVirtualIndex: nextVirtualIndex,
             animMode: pendingAnimMode,
             moveReason: action.moveReason,
+            phase: "capture",
           },
         };
       }
@@ -120,13 +117,37 @@ export function reducer(state: State, action: ReducerAction): State {
       };
     }
 
-    case "COMMIT_REBASE": {
+    case "APPLY_REBASE_ORIGIN": {
       if (!syncedState.pendingTransition) return syncedState;
 
       return {
         ...syncedState,
+        fromVirtualIndex: action.fromVirtualIndex,
+        virtualIndex: action.fromVirtualIndex,
+        animMode: "rebase",
+        moveReason: syncedState.pendingTransition.moveReason,
+        pendingTransition: {
+          ...syncedState.pendingTransition,
+          phase: "ready",
+        },
+      };
+    }
+
+    case "COMMIT_REBASE": {
+      if (!syncedState.pendingTransition) return syncedState;
+
+      const nextVirtualIndex = currentLayout.isFinite
+        ? getPageStart(syncedState.pendingTransition.targetIndex, stepSize)
+        : getAlignedVirtualIndex(
+            syncedState.pendingTransition.targetIndex,
+            syncedState.virtualIndex,
+            currentLayout,
+          );
+
+      return {
+        ...syncedState,
         targetIndex: syncedState.pendingTransition.targetIndex,
-        virtualIndex: syncedState.pendingTransition.virtualIndex,
+        virtualIndex: nextVirtualIndex,
         animMode: syncedState.pendingTransition.animMode,
         moveReason: syncedState.pendingTransition.moveReason,
         pendingTransition: null,
