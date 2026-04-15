@@ -3,7 +3,6 @@ import type { CarouselExternalController } from "../control";
 import type { Action, MoveReason, State } from "../model/reducer";
 import { MIN_DURATION, VELOCITY_COEFFICIENT } from "../model/constants";
 import {
-  getCurrentVirtualIndexFromDOM,
   getVirtualIndexFromDragOffset,
   type CarouselLayout,
 } from "../utilities";
@@ -16,10 +15,9 @@ interface ControllerProps {
   isMoving: boolean;
   stepDuration: number;
   measureRef: React.RefObject<HTMLDivElement | null>;
-  movingRef: React.RefObject<HTMLDivElement | null>;
   layout: CarouselLayout;
   state: State;
-  windowStart: number;
+  getCurrentVirtualIndex: () => number;
 }
 
 interface ControllerResult {
@@ -39,10 +37,9 @@ export function useCarouselController({
   isMoving,
   stepDuration,
   measureRef,
-  movingRef,
   layout,
   state,
-  windowStart,
+  getCurrentVirtualIndex,
 }: ControllerProps): ControllerResult {
   const durationRef = useRef(stepDuration);
   const lastActionTimeRef = useRef(0);
@@ -72,24 +69,6 @@ export function useCarouselController({
     [isMoving],
   );
 
-  const getMeasuredVirtualIndex = useCallback(
-    () =>
-      getCurrentVirtualIndexFromDOM({
-        track: movingRef.current,
-        viewport: measureRef.current,
-        visibleSlidesNr: layout.clampedVisible,
-        windowStart,
-        fallback: state.virtualIndex,
-      }),
-    [
-      layout.clampedVisible,
-      measureRef,
-      movingRef,
-      state.virtualIndex,
-      windowStart,
-    ],
-  );
-
   const resolveFromVirtualIndex = useCallback(
     (dragOffset?: number) => {
       if (typeof dragOffset === "number") {
@@ -102,10 +81,10 @@ export function useCarouselController({
         });
       }
 
-      return getMeasuredVirtualIndex();
+      return getCurrentVirtualIndex();
     },
     [
-      getMeasuredVirtualIndex,
+      getCurrentVirtualIndex,
       layout.clampedVisible,
       measureRef,
       state.virtualIndex,
@@ -171,9 +150,9 @@ export function useCarouselController({
     durationRef.current = stepDuration;
     dispatchAction({
       type: "START_DRAG",
-      fromVirtualIndex: getMeasuredVirtualIndex(),
+      fromVirtualIndex: getCurrentVirtualIndex(),
     });
-  }, [dispatchAction, getMeasuredVirtualIndex, stepDuration]);
+  }, [dispatchAction, getCurrentVirtualIndex, stepDuration]);
 
   const snapDrag = useCallback(
     (dragOffset?: number) => {

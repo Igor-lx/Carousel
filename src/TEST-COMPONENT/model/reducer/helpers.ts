@@ -17,7 +17,6 @@ export const initialState = (currentLayout: CarouselLayout): State => ({
   virtualIndex: 0,
   animMode: "none",
   moveReason: "unknown",
-  pendingTransition: null,
 });
 
 export const getAnimStatus = (mode: AnimationMode) => ({
@@ -87,7 +86,6 @@ export const reconcileStateToLayout = (
     fromVirtualIndex: nextVirtualIndex,
     virtualIndex: nextVirtualIndex,
     animMode: "instant",
-    pendingTransition: null,
   };
 };
 
@@ -102,9 +100,9 @@ const getTransitionSource = (state: State, fromVirtualIndex: number) => {
   const isQueuedMotion = currentLayout.canSlide && state.animMode !== "none";
   const hasPendingTarget =
     currentLayout.canSlide && state.targetIndex !== state.activeIndex;
-  const currentLogicalIndex =
-    state.pendingTransition?.targetIndex ??
-    (hasPendingTarget ? state.targetIndex : state.activeIndex);
+  const currentLogicalIndex = hasPendingTarget
+    ? state.targetIndex
+    : state.activeIndex;
   const laneReference = isQueuedMotion ? state.virtualIndex : fromVirtualIndex;
   const currentPhysicalIndex = currentLayout.isFinite
     ? getPageStart(currentLogicalIndex, stepSize)

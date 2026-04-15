@@ -1,20 +1,8 @@
 import type { CarouselLayout } from "../../utilities/types";
 
-export type AnimationMode = "normal" | "jump" | "instant" | "snap" | "rebase" | "none";
+export type AnimationMode = "normal" | "jump" | "instant" | "snap" | "none";
 
 export type MoveReason = "click" | "gesture" | "autoplay" | "unknown";
-
-type PendingAnimationMode = Extract<AnimationMode, "normal" | "jump">;
-
-export type PendingTransitionPhase = "capture" | "ready";
-
-export interface PendingTransition {
-  targetIndex: number;
-  renderVirtualIndex: number;
-  animMode: PendingAnimationMode;
-  moveReason: MoveReason;
-  phase: PendingTransitionPhase;
-}
 
 type VirtualIndexSource = {
   fromVirtualIndex?: number;
@@ -47,23 +35,11 @@ export type EndDragSnapAction = VirtualIndexSource & {
 
 export type DragAction = StartDragAction | EndDragSnapAction;
 
-export type CommitRebaseAction = {
-  type: "COMMIT_REBASE";
-};
-
-export type ApplyRebaseOriginAction = {
-  type: "APPLY_REBASE_ORIGIN";
-  fromVirtualIndex: number;
-};
-
 export type EndStepAction = {
   type: "END_STEP";
 };
 
-export type LifecycleAction =
-  | ApplyRebaseOriginAction
-  | CommitRebaseAction
-  | EndStepAction;
+export type LifecycleAction = EndStepAction;
 
 export type Action = StepAction | DragAction | LifecycleAction;
 
@@ -77,5 +53,4 @@ export interface State {
   virtualIndex: number;
   animMode: AnimationMode;
   moveReason: MoveReason;
-  pendingTransition: PendingTransition | null;
 }

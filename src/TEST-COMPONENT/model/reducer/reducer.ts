@@ -13,7 +13,6 @@ export function reducer(state: State, action: ReducerAction): State {
   const syncedState = reconcileStateToLayout(state, action.layout);
   const { currentLayout, animMode } = syncedState;
   const status = getAnimStatus(animMode);
-  const stepSize = currentLayout.clampedVisible;
 
   switch (action.type) {
     case "START_DRAG":
@@ -22,13 +21,12 @@ export function reducer(state: State, action: ReducerAction): State {
         fromVirtualIndex: action.fromVirtualIndex ?? syncedState.virtualIndex,
         virtualIndex: action.fromVirtualIndex ?? syncedState.virtualIndex,
         animMode: "none",
-        pendingTransition: null,
       };
 
     case "END_DRAG_SNAP":
       const snapOrigin = action.fromVirtualIndex ?? syncedState.virtualIndex;
       const snapTarget = currentLayout.isFinite
-        ? getPageStart(syncedState.targetIndex, stepSize)
+        ? getPageStart(syncedState.targetIndex, currentLayout.clampedVisible)
         : getAlignedVirtualIndex(
             syncedState.targetIndex,
             snapOrigin,
@@ -42,7 +40,6 @@ export function reducer(state: State, action: ReducerAction): State {
           virtualIndex: snapTarget,
           animMode: "none",
           moveReason: "gesture",
-          pendingTransition: null,
         };
       }
 
@@ -52,7 +49,6 @@ export function reducer(state: State, action: ReducerAction): State {
         virtualIndex: snapTarget,
         animMode: "snap",
         moveReason: "gesture",
-        pendingTransition: null,
       };
 
     case "MOVE":
@@ -63,25 +59,6 @@ export function reducer(state: State, action: ReducerAction): State {
         nextVirtualIndex,
         mode,
       } = resolveStepAction(syncedState, action);
-      const shouldRebase =
-        status.isAnimating &&
-        mode !== "instant" &&
-        Math.abs(nextFromVirtualIndex - syncedState.virtualIndex) > 0.001;
-
-      if (shouldRebase) {
-        const pendingAnimMode = action.type === "GO_TO" ? "jump" : "normal";
-
-        return {
-          ...syncedState,
-          pendingTransition: {
-            targetIndex: nextTargetIndex,
-            renderVirtualIndex: nextVirtualIndex,
-            animMode: pendingAnimMode,
-            moveReason: action.moveReason,
-            phase: "capture",
-          },
-        };
-      }
 
       if (
         nextTargetIndex === syncedState.targetIndex &&
@@ -93,7 +70,6 @@ export function reducer(state: State, action: ReducerAction): State {
             fromVirtualIndex: nextFromVirtualIndex,
             animMode: "snap",
             moveReason: "gesture",
-            pendingTransition: null,
           };
         }
         return {
@@ -102,7 +78,6 @@ export function reducer(state: State, action: ReducerAction): State {
           virtualIndex: nextVirtualIndex,
           animMode: action.isInstant ? "instant" : syncedState.animMode,
           moveReason: action.moveReason,
-          pendingTransition: null,
         };
       }
 
@@ -113,44 +88,6 @@ export function reducer(state: State, action: ReducerAction): State {
         virtualIndex: nextVirtualIndex,
         animMode: mode,
         moveReason: action.moveReason,
-        pendingTransition: null,
-      };
-    }
-
-    case "APPLY_REBASE_ORIGIN": {
-      if (!syncedState.pendingTransition) return syncedState;
-
-      return {
-        ...syncedState,
-        fromVirtualIndex: action.fromVirtualIndex,
-        virtualIndex: action.fromVirtualIndex,
-        animMode: "rebase",
-        moveReason: syncedState.pendingTransition.moveReason,
-        pendingTransition: {
-          ...syncedState.pendingTransition,
-          phase: "ready",
-        },
-      };
-    }
-
-    case "COMMIT_REBASE": {
-      if (!syncedState.pendingTransition) return syncedState;
-
-      const nextVirtualIndex = currentLayout.isFinite
-        ? getPageStart(syncedState.pendingTransition.targetIndex, stepSize)
-        : getAlignedVirtualIndex(
-            syncedState.pendingTransition.targetIndex,
-            syncedState.virtualIndex,
-            currentLayout,
-          );
-
-      return {
-        ...syncedState,
-        targetIndex: syncedState.pendingTransition.targetIndex,
-        virtualIndex: nextVirtualIndex,
-        animMode: syncedState.pendingTransition.animMode,
-        moveReason: syncedState.pendingTransition.moveReason,
-        pendingTransition: null,
       };
     }
 
@@ -162,7 +99,6 @@ export function reducer(state: State, action: ReducerAction): State {
         activeIndex: syncedState.targetIndex,
         fromVirtualIndex: syncedState.virtualIndex,
         animMode: "none",
-        pendingTransition: null,
       };
     }
 

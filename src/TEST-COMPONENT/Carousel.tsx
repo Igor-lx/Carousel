@@ -11,7 +11,7 @@ import {
   useCarouselContextValue,
   useCarouselEngine,
   useCarouselGesture,
-  useCarouselOrchestration,
+  useCarouselMotion,
   useCarouselSlides,
   useCarouselSpeed,
   useCarouselTechStyles,
@@ -86,6 +86,7 @@ const Carousel = memo((props: CarouselProps) => {
   const totalSlides = slidesData.length;
   const containerRef = useRef<HTMLDivElement>(null);
   const movingRef = useRef<HTMLDivElement>(null);
+  const currentVirtualIndexRef = useRef<() => number>(() => 0);
 
   const isReducedMotion = isInstantMotion ?? useIsReducedMotion();
   const isTouch = isTouchDevice ?? useIsTouchDevice();
@@ -145,7 +146,6 @@ const Carousel = memo((props: CarouselProps) => {
     fromVirtualIndex,
     animMode,
     moveReason,
-    pendingTransition,
   } = syncedState;
 
   const { canSlide, pageCount, clampedVisible } = nextLayout;
@@ -158,7 +158,7 @@ const Carousel = memo((props: CarouselProps) => {
     isLayoutClamped: shouldClampLayout,
   });
 
-  const { isMoving, isAnimating, isJumping, isInstant, isIdle } = useMemo(
+  const { isMoving, isJumping, isInstant, isIdle } = useMemo(
     () => getAnimStatus(animMode),
     [animMode],
   );
@@ -171,10 +171,7 @@ const Carousel = memo((props: CarouselProps) => {
   } = useCarouselSlides({
     current: virtualIndex,
     prev: fromVirtualIndex,
-    renderTarget:
-      pendingTransition?.phase === "ready"
-        ? pendingTransition.renderVirtualIndex
-        : virtualIndex,
+    renderTarget: virtualIndex,
     isMoving,
     targetIndex,
     layout: nextLayout,
@@ -194,7 +191,6 @@ const Carousel = memo((props: CarouselProps) => {
     goTo,
     startDrag,
     snapDrag,
-    finalizeStep,
     activeStepDuration,
   } = useCarouselController({
     dispatchAction,
@@ -204,10 +200,9 @@ const Carousel = memo((props: CarouselProps) => {
     isMoving,
     stepDuration,
     measureRef: containerRef,
-    movingRef,
     layout: nextLayout,
     state: syncedState,
-    windowStart,
+    getCurrentVirtualIndex: () => currentVirtualIndexRef.current(),
   });
 
   const {
@@ -257,6 +252,21 @@ const Carousel = memo((props: CarouselProps) => {
     jumpDuration,
   });
 
+  const { getCurrentVirtualIndex } = useCarouselMotion({
+    trackRef: movingRef,
+    enabled: canSlide,
+    startVirtualIndex: fromVirtualIndex,
+    currentVirtualIndex: virtualIndex,
+    windowStart,
+    size: clampedVisible,
+    isMoving,
+    animMode,
+    reason: moveReason,
+    duration: actualDuration,
+    onComplete: finalizeEngineStep,
+  });
+  currentVirtualIndexRef.current = getCurrentVirtualIndex;
+
   useCarouselExternalControllerSync({
     externalControllerRef,
     isReducedMotion,
@@ -268,21 +278,6 @@ const Carousel = memo((props: CarouselProps) => {
     [connectedChildren],
   );
 
-  const { handleTransitionEnd } = useCarouselOrchestration({
-    pendingTransition,
-    dispatchAction,
-    finalizeStep,
-    isInstant,
-    isReducedMotion,
-    isAnimating,
-    actualDuration,
-    trackRef: movingRef,
-    viewportRef: containerRef,
-    visibleSlidesNr: clampedVisible,
-    windowStart,
-    fallbackVirtualIndex: virtualIndex,
-  });
-
   const {
     trackStyle,
     slideStyle,
@@ -290,11 +285,8 @@ const Carousel = memo((props: CarouselProps) => {
     current: virtualIndex,
     windowStart,
     size: clampedVisible,
-    animMode,
     isInteractive: isDragging,
-    duration: actualDuration,
     enabled: canSlide,
-    reason: moveReason,
     dragOffset: offset,
   });
 
@@ -352,7 +344,6 @@ const Carousel = memo((props: CarouselProps) => {
           <div
             ref={movingRef}
             className={classNames.slideContainer}
-            onTransitionEnd={handleTransitionEnd}
             style={trackStyle}
           >
             {virtualSlides.map((slide) => {

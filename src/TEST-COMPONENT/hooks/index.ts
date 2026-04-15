@@ -4,7 +4,7 @@ export * from "./useCarouselController";
 export * from "./useCarouselContextValue";
 export * from "./useCarouselEngine";
 export * from "./useCarouselGesture";
-export * from "./useCarouselOrchestration";
+export * from "./useCarouselMotion";
 export * from "./useCarouselSlides";
 export * from "./useCarouselSpeed";
 export * from "./useCarouselTechStyles";
