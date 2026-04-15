@@ -54,7 +54,7 @@ export function useCarouselOrchestration({
     return () => window.clearTimeout(timeout);
   }, [actualDuration, finalizeStep, isAnimating]);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (pendingTransition) {
       dispatchAction({ type: "COMMIT_REBASE" });
     }

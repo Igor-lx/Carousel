@@ -83,7 +83,6 @@ export const SlideItem = memo(
           !isBroken ? (
             <img
               src={slideData.content}
-              loading="lazy"
               alt={slideData.alt || ""}
               draggable={false}
               onLoad={() => setIsBroken(false)}

@@ -172,7 +172,7 @@ const Carousel = memo((props: CarouselProps) => {
     current: virtualIndex,
     prev: fromVirtualIndex,
     renderTarget: pendingTransition?.virtualIndex ?? virtualIndex,
-    isMoving: isAnimating,
+    isMoving,
     targetIndex,
     layout: nextLayout,
     slidesData: layoutSlidesData,
