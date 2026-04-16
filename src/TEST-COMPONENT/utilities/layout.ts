@@ -6,6 +6,8 @@ import type {
 } from "./types";
 import { clamp, mod, normalizePageIndex } from "./math";
 
+const RENDER_WINDOW_BUFFER_MULTIPLIER = 2;
+
 export const getPageStart = (pageIndex: number, visibleSlidesNr: number) =>
   pageIndex * visibleSlidesNr;
 
@@ -149,7 +151,7 @@ export const getRenderWindow = (
     Math.ceil(Math.max(fromVirtualIndex, toVirtualIndex)) +
     layout.clampedVisible -
     1;
-  const buffer = layout.clampedVisible * 2;
+  const buffer = layout.clampedVisible * RENDER_WINDOW_BUFFER_MULTIPLIER;
 
   if (layout.isFinite) {
     return {

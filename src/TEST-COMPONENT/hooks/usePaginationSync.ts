@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AUTOPLAY_PAGINATION_FACTOR } from "../model/constants";
+import { AUTOPLAY_PAGINATION_FACTOR } from "../model/config";
 
 interface UsePaginationSyncProps {
   targetIndex: number;

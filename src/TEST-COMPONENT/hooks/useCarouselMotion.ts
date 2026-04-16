@@ -7,7 +7,7 @@ import {
   MOVE_SWIPE_BEZIER,
   REPEATED_CLICK_ADVANCE_BEZIER,
   SNAP_BACK_BEZIER,
-} from "../model/constants";
+} from "../model/config";
 import type { AnimationMode, MoveReason } from "../model/reducer";
 import { getCarouselTransform } from "../utilities";
 import { useIsomorphicLayoutEffect } from "../../shared";

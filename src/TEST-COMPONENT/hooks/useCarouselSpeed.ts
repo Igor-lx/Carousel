@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import {
-  DRAG_SPEED_CONFIG,
-  SNAP_BACK_TIME,
-} from "../model/constants";
+  DRAG_DURATION_RAMP_CONFIG,
+  SNAP_BACK_DURATION,
+} from "../model/config";
 import type { MoveReason, AnimationMode } from "../model/reducer";
 import { mapVelocityToDuration } from "../../shared";
 import { SAFE_REPEATED_CLICK_SETTINGS } from "../utilities";
@@ -71,7 +71,7 @@ export function useCarouselSpeed({
   );
 
   const baseDuration = useMemo(() => {
-    if (animMode === "snap") return SNAP_BACK_TIME;
+    if (animMode === "snap") return SNAP_BACK_DURATION;
 
     if (isInstant || animMode === "jump") return jumpDuration;
 
@@ -105,7 +105,7 @@ export function useCarouselSpeed({
       mapVelocityToDuration({
         velocity,
         baseDuration,
-        dragSpeedConfig: DRAG_SPEED_CONFIG,
+        dragSpeedConfig: DRAG_DURATION_RAMP_CONFIG,
       }),
     [baseDuration, velocity],
   );

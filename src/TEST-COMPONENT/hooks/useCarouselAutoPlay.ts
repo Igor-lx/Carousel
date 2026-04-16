@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { HOVER_THRESHOLD } from "../model/constants";
+import { HOVER_PAUSE_DELAY } from "../model/config";
 import type { MoveReason } from "../model/reducer";
 
 interface AutoPlayProps {
@@ -42,7 +42,7 @@ export function useCarouselAutoPlay({
       if (active && withDelay) {
         hoverTimerRef.current = setTimeout(
           () => setIsInternalPaused(true),
-          HOVER_THRESHOLD,
+          HOVER_PAUSE_DELAY,
         );
       } else {
         setIsInternalPaused(active);

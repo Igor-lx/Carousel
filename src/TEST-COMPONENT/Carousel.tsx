@@ -37,8 +37,11 @@ import {
   reconcileStateToLayout,
   reducer,
 } from "./model/reducer";
-import { VISIBILITY_THRESHOLD, CAROUSEL_SLOTS } from "./model/constants";
-import { DEFAULT_SETTINGS } from "./model/defaultSettings";
+import {
+  CAROUSEL_SLOTS,
+  DEFAULT_SETTINGS,
+  VISIBILITY_THRESHOLD,
+} from "./model/config";
 import { CarouselContext } from "./model/context";
 import {
   type CarouselExternalController,
@@ -96,12 +99,14 @@ const Carousel = memo((props: CarouselProps) => {
   });
 
   const {
+    visibleSlidesCount,
     autoplayDuration,
     stepDuration,
     jumpDuration,
     autoplayInterval,
     errorAltPlaceholder,
   } = resolveSafeSettings({
+    visibleSlidesNr,
     durationAutoplay,
     durationStep,
     durationJump,
@@ -112,7 +117,7 @@ const Carousel = memo((props: CarouselProps) => {
   const { instanceRef: externalControllerRef, connectedChildren } =
     useExternalRefBridge<CarouselExternalController>(children);
 
-  const hasLayoutMismatch = hasImperfectLayout(totalSlides, visibleSlidesNr);
+  const hasLayoutMismatch = hasImperfectLayout(totalSlides, visibleSlidesCount);
   const shouldClampLayout = isLayoutClamped && hasLayoutMismatch;
 
   const resolvedSlidesData = useMemo(
@@ -123,14 +128,14 @@ const Carousel = memo((props: CarouselProps) => {
   const layoutSlidesData = useMemo(
     () =>
       shouldClampLayout
-        ? clampSlidesData(resolvedSlidesData, visibleSlidesNr)
+        ? clampSlidesData(resolvedSlidesData, visibleSlidesCount)
         : resolvedSlidesData,
-    [resolvedSlidesData, shouldClampLayout, visibleSlidesNr],
+    [resolvedSlidesData, shouldClampLayout, visibleSlidesCount],
   );
 
   const nextLayout = useMemo<CarouselLayout>(
-    () => getCarouselLayout(layoutSlidesData, visibleSlidesNr, isFinite),
-    [layoutSlidesData, visibleSlidesNr, isFinite],
+    () => getCarouselLayout(layoutSlidesData, visibleSlidesCount, isFinite),
+    [layoutSlidesData, visibleSlidesCount, isFinite],
   );
 
   const [state, baseDispatch] = useReducer(reducer, nextLayout, initialState);

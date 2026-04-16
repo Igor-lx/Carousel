@@ -1,7 +1,7 @@
 import { type RefObject } from "react";
 import type { MoveReason } from "../model/reducer";
 import { type DragListeners, useDrag } from "../../shared";
-import { DRAG_SETTINGS_CONFIG } from "../model/constants";
+import { DRAG_SETTINGS_CONFIG } from "../model/config";
 
 interface GestureProps {
   onMove: (step: number, reason: MoveReason, dragOffset?: number) => void;

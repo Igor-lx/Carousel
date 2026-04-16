@@ -10,6 +10,8 @@ import {
   resolveStepAction,
 } from "./helpers";
 
+const DRAG_RELEASE_EPSILON = 0.001;
+
 export function reducer(state: State, action: ReducerAction): State {
   const syncedState = reconcileStateToLayout(state, action.layout);
   const { currentLayout, animMode } = syncedState;
@@ -36,7 +38,7 @@ export function reducer(state: State, action: ReducerAction): State {
             currentLayout,
           );
 
-      if (Math.abs(snapOrigin - snapTarget) < 0.001) {
+      if (Math.abs(snapOrigin - snapTarget) < DRAG_RELEASE_EPSILON) {
         return {
           ...syncedState,
           fromVirtualIndex: snapTarget,
