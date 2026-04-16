@@ -1,7 +1,7 @@
 export const MIN_SPEED = 100;
 export const MIN_DURATION = 300;
 export const REPEATED_CLICK_DESTINATION_POSITION = 0.65;
-export const REPEATED_CLICK_SPEED_MULTIPLIER = 3;
+export const REPEATED_CLICK_SPEED_MULTIPLIER = 5;
 export const MIN_DELAY = 100;
 
 export const ANIMATION_SAFETY_MARGIN = 30;

@@ -39,6 +39,12 @@ type MotionSegment = {
   terminalVelocity: number;
 };
 
+type HandoffSnapshot = {
+  position: number;
+  velocity: number;
+  timestamp: number;
+};
+
 const EPSILON = 0.0001;
 const MAX_MONOTONIC_SPEED_FACTOR = 3;
 
@@ -361,6 +367,7 @@ export function useCarouselMotion({
   const frameRef = useRef<number | null>(null);
   const completionFrameRef = useRef<number | null>(null);
   const activeSegmentRef = useRef<MotionSegment | null>(null);
+  const handoffSnapshotRef = useRef<HandoffSnapshot | null>(null);
   const velocityRef = useRef(0);
   const lastPlanRef = useRef<string>("");
 
@@ -417,7 +424,10 @@ export function useCarouselMotion({
     };
   }, [currentPositionRef]);
 
-  const finalizeMotion = useCallback((handoffToFollowUp: boolean) => {
+  const finalizeMotion = useCallback((
+    handoffToFollowUp: boolean,
+    handoffSnapshot?: HandoffSnapshot,
+  ) => {
     cancelAnimation();
     const segment = activeSegmentRef.current;
     activeSegmentRef.current = null;
@@ -425,11 +435,18 @@ export function useCarouselMotion({
     cancelCompletion();
 
     if (handoffToFollowUp) {
-      velocityRef.current = segment ? segment.terminalVelocity : velocityRef.current;
+      const nextSnapshot = handoffSnapshot ?? {
+        position: currentVirtualIndex,
+        velocity: segment ? segment.terminalVelocity : velocityRef.current,
+        timestamp: performance.now(),
+      };
+      handoffSnapshotRef.current = nextSnapshot;
+      velocityRef.current = nextSnapshot.velocity;
       onComplete();
       return;
     }
 
+    handoffSnapshotRef.current = null;
     velocityRef.current = 0;
     completionFrameRef.current = window.requestAnimationFrame(() => {
       completionFrameRef.current = null;
@@ -446,20 +463,24 @@ export function useCarouselMotion({
   const animate = useCallback(() => {
     cancelAnimation();
 
-    const step = () => {
+    const step = (timestamp: number) => {
       const segment = activeSegmentRef.current;
       if (!segment) {
         frameRef.current = null;
         return;
       }
 
-      const sampled = sampleSegment(segment, performance.now());
+      const sampled = sampleSegment(segment, timestamp);
       velocityRef.current = sampled.velocity;
       applyPosition(sampled.position);
 
       if (sampled.progress >= 1) {
         frameRef.current = null;
-        finalizeMotion(hasFollowUpStep);
+        finalizeMotion(hasFollowUpStep, {
+          position: sampled.position,
+          velocity: sampled.velocity,
+          timestamp,
+        });
         return;
       }
 
@@ -485,6 +506,7 @@ export function useCarouselMotion({
     if (!enabled) {
       cancelAnimation();
       activeSegmentRef.current = null;
+      handoffSnapshotRef.current = null;
       velocityRef.current = 0;
       applyPosition(currentVirtualIndex);
       return;
@@ -493,6 +515,7 @@ export function useCarouselMotion({
     if (!isMoving) {
       cancelAnimation();
       activeSegmentRef.current = null;
+      handoffSnapshotRef.current = null;
       velocityRef.current = 0;
       applyPosition(currentVirtualIndex);
       return;
@@ -505,13 +528,25 @@ export function useCarouselMotion({
 
     const previousSegment = activeSegmentRef.current;
     const previousTarget = previousSegment?.to;
+    const handoffSnapshot = handoffSnapshotRef.current;
+    const canReuseHandoffSnapshot =
+      previousSegment === null &&
+      handoffSnapshot !== null &&
+      Math.abs(handoffSnapshot.position - startVirtualIndex) < EPSILON;
+    const now = performance.now();
     const nowState = previousSegment
       ? readCurrentState()
-      : {
-          position: currentPositionRef.current,
-          velocity: velocityRef.current,
-          progress: 0,
-        };
+      : canReuseHandoffSnapshot
+        ? {
+            position: handoffSnapshot.position,
+            velocity: handoffSnapshot.velocity,
+            progress: 0,
+          }
+        : {
+            position: currentPositionRef.current,
+            velocity: velocityRef.current,
+            progress: 0,
+          };
     const previousRemainingDuration =
       previousSegment && reason === "click"
         ? Math.max(0, previousSegment.duration * (1 - nowState.progress))
@@ -552,12 +587,24 @@ export function useCarouselMotion({
       from: nowState.position,
       to: currentVirtualIndex,
       duration,
-      startedAt: performance.now(),
+      startedAt: canReuseHandoffSnapshot ? handoffSnapshot.timestamp : now,
       initialVelocity,
       terminalVelocity,
     };
 
-    applyPosition(nowState.position);
+    if (canReuseHandoffSnapshot) {
+      handoffSnapshotRef.current = null;
+      const currentSegment = activeSegmentRef.current;
+
+      if (currentSegment) {
+        const sampled = sampleSegment(currentSegment, now);
+        velocityRef.current = sampled.velocity;
+        applyPosition(sampled.position);
+      }
+    } else {
+      applyPosition(nowState.position);
+    }
+
     animate();
   }, [
     animate,
