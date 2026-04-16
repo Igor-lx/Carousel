@@ -542,12 +542,6 @@ export function useCarouselMotion({
             velocity: handoffSnapshot.velocity,
             progress: 0,
           }
-        : reason === "gesture"
-          ? {
-              position: startVirtualIndex,
-              velocity: 0,
-              progress: 0,
-            }
         : {
             position: currentPositionRef.current,
             velocity: velocityRef.current,
