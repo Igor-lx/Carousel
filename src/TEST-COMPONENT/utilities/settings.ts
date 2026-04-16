@@ -1,11 +1,8 @@
 import {
   MIN_DELAY,
-  MIN_DURATION,
   MIN_SPEED,
-  REPEATED_CLICK_ADVANCE_DURATION,
-  REPEATED_CLICK_AFTER_THRESHOLD_DESTINATION_POSITION,
-  REPEATED_CLICK_BEFORE_THRESHOLD_DESTINATION_POSITION,
-  REPEATED_CLICK_THRESHOLD_POSITION,
+  REPEATED_CLICK_DESTINATION_POSITION,
+  REPEATED_CLICK_SPEED_MULTIPLIER,
 } from "../model/constants";
 import { DEFAULT_SETTINGS } from "../model/defaultSettings";
 
@@ -26,10 +23,8 @@ interface SafeSettingsResult {
 }
 
 interface RepeatedClickSettingsResult {
-  advanceDuration: number;
-  thresholdPosition: number;
-  beforeThresholdDestinationPosition: number;
-  afterThresholdDestinationPosition: number;
+  destinationPosition: number;
+  speedMultiplier: number;
 }
 
 const getSafeDuration = (value: number | undefined, fallback: number) => {
@@ -54,24 +49,15 @@ const clampUnitPosition = (value: number) => {
 
 export const resolveRepeatedClickSettings =
   (): RepeatedClickSettingsResult => {
-    const thresholdPosition = clampUnitPosition(
-      REPEATED_CLICK_THRESHOLD_POSITION,
-    );
-
     return {
-      advanceDuration:
-        Number.isFinite(REPEATED_CLICK_ADVANCE_DURATION) &&
-        REPEATED_CLICK_ADVANCE_DURATION > 0
-          ? REPEATED_CLICK_ADVANCE_DURATION
-          : MIN_DURATION,
-      thresholdPosition,
-      beforeThresholdDestinationPosition: Math.max(
-        thresholdPosition,
-        clampUnitPosition(REPEATED_CLICK_BEFORE_THRESHOLD_DESTINATION_POSITION),
+      destinationPosition: clampUnitPosition(
+        REPEATED_CLICK_DESTINATION_POSITION,
       ),
-      afterThresholdDestinationPosition: clampUnitPosition(
-        REPEATED_CLICK_AFTER_THRESHOLD_DESTINATION_POSITION,
-      ),
+      speedMultiplier:
+        Number.isFinite(REPEATED_CLICK_SPEED_MULTIPLIER) &&
+        REPEATED_CLICK_SPEED_MULTIPLIER >= 1
+          ? REPEATED_CLICK_SPEED_MULTIPLIER
+          : 1,
     };
   };
 

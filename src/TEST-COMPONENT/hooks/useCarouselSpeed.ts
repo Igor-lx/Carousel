@@ -66,12 +66,8 @@ export function useCarouselSpeed({
 
   const repeatedClickAdvanceDuration = useMemo(
     () =>
-      getSegmentDurationBySpan(
-        segmentStartVirtualIndex,
-        targetVirtualIndex,
-        SAFE_REPEATED_CLICK_SETTINGS.advanceDuration,
-      ),
-    [getSegmentDurationBySpan, segmentStartVirtualIndex, targetVirtualIndex],
+      clickSegmentDuration / SAFE_REPEATED_CLICK_SETTINGS.speedMultiplier,
+    [clickSegmentDuration],
   );
 
   const baseDuration = useMemo(() => {

@@ -1,9 +1,7 @@
 export const MIN_SPEED = 100;
 export const MIN_DURATION = 300;
-export const REPEATED_CLICK_ADVANCE_DURATION = 700;
-export const REPEATED_CLICK_THRESHOLD_POSITION = 0.5;
-export const REPEATED_CLICK_BEFORE_THRESHOLD_DESTINATION_POSITION = 0.9;
-export const REPEATED_CLICK_AFTER_THRESHOLD_DESTINATION_POSITION = 0.65;
+export const REPEATED_CLICK_DESTINATION_POSITION = 0.65;
+export const REPEATED_CLICK_SPEED_MULTIPLIER = 3;
 export const MIN_DELAY = 100;
 
 export const ANIMATION_SAFETY_MARGIN = 30;
@@ -14,6 +12,7 @@ export const AUTOPLAY_PAGINATION_FACTOR = 0.4;
 
 export const JUMP_BEZIER = "cubic-bezier(0.16, 1, 0.3, 1)";
 export const MOVE_CLICK_BEZIER = "cubic-bezier(0.2, 0.9, 0.32, 1)";
+export const REPEATED_CLICK_ADVANCE_BEZIER = "cubic-bezier(0.34, 0.44, 0.4, 1)";
 export const MOVE_AUTO_BEZIER = "cubic-bezier(0.28, 0.72, 0.38, 1)";
 export const MOVE_SWIPE_BEZIER = "cubic-bezier(0.14, 0.92, 0.24, 1)";
 export const SNAP_BACK_BEZIER = "cubic-bezier(0.18, 0.82, 0.28, 1)";

@@ -176,24 +176,6 @@ export const resolveStepAction = (state: State, action: StepAction) => {
   };
 };
 
-const getRepeatedClickPositionWithinPage = (
-  position: number,
-  stepSize: number,
-  direction: number,
-) => {
-  if (stepSize <= REPEATED_CLICK_EPSILON || direction === 0) {
-    return 0;
-  }
-
-  if (direction > 0) {
-    const pageStart = Math.floor(position / stepSize) * stepSize;
-    return clamp((position - pageStart) / stepSize, 0, 1);
-  }
-
-  const pageStart = Math.ceil(position / stepSize) * stepSize;
-  return clamp((pageStart - position) / stepSize, 0, 1);
-};
-
 const clampRepeatedClickVirtualIndex = (
   virtualIndex: number,
   layout: CarouselLayout,
@@ -238,36 +220,19 @@ export const resolveRepeatedClickPlan = ({
     return null;
   }
 
-  const currentPositionWithinPage = getRepeatedClickPositionWithinPage(
-    fromVirtualIndex,
-    stepSize,
-    direction,
-  );
-  const {
-    thresholdPosition,
-    beforeThresholdDestinationPosition,
-    afterThresholdDestinationPosition,
-  } = SAFE_REPEATED_CLICK_SETTINGS;
+  const { destinationPosition } = SAFE_REPEATED_CLICK_SETTINGS;
   const currentPageOrigin =
     direction > 0
       ? Math.floor(fromVirtualIndex / stepSize) * stepSize
       : Math.ceil(fromVirtualIndex / stepSize) * stepSize;
-  const isAfterThresholdClick = currentPositionWithinPage >= thresholdPosition;
-  const boundaryVirtualIndex = currentPageOrigin + direction * stepSize;
 
   const nextAdvanceVirtualIndex = clampRepeatedClickVirtualIndex(
-    isAfterThresholdClick
-      ? currentPageOrigin +
-          direction * (1 + afterThresholdDestinationPosition) * stepSize
-      : currentPageOrigin +
-          direction * beforeThresholdDestinationPosition * stepSize,
+    currentPageOrigin + direction * (1 + destinationPosition) * stepSize,
     layout,
   );
 
   const nextTargetVirtualIndex = clampRepeatedClickVirtualIndex(
-    isAfterThresholdClick
-      ? currentPageOrigin + direction * 2 * stepSize
-      : boundaryVirtualIndex,
+    currentPageOrigin + direction * 2 * stepSize,
     layout,
   );
 
