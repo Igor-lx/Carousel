@@ -1,45 +1,46 @@
 import { type RefObject } from "react";
-import type { MoveReason } from "../model/reducer";
-import { type DragListeners, useDrag } from "../../shared";
+import {
+  type DragEndPayload,
+  type DragListeners,
+  useDrag,
+} from "../../shared";
 import { DRAG_SETTINGS_CONFIG } from "../model/config";
 
 interface GestureProps {
-  onMove: (step: number, reason: MoveReason, dragOffset?: number) => void;
+  onPressStart: () => void;
   onDragStart: () => void;
-  onDragSnap: (dragOffset?: number) => void;
+  onDragMove: (dragOffset: number) => void;
+  onDragEnd: (payload: DragEndPayload) => void;
   enabled: boolean;
   measureRef: RefObject<HTMLDivElement | null>;
 }
 
 interface GestureResult {
   isDragging: boolean;
+  isInteracting: boolean;
   velocity: number;
   dragListeners: DragListeners;
-  offset: number;
 }
 
 export function useCarouselGesture({
-  onMove,
+  onPressStart,
   onDragStart,
-  onDragSnap,
+  onDragMove,
+  onDragEnd,
   enabled,
   measureRef,
 }: GestureProps): GestureResult {
-  const { isDragging, velocity, dragListeners, offset } = useDrag({
+  const { isDragging, isInteracting, velocity, dragListeners } = useDrag({
     enabled,
     measureRef,
+    onPressStart,
     onDragStart,
-    config: DRAG_SETTINGS_CONFIG,
-    onDragEnd: (result, _velocity, dragOffset) => {
-      if (result === "LEFT") {
-        onMove(1, "gesture", dragOffset);
-      } else if (result === "RIGHT") {
-        onMove(-1, "gesture", dragOffset);
-      } else {
-        onDragSnap(dragOffset);
-      }
+    onDragMove: (sample) => {
+      onDragMove(sample.offset);
     },
+    config: DRAG_SETTINGS_CONFIG,
+    onDragEnd,
   });
 
-  return { isDragging, velocity, dragListeners, offset };
+  return { isDragging, isInteracting, velocity, dragListeners };
 }

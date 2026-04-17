@@ -1,19 +1,31 @@
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 
-export type DragPhase = "IDLE" | "START" | "DRAGGING" | "COOLDOWN";
+export type DragPhase = "IDLE" | "PRESS" | "DRAGGING" | "COOLDOWN";
 export type SwipeDirection = "LEFT" | "RIGHT" | "NONE";
 
 export interface DragState {
   phase: DragPhase;
-  offset: number;
-  velocity: number;
 }
 
-export type DragAction =
-  | { type: "SET_START" }
-  | { type: "SET_DRAG"; offset: number; velocity: number }
-  | { type: "SET_IDLE" }
-  | { type: "SET_COOLDOWN" };
+export type DragAction = {
+  type: "SET_PHASE";
+  phase: DragPhase;
+};
+
+export interface DragSample {
+  rawOffset: number;
+  offset: number;
+  rawVelocity: number;
+  velocity: number;
+  width: number;
+  timestamp: number;
+}
+
+export interface DragEndPayload extends DragSample {
+  result: SwipeDirection;
+  wasDragging: boolean;
+  wasCancelled: boolean;
+}
 
 export interface DragListeners {
   onPointerDown?: (e: ReactPointerEvent) => void;
@@ -38,8 +50,10 @@ export interface DragConfig {
 }
 
 export interface DragProps {
-  onDragStart?: () => void;
-  onDragEnd?: (result: SwipeDirection, velocity: number, dragOffset: number) => void;
+  onPressStart?: () => void;
+  onDragStart?: (sample: DragSample) => void;
+  onDragMove?: (sample: DragSample) => void;
+  onDragEnd?: (payload: DragEndPayload) => void;
   enabled?: boolean;
   measureRef: React.RefObject<HTMLElement | null>;
   config?: DragConfig;
@@ -47,7 +61,7 @@ export interface DragProps {
 
 export interface DragResult {
   isDragging: boolean;
-  offset: number;
+  isInteracting: boolean;
   velocity: number;
   dragListeners: DragListeners;
 }

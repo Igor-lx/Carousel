@@ -1,5 +1,17 @@
 import type { SwipeDirection, DragConfig } from "./types";
 
+const clamp = (value: number, min: number, max: number) =>
+  Math.max(min, Math.min(value, max));
+
+const clampMagnitude = (value: number, limit: number) => {
+  if (!Number.isFinite(value) || !(limit > 0)) {
+    return 0;
+  }
+
+  return Math.sign(value) * Math.min(Math.abs(value), limit);
+};
+
+const getSafeResistance = (resistance: number) => clamp(resistance, 0, 1);
 
 export const applyResistance = (
   offset: number,
@@ -8,9 +20,18 @@ export const applyResistance = (
 ): number => {
   const sign = Math.sign(offset);
   const abs = Math.abs(offset);
-  return sign * (abs / (1 + abs * resistance * curvature));
-};
+  const safeResistance = getSafeResistance(resistance);
+  const resistanceStrength =
+    safeResistance <= 0
+      ? 0
+      : safeResistance / Math.max(1 - safeResistance, 0.001);
 
+  return (
+    sign *
+    (abs /
+      (1 + abs * Math.max(0, curvature) * resistanceStrength))
+  );
+};
 
 export const calculateEMA = (
   prevV: number,
@@ -20,27 +41,43 @@ export const calculateEMA = (
   return prevV * (1 - alpha) + instantV * alpha;
 };
 
-
 export const getSwipeDirection = (
-  offset: number,
-  velocity: number,
+  rawOffset: number,
+  rawVelocity: number,
   width: number,
   config: Required<DragConfig>,
 ): SwipeDirection => {
-  const powerFactor = 1 - config.RESISTANCE;
-
-  const adaptedThreshold = Math.max(
+  const distanceThreshold = Math.max(
     config.MIN_SWIPE_DISTANCE,
-    width * config.SWIPE_THRESHOLD_RATIO * powerFactor,
+    Math.max(0, width) * config.SWIPE_THRESHOLD_RATIO,
+  );
+  const adaptedThreshold = Math.abs(
+    applyResistance(
+      distanceThreshold,
+      config.RESISTANCE,
+      config.RESISTANCE_CURVATURE,
+    ),
   );
 
   const isQuickFlick =
-    velocity > config.SWIPE_VELOCITY_LIMIT &&
-    Math.abs(offset) > config.QUICK_SWIPE_MIN_OFFSET;
+    Math.abs(rawVelocity) >= config.SWIPE_VELOCITY_LIMIT &&
+    Math.abs(rawOffset) >= config.QUICK_SWIPE_MIN_OFFSET;
 
-  if (Math.abs(offset) > adaptedThreshold || isQuickFlick) {
-    return offset < 0 ? "LEFT" : "RIGHT";
+  if (Math.abs(rawOffset) >= distanceThreshold || isQuickFlick) {
+    return rawOffset < 0 ? "LEFT" : "RIGHT";
+  }
+
+  const resistedOffset = applyResistance(
+    rawOffset,
+    config.RESISTANCE,
+    config.RESISTANCE_CURVATURE,
+  );
+
+  if (Math.abs(resistedOffset) >= adaptedThreshold) {
+    return rawOffset < 0 ? "LEFT" : "RIGHT";
   }
 
   return "NONE";
 };
+
+export const clampVelocityMagnitude = clampMagnitude;

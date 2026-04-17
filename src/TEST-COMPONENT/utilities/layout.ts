@@ -134,6 +134,21 @@ export const getAlignedVirtualIndex = (
   return pageStart + laneOffset * layout.virtualLength;
 };
 
+export const getNearestPageIndex = (
+  virtualIndex: number,
+  layout: CarouselLayout,
+) => {
+  if (layout.pageCount <= 0 || layout.clampedVisible <= 0) {
+    return 0;
+  }
+
+  const rawPageIndex = Math.round(virtualIndex / layout.clampedVisible);
+
+  return layout.isFinite
+    ? clamp(rawPageIndex, 0, layout.pageCount - 1)
+    : normalizePageIndex(rawPageIndex, layout.pageCount);
+};
+
 export const getRenderWindow = (
   fromVirtualIndex: number,
   toVirtualIndex: number,

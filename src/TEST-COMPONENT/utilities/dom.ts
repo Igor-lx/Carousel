@@ -3,7 +3,10 @@ const parseLengthValue = (rawValue: string) => {
   return Number.isFinite(value) ? value : 0;
 };
 
-const getTrackSlotSize = (viewport: HTMLElement, visibleSlidesNr: number) => {
+export const getTrackSlotSize = (
+  viewport: HTMLElement,
+  visibleSlidesNr: number,
+) => {
   if (visibleSlidesNr <= 0) return 0;
 
   const viewportWidth = viewport.offsetWidth;

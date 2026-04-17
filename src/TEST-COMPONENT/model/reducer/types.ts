@@ -27,13 +27,18 @@ export type StepAction = MoveAction | GoToAction;
 
 export type StartDragAction = VirtualIndexSource & {
   type: "START_DRAG";
+  targetIndex?: number;
 };
 
-export type EndDragSnapAction = VirtualIndexSource & {
-  type: "END_DRAG_SNAP";
+export type EndDragAction = VirtualIndexSource & {
+  type: "END_DRAG";
+  targetIndex: number;
+  targetVirtualIndex: number;
+  isSnap: boolean;
+  releaseVelocity: number;
 };
 
-export type DragAction = StartDragAction | EndDragSnapAction;
+export type DragAction = StartDragAction | EndDragAction;
 
 export type EndStepAction = {
   type: "END_STEP";
@@ -55,4 +60,5 @@ export interface State {
   isRepeatedClickAdvance: boolean;
   animMode: AnimationMode;
   moveReason: MoveReason;
+  gestureReleaseVelocity: number;
 }

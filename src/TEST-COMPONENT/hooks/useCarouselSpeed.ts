@@ -70,8 +70,40 @@ export function useCarouselSpeed({
     [clickSegmentDuration],
   );
 
+  const gestureSegmentDuration = useMemo(
+    () =>
+      getSegmentDurationBySpan(
+        segmentStartVirtualIndex,
+        targetVirtualIndex,
+        stepDuration,
+      ),
+    [
+      getSegmentDurationBySpan,
+      segmentStartVirtualIndex,
+      stepDuration,
+      targetVirtualIndex,
+    ],
+  );
+
+  const snapSegmentDuration = useMemo(() => {
+    const scaledDuration = getSegmentDurationBySpan(
+      segmentStartVirtualIndex,
+      targetVirtualIndex,
+      SNAP_BACK_DURATION,
+    );
+
+    return Math.max(
+      DRAG_DURATION_RAMP_CONFIG.minDuration,
+      Math.min(SNAP_BACK_DURATION, scaledDuration),
+    );
+  }, [
+    getSegmentDurationBySpan,
+    segmentStartVirtualIndex,
+    targetVirtualIndex,
+  ]);
+
   const baseDuration = useMemo(() => {
-    if (animMode === "snap") return SNAP_BACK_DURATION;
+    if (animMode === "snap") return snapSegmentDuration;
 
     if (isInstant || animMode === "jump") return jumpDuration;
 
@@ -84,7 +116,7 @@ export function useCarouselSpeed({
       case "autoplay":
         return autoplayDuration;
       case "gesture":
-        return stepDuration;
+        return gestureSegmentDuration;
       default:
         return autoplayDuration;
     }
@@ -92,11 +124,13 @@ export function useCarouselSpeed({
     animMode,
     autoplayDuration,
     clickSegmentDuration,
+    gestureSegmentDuration,
     isRepeatedClickAdvance,
     isInstant,
     jumpDuration,
     repeatedClickAdvanceDuration,
     reason,
+    snapSegmentDuration,
     stepDuration,
   ]);
 

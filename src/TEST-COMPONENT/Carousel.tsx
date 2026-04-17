@@ -1,4 +1,4 @@
-import { memo, useMemo, useReducer, useRef } from "react";
+import { memo, useCallback, useMemo, useReducer, useRef } from "react";
 
 import styles from "./Carousel.module.scss";
 import controlsVariables from "./styles/Controls.variables.module.scss";
@@ -49,6 +49,7 @@ import {
 } from "./control";
 import { SLIDE_KEYS, type CarouselProps } from "./Carousel.types";
 import {
+  applyTrackPositionStyle,
   clampSlidesData,
   getCarouselLayout,
   hasImperfectLayout,
@@ -153,6 +154,7 @@ const Carousel = memo((props: CarouselProps) => {
     isRepeatedClickAdvance,
     animMode,
     moveReason,
+    gestureReleaseVelocity,
   } = syncedState;
 
   const { canSlide, pageCount, clampedVisible } = nextLayout;
@@ -192,11 +194,24 @@ const Carousel = memo((props: CarouselProps) => {
       layout: nextLayout,
     });
 
+  const applyDragPosition = useCallback(
+    (position: number) => {
+      motionPositionRef.current = position;
+
+      const track = movingRef.current;
+      if (!track) return;
+
+      applyTrackPositionStyle(track, position, windowStart, clampedVisible);
+    },
+    [clampedVisible, windowStart],
+  );
+
   const {
     move,
     goTo,
     startDrag,
-    snapDrag,
+    updateDrag,
+    finishDrag,
   } = useCarouselController({
     dispatchAction,
     enabled: canSlide,
@@ -205,17 +220,18 @@ const Carousel = memo((props: CarouselProps) => {
     layout: nextLayout,
     baseVirtualIndex: virtualIndex,
     currentPositionRef: motionPositionRef,
+    applyDragPosition,
   });
 
   const {
     isDragging,
-    velocity,
+    isInteracting,
     dragListeners,
-    offset,
   } = useCarouselGesture({
-    onDragStart: startDrag,
-    onDragSnap: snapDrag,
-    onMove: move,
+    onPressStart: startDrag,
+    onDragStart: () => undefined,
+    onDragMove: updateDrag,
+    onDragEnd: finishDrag,
     enabled: canSlide,
     measureRef: containerRef,
   });
@@ -231,7 +247,7 @@ const Carousel = memo((props: CarouselProps) => {
     onClick: onSlideClick,
   });
 
-  const isPaused = !isVisible || isDragging || isMoving;
+  const isPaused = !isVisible || isInteracting || isMoving;
   const { onHover } = useCarouselAutoPlay({
     enabled: isAuto && canSlide,
     ignoreHover: isTouch,
@@ -243,7 +259,7 @@ const Carousel = memo((props: CarouselProps) => {
   });
 
   const actualDuration = useCarouselSpeed({
-    velocity,
+    velocity: gestureReleaseVelocity,
     reason: moveReason,
     animMode,
     isDragging,
@@ -279,6 +295,7 @@ const Carousel = memo((props: CarouselProps) => {
     animMode,
     reason: moveReason,
     duration: actualDuration,
+    gestureReleaseVelocity,
     isRepeatedClickAdvance,
     followUpVirtualIndex,
     followUpDuration,
@@ -296,15 +313,8 @@ const Carousel = memo((props: CarouselProps) => {
     [connectedChildren],
   );
 
-  const {
-    trackStyle,
-    slideStyle,
-  } = useCarouselTechStyles({
-    current: virtualIndex,
-    windowStart,
+  const { slideStyle } = useCarouselTechStyles({
     size: clampedVisible,
-    isDragging,
-    dragOffset: offset,
   });
 
   useIsomorphicLayoutEffect(() => {
@@ -361,7 +371,6 @@ const Carousel = memo((props: CarouselProps) => {
           <div
             ref={movingRef}
             className={classNames.slideContainer}
-            style={trackStyle}
           >
             {virtualSlides.map((slide) => {
               return (

@@ -1,5 +1,5 @@
 export const DRAG_SETTINGS_CONFIG = {
-  RESISTANCE: 0.75,
+  RESISTANCE: 0.5,
   RESISTANCE_CURVATURE: 0.005,
   INTENT_THRESHOLD: 10,
   MAX_VELOCITY: 4,
@@ -12,4 +12,5 @@ export const DRAG_DURATION_RAMP_CONFIG = {
   rampEnd: 1.9,
   minDurationRatio: 0.2,
   minDuration: 160,
+  inertiaBoost: 1,
 } as const;

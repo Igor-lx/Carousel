@@ -3,6 +3,7 @@ export interface DragSpeedConfig {
   rampEnd: number;
   minDurationRatio: number;
   minDuration: number;
+  inertiaBoost: number;
 }
 
 export const DEFAULT_DRAG_SPEED_CONFIG: DragSpeedConfig = {
@@ -10,6 +11,7 @@ export const DEFAULT_DRAG_SPEED_CONFIG: DragSpeedConfig = {
   rampEnd: 2.1,
   minDurationRatio: 0.3,
   minDuration: 240,
+  inertiaBoost: 1,
 };
 
 const smoothstep = (progress: number) =>
@@ -32,6 +34,34 @@ const getVelocityModifierWeight = (
   return smoothstep(progress);
 };
 
+export const scaleVelocityToInertia = ({
+  velocity,
+  dragSpeedConfig,
+}: {
+  velocity: number;
+  dragSpeedConfig?: Partial<DragSpeedConfig>;
+}) => {
+  const resolvedDragSpeedConfig: DragSpeedConfig = {
+    ...DEFAULT_DRAG_SPEED_CONFIG,
+    ...dragSpeedConfig,
+  };
+  const safeVelocity = Math.abs(velocity);
+
+  if (!Number.isFinite(velocity) || safeVelocity <= 0) {
+    return 0;
+  }
+
+  const weight = getVelocityModifierWeight(
+    safeVelocity,
+    resolvedDragSpeedConfig,
+  );
+  const safeBoost = Math.max(0, resolvedDragSpeedConfig.inertiaBoost);
+  const amplifiedVelocity =
+    safeVelocity * (1 + (safeBoost - 1) * weight);
+
+  return Math.sign(velocity) * amplifiedVelocity;
+};
+
 export const mapVelocityToDuration = ({
   velocity,
   baseDuration,
@@ -45,12 +75,13 @@ export const mapVelocityToDuration = ({
     ...DEFAULT_DRAG_SPEED_CONFIG,
     ...dragSpeedConfig,
   };
+  const velocityMagnitude = Math.abs(velocity);
 
   if (!Number.isFinite(baseDuration) || baseDuration <= 0) {
     return baseDuration;
   }
 
-  if (velocity <= resolvedDragSpeedConfig.velocityThreshold) {
+  if (velocityMagnitude <= resolvedDragSpeedConfig.velocityThreshold) {
     return baseDuration;
   }
 
@@ -67,7 +98,7 @@ export const mapVelocityToDuration = ({
   }
 
   const weight = getVelocityModifierWeight(
-    velocity,
+    velocityMagnitude,
     resolvedDragSpeedConfig,
   );
   const scaledDuration =

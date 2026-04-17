@@ -16,15 +16,30 @@ import type {
   DragProps,
   DragResult,
   DragConfig,
+  DragEndPayload,
+  DragPhase,
+  DragSample,
 } from "./model/types";
 import {
   getSwipeDirection,
   calculateEMA,
   applyResistance,
+  clampVelocityMagnitude,
 } from "./model/utilites";
 
+const createIdleSample = (width = 0, timestamp = 0): DragSample => ({
+  rawOffset: 0,
+  offset: 0,
+  rawVelocity: 0,
+  velocity: 0,
+  width,
+  timestamp,
+});
+
 export function useDrag({
+  onPressStart,
   onDragStart,
+  onDragMove,
   onDragEnd,
   enabled = true,
   measureRef,
@@ -44,10 +59,7 @@ export function useDrag({
   const lockUntilRef = useRef<number>(0);
   const timeoutRef = useRef<number | null>(null);
   const phaseRef = useRef(state.phase);
-  const dragSampleRef = useRef({
-    offset: initialState.offset,
-    velocity: initialState.velocity,
-  });
+  const dragSampleRef = useRef(createIdleSample());
   useEffect(() => {
     phaseRef.current = state.phase;
   }, [state.phase]);
@@ -57,8 +69,58 @@ export function useDrag({
     startY: 0,
     lastX: 0,
     lastTime: 0,
+    lastOffset: 0,
     pointerId: null as number | null,
   });
+
+  const setPhase = useCallback((phase: DragPhase) => {
+    dispatch({ type: "SET_PHASE", phase });
+  }, []);
+
+  const createSample = useCallback(
+    (currentX: number, timestamp: number): DragSample => {
+      const currentGesture = gesture.current;
+      const settingsSnapshot = settingsRef.current;
+      const rawOffset = currentX - currentGesture.startX;
+      const offset = applyResistance(
+        rawOffset,
+        settingsSnapshot.RESISTANCE,
+        settingsSnapshot.RESISTANCE_CURVATURE,
+      );
+      const dt = Math.max(1, timestamp - currentGesture.lastTime);
+      const rawVelocity = clampVelocityMagnitude(
+        (currentX - currentGesture.lastX) / dt,
+        settingsSnapshot.MAX_VELOCITY,
+      );
+      const instantVelocity = clampVelocityMagnitude(
+        (offset - currentGesture.lastOffset) / dt,
+        settingsSnapshot.MAX_VELOCITY,
+      );
+      const velocity = clampVelocityMagnitude(
+        calculateEMA(
+          dragSampleRef.current.velocity,
+          instantVelocity,
+          settingsSnapshot.EMA_ALPHA,
+        ),
+        settingsSnapshot.MAX_VELOCITY,
+      );
+      const width = measureRef.current?.offsetWidth ?? dragSampleRef.current.width;
+
+      currentGesture.lastX = currentX;
+      currentGesture.lastTime = timestamp;
+      currentGesture.lastOffset = offset;
+
+      return {
+        rawOffset,
+        offset,
+        rawVelocity,
+        velocity,
+        width,
+        timestamp,
+      };
+    },
+    [measureRef],
+  );
 
   const stopDragging = useCallback(
     (isCancel = false) => {
@@ -72,39 +134,58 @@ export function useDrag({
         } catch {}
       }
 
-      if (currentPhase === "DRAGGING" && !isCancel) {
-        const { offset, velocity } = dragSampleRef.current;
+      if (currentPhase === "IDLE" || currentPhase === "COOLDOWN") {
+        return;
+      }
 
-        setReleasedVelocity(velocity);
+      const sample = {
+        ...dragSampleRef.current,
+        width: target?.offsetWidth ?? dragSampleRef.current.width,
+        timestamp: now,
+      };
+      const wasDragging = currentPhase === "DRAGGING";
+      const result =
+        !isCancel && wasDragging
+          ? getSwipeDirection(
+              sample.rawOffset,
+              sample.rawVelocity,
+              sample.width,
+              settingsRef.current,
+            )
+          : "NONE";
+      const payload: DragEndPayload = {
+        ...sample,
+        result,
+        wasDragging,
+        wasCancelled: isCancel,
+      };
 
-        const result = getSwipeDirection(
-          offset,
-          velocity,
-          target?.offsetWidth ?? 0,
-          settingsRef.current,
-        );
-        onDragEnd?.(result, velocity, offset);
+      if (wasDragging) {
+        setReleasedVelocity(sample.velocity);
+        onDragEnd?.(payload);
 
         lockUntilRef.current = now + settingsRef.current.COOLDOWN_MS;
-        dispatch({ type: "SET_COOLDOWN" });
+        setPhase("COOLDOWN");
 
-        if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+        if (timeoutRef.current !== null) {
+          window.clearTimeout(timeoutRef.current);
+        }
+
         timeoutRef.current = window.setTimeout(() => {
-          dispatch({ type: "SET_IDLE" });
+          setPhase("IDLE");
           timeoutRef.current = null;
         }, settingsRef.current.COOLDOWN_MS);
       } else {
         setReleasedVelocity(0);
-        dragSampleRef.current = {
-          offset: initialState.offset,
-          velocity: initialState.velocity,
-        };
-        dispatch({ type: "SET_IDLE" });
+        onDragEnd?.(payload);
+        setPhase("IDLE");
       }
 
+      dragSampleRef.current = createIdleSample(target?.offsetWidth ?? 0, now);
+      gesture.current.lastOffset = 0;
       gesture.current.pointerId = null;
     },
-    [measureRef, onDragEnd],
+    [measureRef, onDragEnd, setPhase],
   );
 
   const handlePointerDown = useCallback(
@@ -129,15 +210,15 @@ export function useDrag({
         startY: e.clientY,
         lastX: e.clientX,
         lastTime: now,
+        lastOffset: 0,
         pointerId: e.pointerId,
       };
-      dragSampleRef.current = {
-        offset: initialState.offset,
-        velocity: initialState.velocity,
-      };
-      dispatch({ type: "SET_START" });
+      dragSampleRef.current = createIdleSample(target.offsetWidth, now);
+      setReleasedVelocity(0);
+      setPhase("PRESS");
+      onPressStart?.();
     },
-    [enabled],
+    [enabled, onPressStart, setPhase],
   );
 
   const handlePointerMove = useCallback(
@@ -152,7 +233,7 @@ export function useDrag({
       const dy = e.clientY - g.startY;
       const s = settingsRef.current;
 
-      if (currentPhase === "START") {
+      if (currentPhase === "PRESS") {
         const absX = Math.abs(dx);
         const absY = Math.abs(dy);
 
@@ -161,38 +242,25 @@ export function useDrag({
             stopDragging(true);
             return;
           }
-          onDragStart?.();
-          dragSampleRef.current = {
-            offset: initialState.offset,
-            velocity: initialState.velocity,
-          };
-          dispatch({ type: "SET_DRAG", offset: 0, velocity: 0 });
+
+          const sample = createSample(e.clientX, now);
+          dragSampleRef.current = sample;
+          setPhase("DRAGGING");
+          onDragStart?.(sample);
+          onDragMove?.(sample);
         }
         return;
       }
 
-      const dt = Math.max(1, now - g.lastTime);
-      const instantV = Math.abs((e.clientX - g.lastX) / dt);
-      const offset = applyResistance(dx, s.RESISTANCE, s.RESISTANCE_CURVATURE);
-      const velocity = Math.min(
-        calculateEMA(dragSampleRef.current.velocity, instantV, s.EMA_ALPHA),
-        s.MAX_VELOCITY,
-      );
+      if (e.cancelable) {
+        e.preventDefault();
+      }
 
-      g.lastX = e.clientX;
-      g.lastTime = now;
-      dragSampleRef.current = {
-        offset,
-        velocity,
-      };
-
-      dispatch({
-        type: "SET_DRAG",
-        offset,
-        velocity,
-      });
+      const sample = createSample(e.clientX, now);
+      dragSampleRef.current = sample;
+      onDragMove?.(sample);
     },
-    [onDragStart, stopDragging],
+    [createSample, onDragMove, onDragStart, setPhase, stopDragging],
   );
 
   useEffect(() => {
@@ -237,12 +305,12 @@ export function useDrag({
       onLostPointerCapture: () => stopDragging(true),
       style: SHARED_DRAG_STYLES,
     };
-  }, [enabled, handlePointerDown, handlePointerMove, stopDragging, state.phase]);
+  }, [enabled, handlePointerDown, handlePointerMove, stopDragging]);
 
   return {
     isDragging: state.phase === "DRAGGING",
-    offset: state.offset,
-    velocity: state.phase === "DRAGGING" ? state.velocity : releasedVelocity,
+    isInteracting: state.phase === "PRESS" || state.phase === "DRAGGING",
+    velocity: releasedVelocity,
     dragListeners,
   };
 }

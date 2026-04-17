@@ -1,7 +1,7 @@
 import type { ReducerAction, State } from ".";
 import {
-  getAlignedVirtualIndex,
-  getPageStart,
+  clamp,
+  normalizePageIndex,
 } from "../../utilities";
 import {
   getAnimStatus,
@@ -19,45 +19,57 @@ export function reducer(state: State, action: ReducerAction): State {
 
   switch (action.type) {
     case "START_DRAG":
+      const dragTargetIndex =
+        action.targetIndex ?? syncedState.targetIndex;
+
       return {
         ...syncedState,
+        activeIndex: dragTargetIndex,
+        targetIndex: dragTargetIndex,
         fromVirtualIndex: action.fromVirtualIndex ?? syncedState.virtualIndex,
         virtualIndex: action.fromVirtualIndex ?? syncedState.virtualIndex,
         followUpVirtualIndex: null,
         isRepeatedClickAdvance: false,
         animMode: "none",
+        moveReason: "gesture",
+        gestureReleaseVelocity: 0,
       };
 
-    case "END_DRAG_SNAP":
-      const snapOrigin = action.fromVirtualIndex ?? syncedState.virtualIndex;
-      const snapTarget = currentLayout.isFinite
-        ? getPageStart(syncedState.targetIndex, currentLayout.clampedVisible)
-        : getAlignedVirtualIndex(
-            syncedState.targetIndex,
-            snapOrigin,
-            currentLayout,
-          );
+    case "END_DRAG":
+      const dragReleaseOrigin =
+        action.fromVirtualIndex ?? syncedState.virtualIndex;
+      const resolvedTargetIndex = currentLayout.isFinite
+        ? clamp(action.targetIndex, 0, currentLayout.pageCount - 1)
+        : normalizePageIndex(action.targetIndex, currentLayout.pageCount);
 
-      if (Math.abs(snapOrigin - snapTarget) < DRAG_RELEASE_EPSILON) {
+      if (
+        Math.abs(dragReleaseOrigin - action.targetVirtualIndex) <
+        DRAG_RELEASE_EPSILON
+      ) {
         return {
           ...syncedState,
-          fromVirtualIndex: snapTarget,
-          virtualIndex: snapTarget,
+          activeIndex: resolvedTargetIndex,
+          targetIndex: resolvedTargetIndex,
+          fromVirtualIndex: action.targetVirtualIndex,
+          virtualIndex: action.targetVirtualIndex,
           followUpVirtualIndex: null,
           isRepeatedClickAdvance: false,
           animMode: "none",
           moveReason: "gesture",
+          gestureReleaseVelocity: 0,
         };
       }
 
       return {
         ...syncedState,
-        fromVirtualIndex: snapOrigin,
-        virtualIndex: snapTarget,
+        targetIndex: resolvedTargetIndex,
+        fromVirtualIndex: dragReleaseOrigin,
+        virtualIndex: action.targetVirtualIndex,
         followUpVirtualIndex: null,
         isRepeatedClickAdvance: false,
-        animMode: "snap",
+        animMode: action.isSnap ? "snap" : "normal",
         moveReason: "gesture",
+        gestureReleaseVelocity: action.releaseVelocity,
       };
 
     case "MOVE":
@@ -99,6 +111,7 @@ export function reducer(state: State, action: ReducerAction): State {
             isRepeatedClickAdvance: false,
             animMode: "snap",
             moveReason: "gesture",
+            gestureReleaseVelocity: 0,
           };
         }
         return {
@@ -109,6 +122,7 @@ export function reducer(state: State, action: ReducerAction): State {
           isRepeatedClickAdvance: false,
           animMode: action.isInstant ? "instant" : syncedState.animMode,
           moveReason: action.moveReason,
+          gestureReleaseVelocity: 0,
         };
       }
 
@@ -121,6 +135,7 @@ export function reducer(state: State, action: ReducerAction): State {
         isRepeatedClickAdvance: repeatedClickPlan !== null,
         animMode: mode,
         moveReason: action.moveReason,
+        gestureReleaseVelocity: 0,
       };
     }
 
@@ -136,6 +151,7 @@ export function reducer(state: State, action: ReducerAction): State {
           isRepeatedClickAdvance: false,
           animMode: "normal",
           moveReason: "click",
+          gestureReleaseVelocity: 0,
         };
       }
 
@@ -146,6 +162,7 @@ export function reducer(state: State, action: ReducerAction): State {
         followUpVirtualIndex: null,
         isRepeatedClickAdvance: false,
         animMode: "none",
+        gestureReleaseVelocity: 0,
       };
     }
 

@@ -9,7 +9,7 @@ import {
   SNAP_BACK_BEZIER,
 } from "../model/config";
 import type { AnimationMode, MoveReason } from "../model/reducer";
-import { getCarouselTransform } from "../utilities";
+import { applyTrackPositionStyle } from "../utilities";
 import { useIsomorphicLayoutEffect } from "../../shared";
 
 interface MotionProps {
@@ -24,6 +24,7 @@ interface MotionProps {
   animMode: AnimationMode;
   reason: MoveReason;
   duration: number;
+  gestureReleaseVelocity: number;
   isRepeatedClickAdvance: boolean;
   followUpVirtualIndex: number | null;
   followUpDuration: number;
@@ -358,6 +359,7 @@ export function useCarouselMotion({
   animMode,
   reason,
   duration,
+  gestureReleaseVelocity,
   isRepeatedClickAdvance,
   followUpVirtualIndex,
   followUpDuration,
@@ -378,9 +380,7 @@ export function useCarouselMotion({
       const track = trackRef.current;
       if (!track) return;
 
-      const relativeIndex = position - windowStart;
-      track.style.transform = `${getCarouselTransform(relativeIndex, size)} translateX(0px)`;
-      track.style.transition = "none";
+      applyTrackPositionStyle(track, position, windowStart, size);
     },
     [size, trackRef, windowStart],
   );
@@ -492,7 +492,7 @@ export function useCarouselMotion({
 
   useIsomorphicLayoutEffect(() => {
     const planKey =
-      `${enabled}:${isMoving}:${animMode}:${reason}:${duration}:${startVirtualIndex}:${currentVirtualIndex}:${isRepeatedClickAdvance}:${followUpVirtualIndex}:${followUpDuration}`;
+      `${enabled}:${isMoving}:${animMode}:${reason}:${duration}:${gestureReleaseVelocity}:${startVirtualIndex}:${currentVirtualIndex}:${isRepeatedClickAdvance}:${followUpVirtualIndex}:${followUpDuration}`;
     if (lastPlanRef.current === planKey) {
       if (!isMoving) {
         applyPosition(currentPositionRef.current);
@@ -544,8 +544,8 @@ export function useCarouselMotion({
           }
         : reason === "gesture"
           ? {
-              position: startVirtualIndex,
-              velocity: 0,
+              position: currentPositionRef.current,
+              velocity: gestureReleaseVelocity,
               progress: 0,
             }
         : {
@@ -570,7 +570,8 @@ export function useCarouselMotion({
     }
 
     const initialVelocity = resolveInitialVelocity({
-      currentVelocity: nowState.velocity,
+      currentVelocity:
+        reason === "gesture" ? gestureReleaseVelocity : nowState.velocity,
       distance,
       duration,
       animMode,
@@ -624,6 +625,7 @@ export function useCarouselMotion({
     finalizeMotion,
     followUpDuration,
     followUpVirtualIndex,
+    gestureReleaseVelocity,
     isRepeatedClickAdvance,
     isMoving,
     currentPositionRef,
