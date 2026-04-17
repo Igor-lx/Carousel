@@ -67,7 +67,7 @@ const CAROUSEL_DATA = [
 ];
 
 const VIS_CONFIG = {
-  DESKTOP: 1,
+  DESKTOP: 2,
   TABLET: 2,
   MOBILE: 1,
   DEFAULT: 3,
@@ -128,7 +128,7 @@ function App() {
             isAuto={isAutoOn}
             isPaginationOn={true}
             // isInstantMotion = {true}
-            isInteractive={true}
+            isInteractive={false}
             durationAutoplay={20000}
             durationStep={5000}
             durationJump={800}
