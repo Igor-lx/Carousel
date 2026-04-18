@@ -91,6 +91,9 @@ const Carousel = memo((props: CarouselProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const movingRef = useRef<HTMLDivElement>(null);
   const motionPositionRef = useRef(0);
+  const motionPositionReaderRef = useRef<() => number>(
+    () => motionPositionRef.current,
+  );
 
   const isReducedMotion = isInstantMotion ?? useIsReducedMotion();
   const isTouch = isTouchDevice ?? useIsTouchDevice();
@@ -206,6 +209,11 @@ const Carousel = memo((props: CarouselProps) => {
     [clampedVisible, windowStart],
   );
 
+  const readCurrentPosition = useCallback(
+    () => motionPositionReaderRef.current(),
+    [],
+  );
+
   const {
     move,
     goTo,
@@ -220,6 +228,7 @@ const Carousel = memo((props: CarouselProps) => {
     layout: nextLayout,
     baseVirtualIndex: virtualIndex,
     currentPositionRef: motionPositionRef,
+    readCurrentPosition,
     applyDragPosition,
   });
 
@@ -286,6 +295,7 @@ const Carousel = memo((props: CarouselProps) => {
   useCarouselMotion({
     trackRef: movingRef,
     currentPositionRef: motionPositionRef,
+    positionReaderRef: motionPositionReaderRef,
     enabled: canSlide,
     startVirtualIndex: fromVirtualIndex,
     currentVirtualIndex: virtualIndex,

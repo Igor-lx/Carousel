@@ -23,3 +23,14 @@ export const getShortestDistance = (
 
   return Math.abs(forward) <= Math.abs(backward) ? forward : backward;
 };
+
+export const scaleVirtualVelocityToPageVelocity = (
+  virtualVelocity: number,
+  pageSize: number,
+) => {
+  if (!Number.isFinite(virtualVelocity) || !(pageSize > 0)) {
+    return 0;
+  }
+
+  return (virtualVelocity * 1000) / pageSize;
+};

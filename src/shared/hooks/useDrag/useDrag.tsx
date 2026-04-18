@@ -36,6 +36,37 @@ const createIdleSample = (width = 0, timestamp = 0): DragSample => ({
   timestamp,
 });
 
+const INTERACTIVE_TARGET_SELECTOR = [
+  "button",
+  "input",
+  "select",
+  "textarea",
+  "label",
+  "a[href]",
+  "summary",
+  "[contenteditable='true']",
+  "[role='button']",
+  "[role='link']",
+  "[role='checkbox']",
+  "[role='radio']",
+  "[role='switch']",
+  "[role='tab']",
+  "[data-drag-ignore='true']",
+].join(",");
+
+const shouldIgnoreDragPress = (
+  target: EventTarget | null,
+  boundary: HTMLElement,
+) => {
+  if (!(target instanceof Element)) {
+    return false;
+  }
+
+  const interactiveTarget = target.closest(INTERACTIVE_TARGET_SELECTOR);
+
+  return interactiveTarget !== null && boundary.contains(interactiveTarget);
+};
+
 export function useDrag({
   onPressStart,
   onDragStart,
@@ -201,6 +232,10 @@ export function useDrag({
         return;
 
       const target = e.currentTarget as HTMLElement;
+      if (shouldIgnoreDragPress(e.target, target)) {
+        return;
+      }
+
       try {
         target.setPointerCapture(e.pointerId);
       } catch {}

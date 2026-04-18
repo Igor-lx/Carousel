@@ -7,6 +7,7 @@ import {
   getAlignedVirtualIndex,
   getNearestPageIndex,
   getPageStart,
+  scaleVirtualVelocityToPageVelocity,
   getTrackSlotSize,
   normalizePageIndex,
   getVirtualIndexFromDragOffset,
@@ -25,6 +26,7 @@ interface ControllerProps {
   layout: CarouselLayout;
   baseVirtualIndex: number;
   currentPositionRef: React.MutableRefObject<number>;
+  readCurrentPosition: () => number;
   applyDragPosition: (position: number) => void;
 }
 
@@ -49,29 +51,41 @@ export function useCarouselController({
   layout,
   baseVirtualIndex,
   currentPositionRef,
+  readCurrentPosition,
   applyDragPosition,
 }: ControllerProps): ControllerResult {
   const dragOriginPageIndexRef = useRef(0);
+  const dragOriginPositionRef = useRef<number | null>(null);
+
+  const resolveCurrentPosition = useCallback(() => {
+    const position = readCurrentPosition();
+
+    return Number.isFinite(position) ? position : currentPositionRef.current;
+  }, [currentPositionRef, readCurrentPosition]);
 
   const resolveFromVirtualIndex = useCallback(
     (dragOffset?: number) => {
+      const dragOriginPosition = dragOriginPositionRef.current;
+      const gestureBaseVirtualIndex =
+        dragOriginPosition !== null ? dragOriginPosition : baseVirtualIndex;
+
       if (typeof dragOffset === "number") {
         return getVirtualIndexFromDragOffset({
-          baseVirtualIndex,
+          baseVirtualIndex: gestureBaseVirtualIndex,
           dragOffset,
           viewport: measureRef.current,
           visibleSlidesNr: layout.clampedVisible,
-          fallback: baseVirtualIndex,
+          fallback: gestureBaseVirtualIndex,
         });
       }
 
-      return currentPositionRef.current;
+      return resolveCurrentPosition();
     },
     [
       baseVirtualIndex,
-      currentPositionRef,
       layout.clampedVisible,
       measureRef,
+      resolveCurrentPosition,
     ],
   );
 
@@ -98,9 +112,14 @@ export function useCarouselController({
       if (slotSize <= 0) return 0;
 
       const virtualVelocity = -dragVelocity / slotSize;
+      const responseVelocity = scaleVirtualVelocityToPageVelocity(
+        virtualVelocity,
+        layout.clampedVisible,
+      );
 
       return scaleVelocityToInertia({
         velocity: virtualVelocity,
+        responseVelocity,
         dragSpeedConfig: DRAG_DURATION_RAMP_CONFIG,
       });
     },
@@ -151,16 +170,17 @@ export function useCarouselController({
   );
 
   const startDrag = useCallback(() => {
-    const dragOriginPosition = currentPositionRef.current;
+    const dragOriginPosition = resolveCurrentPosition();
     const dragOriginIndex = getNearestPageIndex(dragOriginPosition, layout);
 
     dragOriginPageIndexRef.current = dragOriginIndex;
+    dragOriginPositionRef.current = dragOriginPosition;
     dispatchAction({
       type: "START_DRAG",
       fromVirtualIndex: dragOriginPosition,
       targetIndex: dragOriginIndex,
     });
-  }, [currentPositionRef, dispatchAction, layout]);
+  }, [dispatchAction, layout, resolveCurrentPosition]);
 
   const updateDrag = useCallback(
     (dragOffset: number) => {
@@ -208,6 +228,8 @@ export function useCarouselController({
         isSnap: isSnap || Math.abs(targetVirtualIndex - releasePosition) < 0.001,
         releaseVelocity: resolveReleaseVelocity(payload.velocity),
       });
+
+      dragOriginPositionRef.current = null;
     },
     [
       applyDragPosition,

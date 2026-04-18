@@ -1,11 +1,15 @@
 import { useMemo } from "react";
 import {
   DRAG_DURATION_RAMP_CONFIG,
+  MOTION_MONOTONIC_SPEED_FACTOR,
   SNAP_BACK_DURATION,
 } from "../model/config";
 import type { MoveReason, AnimationMode } from "../model/reducer";
 import { mapVelocityToDuration } from "../../shared";
-import { SAFE_REPEATED_CLICK_SETTINGS } from "../utilities";
+import {
+  SAFE_REPEATED_CLICK_SETTINGS,
+  scaleVirtualVelocityToPageVelocity,
+} from "../utilities";
 
 interface SpeedProps {
   reason: MoveReason;
@@ -137,12 +141,30 @@ export function useCarouselSpeed({
   const dynamicDuration = useMemo(
     () =>
       mapVelocityToDuration({
-        velocity,
+        velocity: scaleVirtualVelocityToPageVelocity(velocity, stepSize),
         baseDuration,
         dragSpeedConfig: DRAG_DURATION_RAMP_CONFIG,
       }),
-    [baseDuration, velocity],
+    [baseDuration, stepSize, velocity],
   );
+
+  const velocityPreservingGestureDuration = useMemo(() => {
+    if (reason !== "gesture") {
+      return Infinity;
+    }
+
+    const distance = Math.abs(targetVirtualIndex - segmentStartVirtualIndex);
+    const velocityMagnitude = Math.abs(velocity);
+
+    if (!(distance > 0) || !(velocityMagnitude > 0)) {
+      return Infinity;
+    }
+
+    return (
+      (distance * MOTION_MONOTONIC_SPEED_FACTOR) /
+      velocityMagnitude
+    );
+  }, [reason, segmentStartVirtualIndex, targetVirtualIndex, velocity]);
 
   return useMemo(() => {
     if (isDragging) return 0;
@@ -150,7 +172,12 @@ export function useCarouselSpeed({
     if (animMode === "snap") return baseDuration;
 
     if (isInstant || animMode === "jump") return jumpDuration;
-    if (reason === "gesture") return dynamicDuration;
+    if (reason === "gesture") {
+      return Math.max(
+        DRAG_DURATION_RAMP_CONFIG.minDuration,
+        Math.min(dynamicDuration, velocityPreservingGestureDuration),
+      );
+    }
 
     return baseDuration;
   }, [
@@ -161,5 +188,6 @@ export function useCarouselSpeed({
     isInstant,
     jumpDuration,
     reason,
+    velocityPreservingGestureDuration,
   ]);
 }

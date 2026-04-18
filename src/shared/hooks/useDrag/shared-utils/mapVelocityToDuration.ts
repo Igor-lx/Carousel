@@ -36,9 +36,11 @@ const getVelocityModifierWeight = (
 
 export const scaleVelocityToInertia = ({
   velocity,
+  responseVelocity,
   dragSpeedConfig,
 }: {
   velocity: number;
+  responseVelocity?: number;
   dragSpeedConfig?: Partial<DragSpeedConfig>;
 }) => {
   const resolvedDragSpeedConfig: DragSpeedConfig = {
@@ -46,13 +48,20 @@ export const scaleVelocityToInertia = ({
     ...dragSpeedConfig,
   };
   const safeVelocity = Math.abs(velocity);
+  const safeResponseVelocity =
+    typeof responseVelocity === "number" && Number.isFinite(responseVelocity)
+      ? Math.abs(responseVelocity)
+      : null;
+  const rampVelocity = safeResponseVelocity !== null
+    ? safeResponseVelocity
+    : safeVelocity;
 
   if (!Number.isFinite(velocity) || safeVelocity <= 0) {
     return 0;
   }
 
   const weight = getVelocityModifierWeight(
-    safeVelocity,
+    rampVelocity,
     resolvedDragSpeedConfig,
   );
   const safeBoost = Math.max(0, resolvedDragSpeedConfig.inertiaBoost);

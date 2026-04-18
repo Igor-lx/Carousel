@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 
 import {
   JUMP_BEZIER,
+  MOTION_MONOTONIC_SPEED_FACTOR,
   MOVE_AUTO_BEZIER,
   MOVE_CLICK_BEZIER,
   MOVE_SWIPE_BEZIER,
@@ -15,6 +16,7 @@ import { useIsomorphicLayoutEffect } from "../../shared";
 interface MotionProps {
   trackRef: React.RefObject<HTMLDivElement | null>;
   currentPositionRef: React.MutableRefObject<number>;
+  positionReaderRef: React.MutableRefObject<() => number>;
   enabled: boolean;
   startVirtualIndex: number;
   currentVirtualIndex: number;
@@ -47,8 +49,6 @@ type HandoffSnapshot = {
 };
 
 const EPSILON = 0.0001;
-const MAX_MONOTONIC_SPEED_FACTOR = 3;
-
 const getBezier = (animMode: AnimationMode, reason: MoveReason) => {
   if (animMode === "jump") return JUMP_BEZIER;
   if (animMode === "snap") return SNAP_BACK_BEZIER;
@@ -104,7 +104,7 @@ const clampRetargetVelocity = (
   }
 
   const maxVelocity =
-    (Math.abs(distance) / duration) * MAX_MONOTONIC_SPEED_FACTOR;
+    (Math.abs(distance) / duration) * MOTION_MONOTONIC_SPEED_FACTOR;
 
   return direction * Math.min(Math.abs(velocity), maxVelocity);
 };
@@ -350,6 +350,7 @@ const sampleSegment = (segment: MotionSegment, now: number) => {
 export function useCarouselMotion({
   trackRef,
   currentPositionRef,
+  positionReaderRef,
   enabled,
   startVirtualIndex,
   currentVirtualIndex,
@@ -399,17 +400,33 @@ export function useCarouselMotion({
     }
   }, []);
 
-  const readCurrentState = useCallback(() => {
-    const segment = activeSegmentRef.current;
-    if (!segment) {
-      return {
-        position: currentPositionRef.current,
-        velocity: velocityRef.current,
-        progress: 1,
-      };
-    }
+  const sampleCurrentState = useCallback(
+    (timestamp: number) => {
+      const segment = activeSegmentRef.current;
+      if (!segment) {
+        return {
+          position: currentPositionRef.current,
+          velocity: velocityRef.current,
+          progress: 1,
+        };
+      }
 
-    const sampled = sampleSegment(segment, performance.now());
+      return sampleSegment(segment, timestamp);
+    },
+    [currentPositionRef],
+  );
+
+  const readCurrentPosition = useCallback(() => {
+    const sampled = sampleCurrentState(performance.now());
+
+    currentPositionRef.current = sampled.position;
+    velocityRef.current = sampled.velocity;
+
+    return sampled.position;
+  }, [currentPositionRef, sampleCurrentState]);
+
+  const readCurrentState = useCallback(() => {
+    const sampled = sampleCurrentState(performance.now());
     currentPositionRef.current = sampled.position;
     velocityRef.current = sampled.velocity;
 
@@ -422,7 +439,9 @@ export function useCarouselMotion({
       velocity: velocityRef.current,
       progress: sampled.progress,
     };
-  }, [currentPositionRef]);
+  }, [currentPositionRef, sampleCurrentState]);
+
+  positionReaderRef.current = readCurrentPosition;
 
   const finalizeMotion = useCallback((
     handoffToFollowUp: boolean,
