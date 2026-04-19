@@ -23,6 +23,7 @@ export interface DragSample {
 
 export interface DragEndPayload extends DragSample {
   result: SwipeDirection;
+  isQuickFlick: boolean;
   wasDragging: boolean;
   wasCancelled: boolean;
 }

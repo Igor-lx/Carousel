@@ -41,6 +41,14 @@ export const calculateEMA = (
   return prevV * (1 - alpha) + instantV * alpha;
 };
 
+export const isQuickFlickGesture = (
+  rawOffset: number,
+  rawVelocity: number,
+  config: Required<DragConfig>,
+) =>
+  Math.abs(rawVelocity) >= config.SWIPE_VELOCITY_LIMIT &&
+  Math.abs(rawOffset) >= config.QUICK_SWIPE_MIN_OFFSET;
+
 export const getSwipeDirection = (
   rawOffset: number,
   rawVelocity: number,
@@ -51,29 +59,19 @@ export const getSwipeDirection = (
     config.MIN_SWIPE_DISTANCE,
     Math.max(0, width) * config.SWIPE_THRESHOLD_RATIO,
   );
-  const adaptedThreshold = Math.abs(
-    applyResistance(
-      distanceThreshold,
-      config.RESISTANCE,
-      config.RESISTANCE_CURVATURE,
-    ),
+  const resistanceFactor = 1 - getSafeResistance(config.RESISTANCE);
+  const adaptedRawThreshold = Math.max(
+    config.MIN_SWIPE_DISTANCE,
+    distanceThreshold * resistanceFactor,
   );
 
-  const isQuickFlick =
-    Math.abs(rawVelocity) >= config.SWIPE_VELOCITY_LIMIT &&
-    Math.abs(rawOffset) >= config.QUICK_SWIPE_MIN_OFFSET;
+  const isQuickFlick = isQuickFlickGesture(rawOffset, rawVelocity, config);
 
-  if (Math.abs(rawOffset) >= distanceThreshold || isQuickFlick) {
+  if (isQuickFlick) {
     return rawOffset < 0 ? "LEFT" : "RIGHT";
   }
 
-  const resistedOffset = applyResistance(
-    rawOffset,
-    config.RESISTANCE,
-    config.RESISTANCE_CURVATURE,
-  );
-
-  if (Math.abs(resistedOffset) >= adaptedThreshold) {
+  if (Math.abs(rawOffset) >= adaptedRawThreshold) {
     return rawOffset < 0 ? "LEFT" : "RIGHT";
   }
 

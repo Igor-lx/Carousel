@@ -1,6 +1,9 @@
 import { useCallback, useRef } from "react";
 import type { CarouselExternalController } from "../control";
-import { DRAG_DURATION_RAMP_CONFIG } from "../model/config";
+import {
+  DRAG_DURATION_RAMP_CONFIG,
+  DRAG_SETTINGS_CONFIG,
+} from "../model/config";
 import type { Action, MoveReason } from "../model/reducer";
 import {
   clamp,
@@ -104,21 +107,37 @@ export function useCarouselController({
   );
 
   const resolveReleaseVelocity = useCallback(
-    (dragVelocity: number) => {
+    ({
+      dragVelocity,
+      rawDragVelocity,
+      isQuickFlick,
+    }: {
+      dragVelocity: number;
+      rawDragVelocity: number;
+      isQuickFlick: boolean;
+    }) => {
       const viewport = measureRef.current;
       if (!viewport) return 0;
 
       const slotSize = getTrackSlotSize(viewport, layout.clampedVisible);
       if (slotSize <= 0) return 0;
 
-      const virtualVelocity = -dragVelocity / slotSize;
+      const visualVirtualVelocity = -dragVelocity / slotSize;
+      const rawVirtualVelocity = -rawDragVelocity / slotSize;
+      const flickVirtualVelocity =
+        visualVirtualVelocity +
+        (rawVirtualVelocity - visualVirtualVelocity) *
+          DRAG_SETTINGS_CONFIG.RESISTANCE;
+      const releaseVirtualVelocity = isQuickFlick
+        ? flickVirtualVelocity
+        : visualVirtualVelocity;
       const responseVelocity = scaleVirtualVelocityToPageVelocity(
-        virtualVelocity,
+        releaseVirtualVelocity,
         layout.clampedVisible,
       );
 
       return scaleVelocityToInertia({
-        velocity: virtualVelocity,
+        velocity: releaseVirtualVelocity,
         responseVelocity,
         dragSpeedConfig: DRAG_DURATION_RAMP_CONFIG,
       });
@@ -226,7 +245,11 @@ export function useCarouselController({
         targetIndex,
         targetVirtualIndex,
         isSnap: isSnap || Math.abs(targetVirtualIndex - releasePosition) < 0.001,
-        releaseVelocity: resolveReleaseVelocity(payload.velocity),
+        releaseVelocity: resolveReleaseVelocity({
+          dragVelocity: payload.velocity,
+          rawDragVelocity: payload.rawVelocity,
+          isQuickFlick: payload.isQuickFlick,
+        }),
       });
 
       dragOriginPositionRef.current = null;

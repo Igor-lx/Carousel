@@ -22,6 +22,7 @@ import type {
 } from "./model/types";
 import {
   getSwipeDirection,
+  isQuickFlickGesture,
   calculateEMA,
   applyResistance,
   clampVelocityMagnitude,
@@ -175,6 +176,14 @@ export function useDrag({
         timestamp: now,
       };
       const wasDragging = currentPhase === "DRAGGING";
+      const isQuickFlick =
+        !isCancel &&
+        wasDragging &&
+        isQuickFlickGesture(
+          sample.rawOffset,
+          sample.rawVelocity,
+          settingsRef.current,
+        );
       const result =
         !isCancel && wasDragging
           ? getSwipeDirection(
@@ -187,6 +196,7 @@ export function useDrag({
       const payload: DragEndPayload = {
         ...sample,
         result,
+        isQuickFlick,
         wasDragging,
         wasCancelled: isCancel,
       };

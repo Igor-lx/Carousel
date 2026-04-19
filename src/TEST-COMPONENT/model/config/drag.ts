@@ -1,5 +1,5 @@
 export const DRAG_SETTINGS_CONFIG = {
-  RESISTANCE: 0.4, // Larger value -> stiffer drag feel.
+  RESISTANCE: 0.5, // Larger value -> stiffer drag feel.
   RESISTANCE_CURVATURE: 0.004, // Larger value -> resistance ramps up sooner on long drags.
   INTENT_THRESHOLD: 8, // Larger value -> later drag takeover.
   MAX_VELOCITY: 4.5, // Larger value -> wider release-speed response range.
