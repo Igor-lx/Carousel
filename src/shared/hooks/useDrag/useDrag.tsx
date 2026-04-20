@@ -21,11 +21,10 @@ import type {
   DragSample,
 } from "./model/types";
 import {
-  getSwipeDirection,
-  isQuickFlickGesture,
   calculateEMA,
   applyResistance,
   clampVelocityMagnitude,
+  resolveDragRelease,
 } from "./model/utilites";
 
 const createIdleSample = (width = 0, timestamp = 0): DragSample => ({
@@ -176,27 +175,14 @@ export function useDrag({
         timestamp: now,
       };
       const wasDragging = currentPhase === "DRAGGING";
-      const isQuickFlick =
-        !isCancel &&
-        wasDragging &&
-        isQuickFlickGesture(
-          sample.rawOffset,
-          sample.rawVelocity,
-          settingsRef.current,
-        );
-      const result =
-        !isCancel && wasDragging
-          ? getSwipeDirection(
-              sample.rawOffset,
-              sample.rawVelocity,
-              sample.width,
-              settingsRef.current,
-            )
-          : "NONE";
+      const releaseResolution = resolveDragRelease(
+        sample,
+        settingsRef.current,
+        !isCancel && wasDragging,
+      );
       const payload: DragEndPayload = {
         ...sample,
-        result,
-        isQuickFlick,
+        ...releaseResolution,
         wasDragging,
         wasCancelled: isCancel,
       };

@@ -1,9 +1,6 @@
 import { useCallback, useRef } from "react";
 import type { CarouselExternalController } from "../control";
-import {
-  DRAG_DURATION_RAMP_CONFIG,
-  DRAG_SETTINGS_CONFIG,
-} from "../model/config";
+import { DRAG_DURATION_RAMP_CONFIG } from "../model/config";
 import type { Action, MoveReason } from "../model/reducer";
 import {
   clamp,
@@ -106,31 +103,15 @@ export function useCarouselController({
     [externalController],
   );
 
-  const resolveReleaseVelocity = useCallback(
-    ({
-      dragVelocity,
-      rawDragVelocity,
-      isQuickFlick,
-    }: {
-      dragVelocity: number;
-      rawDragVelocity: number;
-      isQuickFlick: boolean;
-    }) => {
+  const resolveReleaseVirtualVelocity = useCallback(
+    (dragReleaseVelocity: number) => {
       const viewport = measureRef.current;
       if (!viewport) return 0;
 
       const slotSize = getTrackSlotSize(viewport, layout.clampedVisible);
       if (slotSize <= 0) return 0;
 
-      const visualVirtualVelocity = -dragVelocity / slotSize;
-      const rawVirtualVelocity = -rawDragVelocity / slotSize;
-      const flickVirtualVelocity =
-        visualVirtualVelocity +
-        (rawVirtualVelocity - visualVirtualVelocity) *
-          DRAG_SETTINGS_CONFIG.RESISTANCE;
-      const releaseVirtualVelocity = isQuickFlick
-        ? flickVirtualVelocity
-        : visualVirtualVelocity;
+      const releaseVirtualVelocity = -dragReleaseVelocity / slotSize;
       const responseVelocity = scaleVirtualVelocityToPageVelocity(
         releaseVirtualVelocity,
         layout.clampedVisible,
@@ -245,11 +226,7 @@ export function useCarouselController({
         targetIndex,
         targetVirtualIndex,
         isSnap: isSnap || Math.abs(targetVirtualIndex - releasePosition) < 0.001,
-        releaseVelocity: resolveReleaseVelocity({
-          dragVelocity: payload.velocity,
-          rawDragVelocity: payload.rawVelocity,
-          isQuickFlick: payload.isQuickFlick,
-        }),
+        releaseVelocity: resolveReleaseVirtualVelocity(payload.releaseVelocity),
       });
 
       dragOriginPositionRef.current = null;
@@ -260,7 +237,7 @@ export function useCarouselController({
       enabled,
       layout,
       resolveFromVirtualIndex,
-      resolveReleaseVelocity,
+      resolveReleaseVirtualVelocity,
     ],
   );
 

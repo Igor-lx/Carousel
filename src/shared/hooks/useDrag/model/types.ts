@@ -21,9 +21,13 @@ export interface DragSample {
   timestamp: number;
 }
 
-export interface DragEndPayload extends DragSample {
+export interface DragReleaseResolution {
   result: SwipeDirection;
   isQuickFlick: boolean;
+  releaseVelocity: number;
+}
+
+export interface DragEndPayload extends DragSample, DragReleaseResolution {
   wasDragging: boolean;
   wasCancelled: boolean;
 }

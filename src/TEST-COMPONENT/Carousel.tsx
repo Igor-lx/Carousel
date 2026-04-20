@@ -238,7 +238,6 @@ const Carousel = memo((props: CarouselProps) => {
     dragListeners,
   } = useCarouselGesture({
     onPressStart: startDrag,
-    onDragStart: () => undefined,
     onDragMove: updateDrag,
     onDragEnd: finishDrag,
     enabled: canSlide,

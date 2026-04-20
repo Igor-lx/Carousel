@@ -8,7 +8,6 @@ import { DRAG_SETTINGS_CONFIG } from "../model/config";
 
 interface GestureProps {
   onPressStart: () => void;
-  onDragStart: () => void;
   onDragMove: (dragOffset: number) => void;
   onDragEnd: (payload: DragEndPayload) => void;
   enabled: boolean;
@@ -18,23 +17,20 @@ interface GestureProps {
 interface GestureResult {
   isDragging: boolean;
   isInteracting: boolean;
-  velocity: number;
   dragListeners: DragListeners;
 }
 
 export function useCarouselGesture({
   onPressStart,
-  onDragStart,
   onDragMove,
   onDragEnd,
   enabled,
   measureRef,
 }: GestureProps): GestureResult {
-  const { isDragging, isInteracting, velocity, dragListeners } = useDrag({
+  const { isDragging, isInteracting, dragListeners } = useDrag({
     enabled,
     measureRef,
     onPressStart,
-    onDragStart,
     onDragMove: (sample) => {
       onDragMove(sample.offset);
     },
@@ -42,5 +38,5 @@ export function useCarouselGesture({
     onDragEnd,
   });
 
-  return { isDragging, isInteracting, velocity, dragListeners };
+  return { isDragging, isInteracting, dragListeners };
 }

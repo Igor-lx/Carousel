@@ -1,4 +1,9 @@
-import type { SwipeDirection, DragConfig } from "./types";
+import type {
+  DragConfig,
+  DragReleaseResolution,
+  DragSample,
+  SwipeDirection,
+} from "./types";
 
 const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(value, max));
@@ -41,7 +46,7 @@ export const calculateEMA = (
   return prevV * (1 - alpha) + instantV * alpha;
 };
 
-export const isQuickFlickGesture = (
+const isQuickFlickGesture = (
   rawOffset: number,
   rawVelocity: number,
   config: Required<DragConfig>,
@@ -49,24 +54,27 @@ export const isQuickFlickGesture = (
   Math.abs(rawVelocity) >= config.SWIPE_VELOCITY_LIMIT &&
   Math.abs(rawOffset) >= config.QUICK_SWIPE_MIN_OFFSET;
 
-export const getSwipeDirection = (
-  rawOffset: number,
-  rawVelocity: number,
+const getAdaptedRawSwipeThreshold = (
   width: number,
   config: Required<DragConfig>,
-): SwipeDirection => {
+) => {
   const distanceThreshold = Math.max(
     config.MIN_SWIPE_DISTANCE,
     Math.max(0, width) * config.SWIPE_THRESHOLD_RATIO,
   );
   const resistanceFactor = 1 - getSafeResistance(config.RESISTANCE);
-  const adaptedRawThreshold = Math.max(
+
+  return Math.max(
     config.MIN_SWIPE_DISTANCE,
     distanceThreshold * resistanceFactor,
   );
+};
 
-  const isQuickFlick = isQuickFlickGesture(rawOffset, rawVelocity, config);
-
+const getSwipeDirection = (
+  rawOffset: number,
+  isQuickFlick: boolean,
+  adaptedRawThreshold: number,
+): SwipeDirection => {
   if (isQuickFlick) {
     return rawOffset < 0 ? "LEFT" : "RIGHT";
   }
@@ -76,6 +84,51 @@ export const getSwipeDirection = (
   }
 
   return "NONE";
+};
+
+const resolveReleaseVelocity = ({
+  velocity,
+  rawVelocity,
+  isQuickFlick,
+  resistance,
+}: {
+  velocity: number;
+  rawVelocity: number;
+  isQuickFlick: boolean;
+  resistance: number;
+}) => {
+  if (!isQuickFlick) {
+    return velocity;
+  }
+
+  const safeResistance = getSafeResistance(resistance);
+
+  return velocity + (rawVelocity - velocity) * safeResistance;
+};
+
+export const resolveDragRelease = (
+  sample: Pick<DragSample, "rawOffset" | "rawVelocity" | "velocity" | "width">,
+  config: Required<DragConfig>,
+  canCommit = true,
+): DragReleaseResolution => {
+  const isQuickFlick =
+    canCommit &&
+    isQuickFlickGesture(sample.rawOffset, sample.rawVelocity, config);
+  const adaptedRawThreshold = getAdaptedRawSwipeThreshold(sample.width, config);
+  const result = canCommit
+    ? getSwipeDirection(sample.rawOffset, isQuickFlick, adaptedRawThreshold)
+    : "NONE";
+
+  return {
+    result,
+    isQuickFlick,
+    releaseVelocity: resolveReleaseVelocity({
+      velocity: sample.velocity,
+      rawVelocity: sample.rawVelocity,
+      isQuickFlick,
+      resistance: config.RESISTANCE,
+    }),
+  };
 };
 
 export const clampVelocityMagnitude = clampMagnitude;
