@@ -67,9 +67,13 @@ export function reducer(state: State, action: ReducerAction): State {
         virtualIndex: action.targetVirtualIndex,
         followUpVirtualIndex: null,
         isRepeatedClickAdvance: false,
-        animMode: action.isSnap ? "snap" : "normal",
+        animMode: action.isInstant
+          ? "instant"
+          : action.isSnap
+            ? "snap"
+            : "normal",
         moveReason: "gesture",
-        gestureReleaseVelocity: action.releaseVelocity,
+        gestureReleaseVelocity: action.isInstant ? 0 : action.releaseVelocity,
       };
 
     case "MOVE":

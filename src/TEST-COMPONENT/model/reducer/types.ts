@@ -32,6 +32,7 @@ export type StartDragAction = VirtualIndexSource & {
 
 export type EndDragAction = VirtualIndexSource & {
   type: "END_DRAG";
+  isInstant?: boolean;
   targetIndex: number;
   targetVirtualIndex: number;
   isSnap: boolean;

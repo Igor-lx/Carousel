@@ -34,6 +34,15 @@ export function useCarouselEngine({
         return;
       }
 
+      if (action.type === "END_DRAG") {
+        dispatch({
+          ...action,
+          layout,
+          isInstant: Boolean(isInstantMode || action.isInstant),
+        });
+        return;
+      }
+
       dispatch({
         ...action,
         layout,
