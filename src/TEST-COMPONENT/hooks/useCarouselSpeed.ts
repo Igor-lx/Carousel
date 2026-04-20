@@ -7,6 +7,7 @@ import {
 import type { MoveReason, AnimationMode } from "../model/reducer";
 import { mapVelocityToDuration } from "../../shared";
 import {
+  getDurationByVirtualSpan,
   SAFE_REPEATED_CLICK_SETTINGS,
   scaleVirtualVelocityToPageVelocity,
 } from "../utilities";
@@ -40,29 +41,17 @@ export function useCarouselSpeed({
   stepDuration,
   jumpDuration,
 }: SpeedProps): number {
-  const getSegmentDurationBySpan = useMemo(
-    () => (segmentStart: number, segmentEnd: number, baseDuration: number) => {
-      if (stepSize <= 0) {
-        return baseDuration;
-      }
-
-      const stepSpan = Math.abs(segmentEnd - segmentStart) / stepSize;
-
-      return baseDuration * Math.max(0, stepSpan);
-    },
-    [stepSize],
-  );
-
   const clickSegmentDuration = useMemo(
     () =>
-      getSegmentDurationBySpan(
-        segmentStartVirtualIndex,
-        targetVirtualIndex,
-        stepDuration,
-      ),
+      getDurationByVirtualSpan({
+        from: segmentStartVirtualIndex,
+        to: targetVirtualIndex,
+        stepSize,
+        baseDuration: stepDuration,
+      }),
     [
-      getSegmentDurationBySpan,
       segmentStartVirtualIndex,
+      stepSize,
       stepDuration,
       targetVirtualIndex,
     ],
@@ -76,33 +65,35 @@ export function useCarouselSpeed({
 
   const gestureSegmentDuration = useMemo(
     () =>
-      getSegmentDurationBySpan(
-        segmentStartVirtualIndex,
-        targetVirtualIndex,
-        stepDuration,
-      ),
+      getDurationByVirtualSpan({
+        from: segmentStartVirtualIndex,
+        to: targetVirtualIndex,
+        stepSize,
+        baseDuration: stepDuration,
+      }),
     [
-      getSegmentDurationBySpan,
       segmentStartVirtualIndex,
+      stepSize,
       stepDuration,
       targetVirtualIndex,
     ],
   );
 
   const snapSegmentDuration = useMemo(() => {
-    const scaledDuration = getSegmentDurationBySpan(
-      segmentStartVirtualIndex,
-      targetVirtualIndex,
-      SNAP_BACK_DURATION,
-    );
+    const scaledDuration = getDurationByVirtualSpan({
+      from: segmentStartVirtualIndex,
+      to: targetVirtualIndex,
+      stepSize,
+      baseDuration: SNAP_BACK_DURATION,
+    });
 
     return Math.max(
       DRAG_DURATION_RAMP_CONFIG.minDuration,
       Math.min(SNAP_BACK_DURATION, scaledDuration),
     );
   }, [
-    getSegmentDurationBySpan,
     segmentStartVirtualIndex,
+    stepSize,
     targetVirtualIndex,
   ]);
 

@@ -1,5 +1,4 @@
 import { useCallback, useRef } from "react";
-import type { CarouselExternalController } from "../control";
 import { DRAG_DURATION_RAMP_CONFIG } from "../model/config";
 import type { Action, MoveReason } from "../model/reducer";
 import {
@@ -21,7 +20,6 @@ import {
 interface ControllerProps {
   dispatchAction: React.Dispatch<Action>;
   enabled: boolean;
-  externalController: React.RefObject<CarouselExternalController | null>;
   measureRef: React.RefObject<HTMLDivElement | null>;
   layout: CarouselLayout;
   baseVirtualIndex: number;
@@ -35,7 +33,6 @@ interface ControllerResult {
     step: number,
     moveReason?: MoveReason,
     dragOffset?: number,
-    skipExternalSync?: boolean,
   ) => void;
   goTo: (index: number, moveReason?: MoveReason) => void;
   startDrag: () => void;
@@ -46,7 +43,6 @@ interface ControllerResult {
 export function useCarouselController({
   dispatchAction,
   enabled,
-  externalController,
   measureRef,
   layout,
   baseVirtualIndex,
@@ -89,20 +85,6 @@ export function useCarouselController({
     ],
   );
 
-  const syncExternalController = useCallback(
-    (step: number) => {
-      if (step > 0) {
-        externalController.current?.moveRight?.();
-        return;
-      }
-
-      if (step < 0) {
-        externalController.current?.moveLeft?.();
-      }
-    },
-    [externalController],
-  );
-
   const resolveReleaseVirtualVelocity = useCallback(
     (dragReleaseVelocity: number) => {
       const viewport = measureRef.current;
@@ -131,15 +113,10 @@ export function useCarouselController({
       step: number,
       moveReason: MoveReason = "unknown",
       dragOffset?: number,
-      skipExternalSync = false,
     ) => {
       if (!enabled) return;
 
       const fromVirtualIndex = resolveFromVirtualIndex(dragOffset);
-
-      if (!skipExternalSync) {
-        syncExternalController(step);
-      }
 
       dispatchAction({
         type: "MOVE",
@@ -152,7 +129,6 @@ export function useCarouselController({
       dispatchAction,
       enabled,
       resolveFromVirtualIndex,
-      syncExternalController,
     ],
   );
 

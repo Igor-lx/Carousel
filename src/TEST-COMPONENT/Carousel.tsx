@@ -52,6 +52,7 @@ import {
   applyTrackPositionStyle,
   clampSlidesData,
   getCarouselLayout,
+  getDurationByVirtualSpan,
   hasImperfectLayout,
   resolveSafeSettings,
   resolveSlidesData,
@@ -223,7 +224,6 @@ const Carousel = memo((props: CarouselProps) => {
   } = useCarouselController({
     dispatchAction,
     enabled: canSlide,
-    externalController: externalControllerRef,
     measureRef: containerRef,
     layout: nextLayout,
     baseVirtualIndex: virtualIndex,
@@ -286,9 +286,12 @@ const Carousel = memo((props: CarouselProps) => {
       return 0;
     }
 
-    const stepSpan = Math.abs(followUpVirtualIndex - virtualIndex) / clampedVisible;
-
-    return stepDuration * Math.max(0, stepSpan);
+    return getDurationByVirtualSpan({
+      from: virtualIndex,
+      to: followUpVirtualIndex,
+      stepSize: clampedVisible,
+      baseDuration: stepDuration,
+    });
   }, [clampedVisible, followUpVirtualIndex, stepDuration, virtualIndex]);
 
   useCarouselMotion({
@@ -315,6 +318,10 @@ const Carousel = memo((props: CarouselProps) => {
     externalControllerRef,
     isReducedMotion,
     actualDuration,
+    targetIndex,
+    pageCount,
+    isFinite: nextLayout.isFinite,
+    animMode,
   });
 
   const slots = useMemo(

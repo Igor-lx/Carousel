@@ -34,3 +34,23 @@ export const scaleVirtualVelocityToPageVelocity = (
 
   return (virtualVelocity * 1000) / pageSize;
 };
+
+export const getDurationByVirtualSpan = ({
+  from,
+  to,
+  stepSize,
+  baseDuration,
+}: {
+  from: number;
+  to: number;
+  stepSize: number;
+  baseDuration: number;
+}) => {
+  if (!(stepSize > 0)) {
+    return baseDuration;
+  }
+
+  const stepSpan = Math.abs(to - from) / stepSize;
+
+  return baseDuration * Math.max(0, stepSpan);
+};
