@@ -13,7 +13,6 @@ export interface CarouselLayout {
 
 export interface ResolvedCarouselSlide {
   slideData: Slide;
-  sourceIndex: number;
   positionIndex: number;
   slideKey: string;
 }
@@ -26,11 +25,7 @@ export interface SlideA11yProps {
 }
 
 export interface VirtualSlide {
-  vIndex: number;
-  slideIndex: number;
-  sourceIndex: number;
   slideData: Slide;
-  isClone: boolean;
   slideKey: string;
   isActive: boolean;
   isActual: boolean;

@@ -25,7 +25,7 @@ import {
   applyResistance,
   clampVelocityMagnitude,
   resolveDragRelease,
-} from "./model/utilites";
+} from "./model/utilities";
 
 const createIdleSample = (width = 0, timestamp = 0): DragSample => ({
   rawOffset: 0,

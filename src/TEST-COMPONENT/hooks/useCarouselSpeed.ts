@@ -5,7 +5,7 @@ import {
   SNAP_BACK_DURATION,
 } from "../model/config";
 import type { MoveReason, AnimationMode } from "../model/reducer";
-import { mapVelocityToDuration } from "../../shared";
+import { mapVelocityToDuration } from "../../shared/hooks/useDrag";
 import {
   getDurationByVirtualSpan,
   SAFE_REPEATED_CLICK_SETTINGS,

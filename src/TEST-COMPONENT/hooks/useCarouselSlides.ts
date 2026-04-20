@@ -81,16 +81,16 @@ export function useCarouselSlides({
     const length = Math.max(0, renderWindow.end - renderWindow.start + 1);
 
     return Array.from({ length }).map((_, offset) => {
-      const vIndex = renderWindow.start + offset;
-      const slideIndex = getLoopedSlideIndex(vIndex, totalSlides);
-      const resolvedSlide = slidesData[slideIndex]!;
-      const isClone =
+      const virtualIndex = renderWindow.start + offset;
+      const resolvedSlide =
+        slidesData[getLoopedSlideIndex(virtualIndex, totalSlides)]!;
+      const usesCloneKey =
         layout.canSlide &&
         !layout.isFinite &&
-        (vIndex < 0 || vIndex >= totalSlides);
+        (virtualIndex < 0 || virtualIndex >= totalSlides);
 
       const { isActual, isActive } = getSlideVisibility(
-        vIndex,
+        virtualIndex,
         current,
         prev,
         layout.clampedVisible,
@@ -104,15 +104,11 @@ export function useCarouselSlides({
       );
 
       return {
-        vIndex,
-        slideIndex: resolvedSlide.positionIndex,
-        sourceIndex: resolvedSlide.sourceIndex,
         slideData: resolvedSlide.slideData,
-        isClone,
         isActive,
         isActual,
-        slideKey: isClone
-          ? `clone:${resolvedSlide.slideKey}:${vIndex}`
+        slideKey: usesCloneKey
+          ? `clone:${resolvedSlide.slideKey}:${virtualIndex}`
           : resolvedSlide.slideKey,
         a11yProps,
       };

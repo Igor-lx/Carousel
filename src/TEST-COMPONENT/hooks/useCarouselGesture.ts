@@ -3,7 +3,7 @@ import {
   type DragEndPayload,
   type DragListeners,
   useDrag,
-} from "../../shared";
+} from "../../shared/hooks/useDrag";
 import { DRAG_SETTINGS_CONFIG } from "../model/config";
 
 interface GestureProps {

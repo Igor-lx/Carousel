@@ -21,12 +21,10 @@ const getSlideContentKey = (slideData: Slide) =>
 
 const createResolvedSlide = (
   slideData: Slide,
-  sourceIndex: number,
   positionIndex: number,
   isLayoutClone: boolean,
 ): ResolvedCarouselSlide => ({
   slideData,
-  sourceIndex,
   positionIndex,
   slideKey: isLayoutClone
     ? `slide:${String(slideData.id)}:layout-clone:${positionIndex}`
@@ -37,7 +35,7 @@ export const resolveSlidesData = (
   slidesData: Slide[],
 ): ResolvedCarouselSlide[] =>
   slidesData.map((slideData, index) =>
-    createResolvedSlide(slideData, index, index, false),
+    createResolvedSlide(slideData, index, false),
   );
 
 export const hasImperfectLayout = (
@@ -73,7 +71,6 @@ export const clampSlidesData = (
 
       return createResolvedSlide(
         sourceSlide.slideData,
-        sourceSlide.sourceIndex,
         length + offset,
         true,
       );

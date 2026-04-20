@@ -15,7 +15,7 @@ import {
 import {
   scaleVelocityToInertia,
   type DragEndPayload,
-} from "../../shared";
+} from "../../shared/hooks/useDrag";
 
 interface ControllerProps {
   dispatchAction: React.Dispatch<Action>;
