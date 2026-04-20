@@ -15,10 +15,19 @@ export function usePaginationEngine(
 ) {
   const waitTimer = useTimer();
   const moveTimer = useTimer();
-  const durationRef = useRef(config.duration);
+  const defaultDurationRef = useRef(config.duration);
+  const configuredDurationRef = useRef<number | null>(null);
+  const activeDurationRef = useRef(config.duration);
 
   useEffect(() => {
-    if (state.mode === "IDLE") durationRef.current = config.duration;
+    defaultDurationRef.current = config.duration;
+
+    if (state.mode !== "IDLE") {
+      return;
+    }
+
+    activeDurationRef.current =
+      configuredDurationRef.current ?? defaultDurationRef.current;
   }, [state.mode, config.duration]);
 
   useEffect(() => {
@@ -33,7 +42,7 @@ export function usePaginationEngine(
     if (state.mode === "MOVING") {
       moveTimer.set(
         () => dispatch({ type: "END_STEP" }),
-        durationRef.current + ANIMATION_END_BUFFER,
+        activeDurationRef.current + ANIMATION_END_BUFFER,
       );
     }
     return () => moveTimer.clear();
@@ -41,16 +50,33 @@ export function usePaginationEngine(
 
   const action = useCallback(
     (direction: "next" | "prev") => {
-      if (state.mode === "MOVING") {
-        durationRef.current = Math.max(
-          durationRef.current * VELOCITY_COEFFICIENT,
+      if (configuredDurationRef.current !== null) {
+        activeDurationRef.current = configuredDurationRef.current;
+      } else if (state.mode === "MOVING") {
+        activeDurationRef.current = Math.max(
+          activeDurationRef.current * VELOCITY_COEFFICIENT,
           MIN_DURATION,
         );
+      } else {
+        activeDurationRef.current = defaultDurationRef.current;
       }
       dispatch({ type: "CLICK", direction });
     },
     [state.mode, dispatch],
   );
 
-  return { action, activeDuration: durationRef.current };
+  const setDuration = useCallback(
+    (duration: number | null) => {
+      configuredDurationRef.current =
+        typeof duration === "number" && duration > 0 ? duration : null;
+
+      if (state.mode === "IDLE") {
+        activeDurationRef.current =
+          configuredDurationRef.current ?? defaultDurationRef.current;
+      }
+    },
+    [state.mode],
+  );
+
+  return { action, activeDuration: activeDurationRef.current, setDuration };
 }

@@ -54,17 +54,21 @@ const INTERACTIVE_TARGET_SELECTOR = [
   "[data-drag-ignore='true']",
 ].join(",");
 
-const shouldIgnoreDragPress = (
+const getInteractiveTarget = (
   target: EventTarget | null,
   boundary: HTMLElement,
 ) => {
   if (!(target instanceof Element)) {
-    return false;
+    return null;
   }
 
   const interactiveTarget = target.closest(INTERACTIVE_TARGET_SELECTOR);
 
-  return interactiveTarget !== null && boundary.contains(interactiveTarget);
+  if (interactiveTarget === null || !boundary.contains(interactiveTarget)) {
+    return null;
+  }
+
+  return interactiveTarget;
 };
 
 export function useDrag({
@@ -88,6 +92,7 @@ export function useDrag({
   const [releasedVelocity, setReleasedVelocity] = useState(0);
 
   const lockUntilRef = useRef<number>(0);
+  const allowedClickTargetRef = useRef<Element | null>(null);
   const timeoutRef = useRef<number | null>(null);
   const phaseRef = useRef(state.phase);
   const dragSampleRef = useRef(createIdleSample());
@@ -191,6 +196,7 @@ export function useDrag({
         setReleasedVelocity(sample.velocity);
         onDragEnd?.(payload);
 
+        allowedClickTargetRef.current = null;
         lockUntilRef.current = now + settingsRef.current.COOLDOWN_MS;
         setPhase("COOLDOWN");
 
@@ -199,12 +205,14 @@ export function useDrag({
         }
 
         timeoutRef.current = window.setTimeout(() => {
+          allowedClickTargetRef.current = null;
           setPhase("IDLE");
           timeoutRef.current = null;
         }, settingsRef.current.COOLDOWN_MS);
       } else {
         setReleasedVelocity(0);
         onDragEnd?.(payload);
+        allowedClickTargetRef.current = null;
         setPhase("IDLE");
       }
 
@@ -222,13 +230,22 @@ export function useDrag({
         !enabled ||
         !e.isPrimary ||
         e.pointerType !== "touch" ||
-        e.button !== 0 ||
-        now < lockUntilRef.current
+        e.button !== 0
       )
         return;
 
       const target = e.currentTarget as HTMLElement;
-      if (shouldIgnoreDragPress(e.target, target)) {
+      const interactiveTarget = getInteractiveTarget(e.target, target);
+
+      if (interactiveTarget) {
+        allowedClickTargetRef.current =
+          now < lockUntilRef.current ? interactiveTarget : null;
+        return;
+      }
+
+      allowedClickTargetRef.current = null;
+
+      if (now < lockUntilRef.current) {
         return;
       }
 
@@ -299,10 +316,23 @@ export function useDrag({
     if (!el || !enabled) return;
 
     const suppress = (e: MouseEvent) => {
-      if (performance.now() < lockUntilRef.current) {
-        e.preventDefault();
-        e.stopPropagation();
+      if (performance.now() >= lockUntilRef.current) {
+        return;
       }
+
+      const allowedClickTarget = allowedClickTargetRef.current;
+      const isAllowedClick =
+        allowedClickTarget instanceof Element &&
+        e.target instanceof Node &&
+        allowedClickTarget.contains(e.target);
+
+      if (isAllowedClick) {
+        allowedClickTargetRef.current = null;
+        return;
+      }
+
+      e.preventDefault();
+      e.stopPropagation();
     };
 
     const prevent = (e: TouchEvent) => {

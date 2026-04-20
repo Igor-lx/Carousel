@@ -33,11 +33,6 @@ export const PaginationWidget = memo(
       className,
     } = props;
 
-    const [durationOverride, setDurationOverride] = useReducer(
-      (_: number | null, next: number | null) => next,
-      null,
-    );
-
     const [localIsFreezed, setLocalIsFreezed] = useReducer(
       (_: boolean, next: boolean) => next,
       WIDGET_DEFAULTS.isFreezed,
@@ -70,15 +65,14 @@ export const PaginationWidget = memo(
       actualVisibleDots,
     });
 
-    const effectiveDuration =
-      durationOverride !== null && durationOverride > 0
-        ? durationOverride
-        : duration;
-
-    const { action, activeDuration } = usePaginationEngine(state, dispatch, {
-      delay,
-      duration: effectiveDuration,
-    });
+    const { action, activeDuration, setDuration } = usePaginationEngine(
+      state,
+      dispatch,
+      {
+        delay,
+        duration,
+      },
+    );
 
     useImperativeHandle(
       ref,
@@ -86,9 +80,9 @@ export const PaginationWidget = memo(
         moveRight: () => action("next"),
         moveLeft: () => action("prev"),
         toggleFreezed: (val: boolean) => setLocalIsFreezed(val),
-        setDuration: (val: number | null) => setDurationOverride(val),
+        setDuration,
       }),
-      [action],
+      [action, setDuration],
     );
 
     const containerStyle = useMemo<ContainerCSSVars>(() => {
