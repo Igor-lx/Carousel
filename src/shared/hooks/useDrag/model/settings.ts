@@ -19,6 +19,6 @@ export const SHARED_DRAG_STYLES: CSSProperties = {
   touchAction: "pan-y",
   userSelect: "none",
   WebkitUserSelect: "none",
-  overscrollBehavior: "contain",
+  overscrollBehaviorX: "contain",
   WebkitTapHighlightColor: "transparent",
 };

@@ -107,11 +107,33 @@ export function useDrag({
     lastTime: 0,
     lastOffset: 0,
     pointerId: null as number | null,
+    hasPointerCapture: false,
+    isDragActivated: false,
   });
 
   const setPhase = useCallback((phase: DragPhase) => {
+    phaseRef.current = phase;
     dispatch({ type: "SET_PHASE", phase });
   }, []);
+
+  const activateDragOwnership = useCallback(
+    (target: HTMLElement, pointerId: number) => {
+      const currentGesture = gesture.current;
+
+      if (!currentGesture.hasPointerCapture) {
+        try {
+          target.setPointerCapture(pointerId);
+          currentGesture.hasPointerCapture = true;
+        } catch {}
+      }
+
+      if (!currentGesture.isDragActivated) {
+        currentGesture.isDragActivated = true;
+        onPressStart?.();
+      }
+    },
+    [onPressStart],
+  );
 
   const createSample = useCallback(
     (currentX: number, timestamp: number): DragSample => {
@@ -163,14 +185,29 @@ export function useDrag({
       const target = measureRef.current;
       const now = performance.now();
       const currentPhase = phaseRef.current;
+      const currentGesture = gesture.current;
 
-      if (gesture.current.pointerId !== null && target) {
+      if (currentGesture.hasPointerCapture && currentGesture.pointerId !== null && target) {
         try {
-          target.releasePointerCapture(gesture.current.pointerId);
+          target.releasePointerCapture(currentGesture.pointerId);
         } catch {}
+
+        currentGesture.hasPointerCapture = false;
       }
 
       if (currentPhase === "IDLE" || currentPhase === "COOLDOWN") {
+        return;
+      }
+
+      if (!currentGesture.isDragActivated) {
+        setReleasedVelocity(0);
+        allowedClickTargetRef.current = null;
+        setPhase("IDLE");
+        dragSampleRef.current = createIdleSample(target?.offsetWidth ?? 0, now);
+        currentGesture.lastOffset = 0;
+        currentGesture.pointerId = null;
+        currentGesture.hasPointerCapture = false;
+        currentGesture.isDragActivated = false;
         return;
       }
 
@@ -217,8 +254,10 @@ export function useDrag({
       }
 
       dragSampleRef.current = createIdleSample(target?.offsetWidth ?? 0, now);
-      gesture.current.lastOffset = 0;
-      gesture.current.pointerId = null;
+      currentGesture.lastOffset = 0;
+      currentGesture.pointerId = null;
+      currentGesture.hasPointerCapture = false;
+      currentGesture.isDragActivated = false;
     },
     [measureRef, onDragEnd, setPhase],
   );
@@ -237,9 +276,8 @@ export function useDrag({
       const target = e.currentTarget as HTMLElement;
       const interactiveTarget = getInteractiveTarget(e.target, target);
 
-      if (interactiveTarget) {
-        allowedClickTargetRef.current =
-          now < lockUntilRef.current ? interactiveTarget : null;
+      if (interactiveTarget && now < lockUntilRef.current) {
+        allowedClickTargetRef.current = interactiveTarget;
         return;
       }
 
@@ -249,10 +287,6 @@ export function useDrag({
         return;
       }
 
-      try {
-        target.setPointerCapture(e.pointerId);
-      } catch {}
-
       gesture.current = {
         startX: e.clientX,
         startY: e.clientY,
@@ -260,13 +294,18 @@ export function useDrag({
         lastTime: now,
         lastOffset: 0,
         pointerId: e.pointerId,
+        hasPointerCapture: false,
+        isDragActivated: false,
       };
       dragSampleRef.current = createIdleSample(target.offsetWidth, now);
       setReleasedVelocity(0);
       setPhase("PRESS");
-      onPressStart?.();
+
+      if (!interactiveTarget) {
+        activateDragOwnership(target, e.pointerId);
+      }
     },
-    [enabled, onPressStart, setPhase],
+    [activateDragOwnership, enabled, setPhase],
   );
 
   const handlePointerMove = useCallback(
@@ -291,6 +330,11 @@ export function useDrag({
             return;
           }
 
+          if (e.cancelable) {
+            e.preventDefault();
+          }
+
+          activateDragOwnership(e.currentTarget as HTMLElement, e.pointerId);
           const sample = createSample(e.clientX, now);
           dragSampleRef.current = sample;
           setPhase("DRAGGING");
@@ -308,7 +352,14 @@ export function useDrag({
       dragSampleRef.current = sample;
       onDragMove?.(sample);
     },
-    [createSample, onDragMove, onDragStart, setPhase, stopDragging],
+    [
+      activateDragOwnership,
+      createSample,
+      onDragMove,
+      onDragStart,
+      setPhase,
+      stopDragging,
+    ],
   );
 
   useEffect(() => {
@@ -336,7 +387,29 @@ export function useDrag({
     };
 
     const prevent = (e: TouchEvent) => {
-      if (phaseRef.current === "DRAGGING" && e.cancelable) {
+      if (!e.cancelable) {
+        return;
+      }
+
+      if (phaseRef.current === "DRAGGING") {
+        e.preventDefault();
+        return;
+      }
+
+      if (phaseRef.current !== "PRESS") {
+        return;
+      }
+
+      const touch = e.touches[0];
+      if (!touch) {
+        return;
+      }
+
+      const dx = touch.clientX - gesture.current.startX;
+      const dy = touch.clientY - gesture.current.startY;
+      const threshold = settingsRef.current.INTENT_THRESHOLD;
+
+      if (Math.abs(dx) > threshold && Math.abs(dx) > Math.abs(dy)) {
         e.preventDefault();
       }
     };
