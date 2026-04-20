@@ -1,19 +1,20 @@
 import type { CSSProperties } from "react";
 
-export type AnimationMode = "IDLE" | "WAITING" | "MOVING";
+export type PaginationWidgetAnimationMode = "IDLE" | "WAITING" | "MOVING";
 
-export interface PaginationState {
+export interface PaginationWidgetState {
   step: number;
-  mode: AnimationMode;
+  mode: PaginationWidgetAnimationMode;
   lastDirection: "next" | "prev" | null;
 }
 
-export type PaginationAction =
+export type PaginationWidgetAction =
   | { type: "CLICK"; direction: "next" | "prev" }
   | { type: "START_ANIMATION" }
-  | { type: "END_STEP" };
+  | { type: "END_STEP" }
+  | { type: "RESET" };
 
-export interface DotWidgetState {
+export interface PaginationWidgetDotState {
   id: number;
   x: number;
   scale: number;
@@ -28,18 +29,18 @@ interface GeometryData {
   unit: number;
 }
 
-export interface LayoutModel {
+export interface PaginationWidgetLayoutModel {
   geometry: GeometryData;
   scales: number[];
 }
 
-export interface SpatialConfig {
+export interface PaginationWidgetSpatialConfig {
   size: number;
   gap: number;
   scaleFactor: number;
 }
 
-export interface ContainerCSSVars extends CSSProperties {
+export interface PaginationWidgetContainerCSSVars extends CSSProperties {
   "--duration": string;
   "--delay": string;
   "--visible-dots-count": string;
@@ -47,7 +48,7 @@ export interface ContainerCSSVars extends CSSProperties {
   "--dots-gap": string;
 }
 
-export interface DotCSSVars extends CSSProperties {
+export interface PaginationWidgetDotCSSVars extends CSSProperties {
   "--dot-x": string;
   "--dot-scale": number;
   "--dot-opacity": number;
@@ -78,7 +79,7 @@ export interface PaginationWidgetProps {
   scaleFactor?: number;
 }
 
-export interface DotProps {
-  state: DotWidgetState;
+export interface PaginationWidgetDotProps {
+  state: PaginationWidgetDotState;
   className: PaginationWidgetClassMap;
 }

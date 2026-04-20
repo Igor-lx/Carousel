@@ -6,36 +6,43 @@ import {
   useMemo,
 } from "react";
 import clsx from "clsx";
-import { WIDGET_DEFAULTS } from "./model/constants";
+import { PAGINATION_WIDGET_DEFAULTS } from "./model/paginationWidgetConstants";
 import styles from "./PaginationWidget.module.scss";
 
 import type {
+  PaginationWidgetContainerCSSVars,
+  PaginationWidgetDotCSSVars,
+  PaginationWidgetDotProps,
   PaginationWidgetProps,
   PaginationWidgetHandler,
-  ContainerCSSVars,
-  DotCSSVars,
-  DotProps,
-} from "./model/types";
+} from "./model/paginationWidgetTypes";
 
-import { initialState, paginationReducer } from "./model/reducer";
+import {
+  initialPaginationWidgetState,
+  paginationWidgetReducer,
+} from "./model/paginationWidgetReducer";
 import { mergeStyles } from "../../../shared";
-import { useLayoutNotice, usePaginationEngine, useSpatialField } from "./hooks";
+import {
+  usePaginationWidgetEngine,
+  usePaginationWidgetLayoutNotice,
+  usePaginationWidgetSpatialField,
+} from "./hooks";
 
 export const PaginationWidget = memo(
   forwardRef<PaginationWidgetHandler, PaginationWidgetProps>((props, ref) => {
     const {
-      visibleDots = WIDGET_DEFAULTS.visibleDots,
-      dotSize = WIDGET_DEFAULTS.dotSize,
-      dotGap = WIDGET_DEFAULTS.dotGap,
-      delay = WIDGET_DEFAULTS.delay,
-      duration = WIDGET_DEFAULTS.duration,
-      scaleFactor = WIDGET_DEFAULTS.scaleFactor,
+      visibleDots = PAGINATION_WIDGET_DEFAULTS.visibleDots,
+      dotSize = PAGINATION_WIDGET_DEFAULTS.dotSize,
+      dotGap = PAGINATION_WIDGET_DEFAULTS.dotGap,
+      delay = PAGINATION_WIDGET_DEFAULTS.delay,
+      duration = PAGINATION_WIDGET_DEFAULTS.duration,
+      scaleFactor = PAGINATION_WIDGET_DEFAULTS.scaleFactor,
       className,
     } = props;
 
     const [localIsFreezed, setLocalIsFreezed] = useReducer(
       (_: boolean, next: boolean) => next,
-      WIDGET_DEFAULTS.isFreezed,
+      PAGINATION_WIDGET_DEFAULTS.isFreezed,
     );
 
     const mergedStyles = useMemo(
@@ -43,9 +50,12 @@ export const PaginationWidget = memo(
       [className],
     );
 
-    const [state, dispatch] = useReducer(paginationReducer, initialState);
+    const [widgetState, dispatchWidgetAction] = useReducer(
+      paginationWidgetReducer,
+      initialPaginationWidgetState,
+    );
 
-    const spatialConfig = useMemo(
+    const widgetSpatialConfig = useMemo(
       () => ({
         size: dotSize,
         gap: dotGap,
@@ -54,48 +64,47 @@ export const PaginationWidget = memo(
       [dotSize, dotGap, scaleFactor],
     );
 
-    const { dotsData, actualVisibleDots } = useSpatialField({
+    const { dotsData, actualVisibleDots } = usePaginationWidgetSpatialField({
       visibleDots,
-      config: spatialConfig,
-      step: state.step,
+      config: widgetSpatialConfig,
+      step: widgetState.step,
     });
 
-    useLayoutNotice({
+    usePaginationWidgetLayoutNotice({
       visibleDots,
       actualVisibleDots,
     });
 
-    const { action, activeDuration, setDuration } = usePaginationEngine(
-      state,
-      dispatch,
-      {
+    const { rotateWidget, activeDuration, setDuration } =
+      usePaginationWidgetEngine(widgetState, dispatchWidgetAction, {
         delay,
         duration,
-      },
-    );
+        isFreezed: localIsFreezed,
+      });
 
     useImperativeHandle(
       ref,
       () => ({
-        moveRight: () => action("next"),
-        moveLeft: () => action("prev"),
+        moveRight: () => rotateWidget("next"),
+        moveLeft: () => rotateWidget("prev"),
         toggleFreezed: (val: boolean) => setLocalIsFreezed(val),
         setDuration,
       }),
-      [action, setDuration],
+      [rotateWidget, setDuration],
     );
 
-    const containerStyle = useMemo<ContainerCSSVars>(() => {
-      const isAnimating = state.mode === "MOVING" && !localIsFreezed;
+    const containerStyle = useMemo<PaginationWidgetContainerCSSVars>(() => {
+      const isAnimating =
+        widgetState.mode === "MOVING" && !localIsFreezed;
       return {
         "--duration": `${isAnimating ? activeDuration : 0}ms`,
-        "--delay": `${state.mode === "WAITING" ? delay : 0}ms`,
+        "--delay": `${widgetState.mode === "WAITING" ? delay : 0}ms`,
         "--visible-dots-count": String(actualVisibleDots),
         "--dot-size": `${dotSize}px`,
         "--dots-gap": `${dotGap}px`,
       };
     }, [
-      state.mode,
+      widgetState.mode,
       activeDuration,
       delay,
       actualVisibleDots,
@@ -120,8 +129,8 @@ export const PaginationWidget = memo(
   }),
 );
 
-const Dot = memo(({ state, className }: DotProps) => {
-  const style: DotCSSVars = {
+const Dot = memo(({ state, className }: PaginationWidgetDotProps) => {
+  const style: PaginationWidgetDotCSSVars = {
     "--dot-x": `${state.x}px`,
     "--dot-scale": state.scale,
     "--dot-opacity": state.opacity,

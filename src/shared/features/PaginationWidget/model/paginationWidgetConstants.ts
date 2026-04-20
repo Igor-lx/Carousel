@@ -1,4 +1,4 @@
-export const WIDGET_DEFAULTS = {
+export const PAGINATION_WIDGET_DEFAULTS = {
   visibleDots: 5,
   dotSize: 24,
   dotGap: 30,

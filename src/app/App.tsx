@@ -127,7 +127,7 @@ function App() {
             slidesData={slidesData}
             isAuto={isAutoOn}
             isPaginationOn={true}
-            // isInstantMotion = {true}
+           // isInstantMotion={true}
             isInteractive={false}
             durationAutoplay={20000}
             durationStep={5000}

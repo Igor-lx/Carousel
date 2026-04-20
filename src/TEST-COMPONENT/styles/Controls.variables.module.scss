@@ -14,11 +14,9 @@
   --nav-h: 100%;
   --nav-w: 8%;
 
-  --slide-cursor: default;
   --slide-border-hover: transparent;
 
   &[data-touch="false"] {
-    --slide-cursor: pointer;
     --slide-border-hover: rgb(139, 139, 241);
 
     &:has(.innerContainer:hover),

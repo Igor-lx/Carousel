@@ -1,23 +1,23 @@
 import { useMemo } from "react";
 import type {
-  SpatialConfig,
-  DotWidgetState,
-  LayoutModel,
-} from "../model/types";
+  PaginationWidgetDotState,
+  PaginationWidgetLayoutModel,
+  PaginationWidgetSpatialConfig,
+} from "../model/paginationWidgetTypes";
 import {
   computePool,
   computeStrip,
   precomputeScales,
   projectDot,
-} from "../utils/math";
+} from "../utils/paginationWidgetMath";
 
-export function useSpatialField({
+export function usePaginationWidgetSpatialField({
   visibleDots,
   config,
   step,
 }: {
   visibleDots: number;
-  config: SpatialConfig;
+  config: PaginationWidgetSpatialConfig;
   step: number;
 }) {
   const safeConfig = useMemo(
@@ -29,7 +29,7 @@ export function useSpatialField({
     [config.size, config.gap, config.scaleFactor],
   );
 
-  const layoutModel = useMemo((): LayoutModel => {
+  const layoutModel = useMemo((): PaginationWidgetLayoutModel => {
     const count = Math.max(Number(visibleDots) || 3, 3);
     const actualCount = count % 2 === 0 ? count + 1 : count;
     const centerIndex = Math.floor(actualCount / 2);
@@ -56,7 +56,7 @@ export function useSpatialField({
     return computePool(baseStep, layoutModel.geometry.actualCount);
   }, [baseStep, layoutModel.geometry.actualCount]);
 
-  const dotsData = useMemo((): DotWidgetState[] => {
+  const dotsData = useMemo((): PaginationWidgetDotState[] => {
     return pool.map((id) => projectDot(id, step, layoutModel));
   }, [pool, step, layoutModel]);
 

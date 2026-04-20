@@ -5,7 +5,7 @@ interface WidgetNoticeProps {
   actualVisibleDots: number;
 }
 
-export function useLayoutNotice({
+export function usePaginationWidgetLayoutNotice({
   visibleDots,
   actualVisibleDots,
 }: WidgetNoticeProps): void {

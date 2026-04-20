@@ -1,15 +1,18 @@
-import type { PaginationState, PaginationAction } from "./types";
+import type {
+  PaginationWidgetAction,
+  PaginationWidgetState,
+} from "./paginationWidgetTypes";
 
-export const initialState: PaginationState = {
+export const initialPaginationWidgetState: PaginationWidgetState = {
   step: 0,
   mode: "IDLE",
   lastDirection: null,
 };
 
-export function paginationReducer(
-  state: PaginationState,
-  action: PaginationAction,
-): PaginationState {
+export function paginationWidgetReducer(
+  state: PaginationWidgetState,
+  action: PaginationWidgetAction,
+): PaginationWidgetState {
   switch (action.type) {
     case "CLICK": {
       const isMoving = state.mode === "MOVING";
@@ -31,7 +34,15 @@ export function paginationReducer(
       };
     }
     case "END_STEP":
-      return { ...initialState, step: Math.round(state.step) };
+      return {
+        ...initialPaginationWidgetState,
+        step: Math.round(state.step),
+      };
+    case "RESET":
+      return {
+        ...initialPaginationWidgetState,
+        step: Math.round(state.step),
+      };
     default:
       return state;
   }

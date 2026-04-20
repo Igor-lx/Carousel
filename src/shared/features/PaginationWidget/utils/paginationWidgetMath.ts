@@ -1,9 +1,12 @@
-import { EDGE_DOT_DRIFT_FACTOR, DOTS_POOL_BUFFER } from "../model/constants";
+import {
+  DOTS_POOL_BUFFER,
+  EDGE_DOT_DRIFT_FACTOR,
+} from "../model/paginationWidgetConstants";
 import type {
-  SpatialConfig,
-  DotWidgetState,
-  LayoutModel,
-} from "../model/types";
+  PaginationWidgetDotState,
+  PaginationWidgetLayoutModel,
+  PaginationWidgetSpatialConfig,
+} from "../model/paginationWidgetTypes";
 
 export const precomputeScales = (
   actualCount: number,
@@ -18,7 +21,7 @@ export const precomputeScales = (
 
 export const computeStrip = (
   scales: number[],
-  config: SpatialConfig,
+  config: PaginationWidgetSpatialConfig,
 ): number[] => {
   const count = scales.length;
   const centerIndex = Math.floor(count / 2);
@@ -46,8 +49,8 @@ export const computePool = (
 export const projectDot = (
   id: number,
   step: number,
-  model: LayoutModel,
-): DotWidgetState => {
+  model: PaginationWidgetLayoutModel,
+): PaginationWidgetDotState => {
   const dist = id - step;
   const { geometry, scales } = model;
   const { centerIndex, strip, actualCount, unit } = geometry;

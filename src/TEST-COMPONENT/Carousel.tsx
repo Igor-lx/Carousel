@@ -215,28 +215,19 @@ const Carousel = memo((props: CarouselProps) => {
     [],
   );
 
-  const {
-    move,
-    goTo,
-    startDrag,
-    updateDrag,
-    finishDrag,
-  } = useCarouselController({
-    dispatchAction,
-    enabled: canSlide,
-    measureRef: containerRef,
-    layout: nextLayout,
-    baseVirtualIndex: virtualIndex,
-    currentPositionRef: motionPositionRef,
-    readCurrentPosition,
-    applyDragPosition,
-  });
+  const { move, goTo, startDrag, updateDrag, finishDrag } =
+    useCarouselController({
+      dispatchAction,
+      enabled: canSlide,
+      measureRef: containerRef,
+      layout: nextLayout,
+      baseVirtualIndex: virtualIndex,
+      currentPositionRef: motionPositionRef,
+      readCurrentPosition,
+      applyDragPosition,
+    });
 
-  const {
-    isDragging,
-    isInteracting,
-    dragListeners,
-  } = useCarouselGesture({
+  const { isDragging, isInteracting, dragListeners } = useCarouselGesture({
     onPressStart: startDrag,
     onDragMove: updateDrag,
     onDragEnd: finishDrag,
@@ -244,16 +235,12 @@ const Carousel = memo((props: CarouselProps) => {
     measureRef: containerRef,
   });
 
-  const {
-    handlePrev,
-    handleNext,
-    handlePageSelect,
-    handleSlideClick,
-  } = useCarouselClick({
-    onMove: move,
-    onGoTo: goTo,
-    onClick: onSlideClick,
-  });
+  const { handlePrev, handleNext, handlePageSelect, handleSlideClick } =
+    useCarouselClick({
+      onMove: move,
+      onGoTo: goTo,
+      onClick: onSlideClick,
+    });
 
   const isPaused = !isVisible || isInteracting || isMoving;
   const { onHover } = useCarouselAutoPlay({
@@ -314,14 +301,14 @@ const Carousel = memo((props: CarouselProps) => {
     onComplete: finalizeEngineStep,
   });
 
+  const shouldRotateExternalWidget = isMoving && !isReducedMotion;
   useCarouselExternalControllerSync({
     externalControllerRef,
-    isReducedMotion,
     actualDuration,
     targetIndex,
     pageCount,
     isFinite: nextLayout.isFinite,
-    animMode,
+    shouldRotateWidget: shouldRotateExternalWidget,
   });
 
   const slots = useMemo(
@@ -384,10 +371,7 @@ const Carousel = memo((props: CarouselProps) => {
           onMouseLeave={() => onHover(false)}
           {...dragListeners}
         >
-          <div
-            ref={movingRef}
-            className={classNames.slideContainer}
-          >
+          <div ref={movingRef} className={classNames.slideContainer}>
             {virtualSlides.map((slide) => {
               return (
                 <SlideItem

@@ -57,7 +57,7 @@
     transition: border-color 0.5s ease;
     overflow: hidden;
     box-sizing: border-box;
-    cursor: var(--slide-cursor, default);
+    cursor: default;
 
     &:focus-visible {
       outline: 1px solid #9cc4f0;
@@ -69,6 +69,14 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+    }
+  }
+
+  .slideInteractive {
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--slide-border-hover, transparent);
     }
   }
 

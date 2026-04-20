@@ -1,3 +1,3 @@
-export * from "./useLayoutNotice";
-export * from "./usePaginationEngine";
-export * from "./useSpatialField";
+export * from "./usePaginationWidgetLayoutNotice";
+export * from "./usePaginationWidgetEngine";
+export * from "./usePaginationWidgetSpatialField";

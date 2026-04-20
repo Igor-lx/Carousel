@@ -3,16 +3,14 @@ import { useRef, type RefObject } from "react";
 import { useIsomorphicLayoutEffect } from "../../shared";
 import { getShortestDistance } from "../utilities";
 import type { CarouselExternalController } from "./types";
-import type { AnimationMode } from "../model/reducer";
 
 interface ExternalControllerSyncProps {
   externalControllerRef: RefObject<CarouselExternalController | null>;
-  isReducedMotion: boolean;
   actualDuration: number;
   targetIndex: number;
   pageCount: number;
   isFinite: boolean;
-  animMode: AnimationMode;
+  shouldRotateWidget: boolean;
 }
 
 const getWidgetDirection = ({
@@ -41,18 +39,13 @@ const getWidgetDirection = ({
 
 export function useCarouselExternalControllerSync({
   externalControllerRef,
-  isReducedMotion,
   actualDuration,
   targetIndex,
   pageCount,
   isFinite,
-  animMode,
+  shouldRotateWidget,
 }: ExternalControllerSyncProps): void {
   const previousTargetIndexRef = useRef<number | null>(null);
-
-  useIsomorphicLayoutEffect(() => {
-    externalControllerRef.current?.toggleFreezed(isReducedMotion);
-  }, [isReducedMotion, externalControllerRef]);
 
   useIsomorphicLayoutEffect(() => {
     externalControllerRef.current?.setDuration(actualDuration);
@@ -64,7 +57,7 @@ export function useCarouselExternalControllerSync({
 
     if (
       previousTargetIndex === null ||
-      animMode === "none"
+      !shouldRotateWidget
     ) {
       return;
     }
@@ -85,10 +78,10 @@ export function useCarouselExternalControllerSync({
       externalControllerRef.current?.moveLeft?.();
     }
   }, [
-    animMode,
     externalControllerRef,
     isFinite,
     pageCount,
+    shouldRotateWidget,
     targetIndex,
   ]);
 }
