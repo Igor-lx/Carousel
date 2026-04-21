@@ -39,10 +39,9 @@ import {
   PaginationWidget,
 } from "../shared";
 
-import Carousel from "../TEST-COMPONENT/Carousel";
-import type { Slide } from "../TEST-COMPONENT/Carousel.types";
-
-import { Controls, Pagination } from "../TEST-COMPONENT/components";
+import Carousel, { type Slide } from "../TEST-COMPONENT/Carousel";
+import { Controls } from "../TEST-COMPONENT/Carousel/modules/Controls/Controls";
+import { Pagination } from "../TEST-COMPONENT/Carousel/modules/Pagination/Pagination";
 
 //=====================================================================================================================================
 
@@ -128,10 +127,10 @@ function App() {
             isAuto={isAutoOn}
             isPaginationOn={true}
            // isInstantMotion={true}
-            isInteractive={false}
+            isInteractive={true}
             durationAutoplay={7500}
             durationStep={5000}
-            durationJump={800}
+            durationJump={900}
             intervalAutoplay={3000}
             isLayoutClamped={true}
             isTouchDevice={isTouch}

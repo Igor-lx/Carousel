@@ -1,0 +1,9 @@
+export const HOVER_PAUSE_DELAY = 150;
+export const VISIBILITY_THRESHOLD = 0.2;
+export const AUTOPLAY_PAGINATION_FACTOR = 0.4;
+
+export const CAROUSEL_SLOTS = [
+  "pagination",
+  "controls",
+  "normalization",
+] as const;

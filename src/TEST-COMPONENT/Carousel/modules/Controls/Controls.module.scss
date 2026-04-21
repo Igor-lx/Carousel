@@ -1,0 +1,112 @@
+@layer components {
+  .navZone {
+    position: absolute;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 8%;
+    height: 100%;
+    border: none;
+    outline: none;
+    background-color: rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    transform: none;
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+    pointer-events: none;
+
+    &:focus-visible {
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  .navZoneL {
+    left: 0;
+  }
+
+  .navZoneR {
+    right: 0;
+  }
+
+  .navButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 45px;
+    border: none;
+    border-radius: 50%;
+    color: rgba(245, 245, 245, 0.807);
+    background-color: rgba(0, 0, 0, 0.45);
+    user-select: none;
+    pointer-events: none;
+
+    svg {
+      opacity: 0.8;
+    }
+  }
+
+  [data-touch="false"]:has([data-carousel-viewport]:hover) .navZone,
+  [data-touch="false"]:has(*:focus-visible) .navZone {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  [data-touch="true"] .navZone {
+    top: 50%;
+    width: 45px;
+    height: 45px;
+    background-color: transparent;
+    opacity: 1;
+    transform: translateY(-50%);
+    pointer-events: auto;
+  }
+
+  [data-touch="true"] .navZoneL {
+    left: 20px;
+  }
+
+  [data-touch="true"] .navZoneR {
+    right: 20px;
+  }
+
+  [data-touch="true"] .navButton {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+
+  @media (max-width: 1024px) {
+    .navZoneL {
+      left: 4px;
+    }
+
+    .navZoneR {
+      right: 4px;
+    }
+
+    .navButton {
+      width: 50px;
+      height: 115px;
+      border-radius: 8%;
+    }
+
+    [data-touch="true"] .navZone {
+      width: 50px;
+      height: 115px;
+    }
+
+    [data-touch="true"] .navZoneL {
+      left: 8px;
+    }
+
+    [data-touch="true"] .navZoneR {
+      right: 8px;
+    }
+  }
+
+  [data-reduced-motion="true"] .navZone {
+    transition: none;
+  }
+}
