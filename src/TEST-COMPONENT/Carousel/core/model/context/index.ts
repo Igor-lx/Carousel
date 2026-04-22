@@ -1,3 +1,3 @@
 export * from "./CarouselModuleApiContext";
-export * from "./CarouselNormalizationContext";
+export * from "./CarouselDiagnosticContext";
 export * from "./types";

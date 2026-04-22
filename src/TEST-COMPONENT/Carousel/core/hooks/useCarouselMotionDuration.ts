@@ -1,15 +1,15 @@
 import { useMemo } from "react";
 import type { MoveReason, AnimationMode } from "../model/reducer";
+import type {
+  CarouselMotionSettings,
+  CarouselRepeatedClickSettings,
+} from "../model/diagnostic";
+import type { DragSpeedConfig } from "../../../../shared";
 import { mapVelocityToDuration } from "../../../../shared/hooks/useDrag";
 import {
   getDurationByVirtualSpan,
   scaleVirtualVelocityToPageVelocity,
 } from "../utilities";
-import {
-  SAFE_DRAG_DURATION_RAMP_SETTINGS,
-  SAFE_MOTION_SETTINGS,
-  SAFE_REPEATED_CLICK_SETTINGS,
-} from "../model/normalization";
 
 interface MotionDurationProps {
   reason: MoveReason;
@@ -21,6 +21,9 @@ interface MotionDurationProps {
   segmentStartVirtualIndex: number;
   targetVirtualIndex: number;
   stepSize: number;
+  dragDurationRampSettings: DragSpeedConfig;
+  motionSettings: CarouselMotionSettings;
+  repeatedClickSettings: CarouselRepeatedClickSettings;
   autoplayDuration: number;
   stepDuration: number;
   jumpDuration: number;
@@ -36,6 +39,9 @@ export function useCarouselMotionDuration({
   segmentStartVirtualIndex,
   targetVirtualIndex,
   stepSize,
+  dragDurationRampSettings,
+  motionSettings,
+  repeatedClickSettings,
   autoplayDuration,
   stepDuration,
   jumpDuration,
@@ -57,9 +63,8 @@ export function useCarouselMotionDuration({
   );
 
   const repeatedClickAdvanceDuration = useMemo(
-    () =>
-      clickSegmentDuration / SAFE_REPEATED_CLICK_SETTINGS.speedMultiplier,
-    [clickSegmentDuration],
+    () => clickSegmentDuration / repeatedClickSettings.speedMultiplier,
+    [clickSegmentDuration, repeatedClickSettings.speedMultiplier],
   );
 
   const gestureSegmentDuration = useMemo(
@@ -83,14 +88,16 @@ export function useCarouselMotionDuration({
       from: segmentStartVirtualIndex,
       to: targetVirtualIndex,
       stepSize,
-      baseDuration: SAFE_MOTION_SETTINGS.snapBackDuration,
+      baseDuration: motionSettings.snapBackDuration,
     });
 
     return Math.max(
-      SAFE_DRAG_DURATION_RAMP_SETTINGS.minDuration,
-      Math.min(SAFE_MOTION_SETTINGS.snapBackDuration, scaledDuration),
+      dragDurationRampSettings.minDuration,
+      Math.min(motionSettings.snapBackDuration, scaledDuration),
     );
   }, [
+    dragDurationRampSettings.minDuration,
+    motionSettings.snapBackDuration,
     segmentStartVirtualIndex,
     stepSize,
     targetVirtualIndex,
@@ -132,9 +139,9 @@ export function useCarouselMotionDuration({
       mapVelocityToDuration({
         velocity: scaleVirtualVelocityToPageVelocity(velocity, stepSize),
         baseDuration,
-        dragSpeedConfig: SAFE_DRAG_DURATION_RAMP_SETTINGS,
+        dragSpeedConfig: dragDurationRampSettings,
       }),
-    [baseDuration, stepSize, velocity],
+    [baseDuration, dragDurationRampSettings, stepSize, velocity],
   );
 
   const velocityPreservingGestureDuration = useMemo(() => {
@@ -150,10 +157,15 @@ export function useCarouselMotionDuration({
     }
 
     return (
-      (distance * SAFE_MOTION_SETTINGS.monotonicSpeedFactor) /
-      velocityMagnitude
+      (distance * motionSettings.monotonicSpeedFactor) / velocityMagnitude
     );
-  }, [reason, segmentStartVirtualIndex, targetVirtualIndex, velocity]);
+  }, [
+    motionSettings.monotonicSpeedFactor,
+    reason,
+    segmentStartVirtualIndex,
+    targetVirtualIndex,
+    velocity,
+  ]);
 
   return useMemo(() => {
     if (isDragging) return 0;
@@ -163,7 +175,7 @@ export function useCarouselMotionDuration({
     if (isInstant || animMode === "jump") return jumpDuration;
     if (reason === "gesture") {
       return Math.max(
-        SAFE_DRAG_DURATION_RAMP_SETTINGS.minDuration,
+        dragDurationRampSettings.minDuration,
         Math.min(velocityScaledDuration, velocityPreservingGestureDuration),
       );
     }
@@ -172,6 +184,7 @@ export function useCarouselMotionDuration({
   }, [
     animMode,
     baseDuration,
+    dragDurationRampSettings.minDuration,
     velocityScaledDuration,
     isDragging,
     isInstant,

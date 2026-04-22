@@ -1,10 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import type { MoveReason } from "../model/reducer";
-import { SAFE_INTERACTION_SETTINGS } from "../model/normalization";
 
 interface AutoPlayProps {
   enabled: boolean;
   autoplayInterval: number;
+  hoverPauseDelay: number;
   isPaused: boolean;
   ignoreHover: boolean;
   isAtEnd: boolean;
@@ -19,6 +19,7 @@ interface AutoPlayResult {
 export function useCarouselAutoPlay({
   enabled,
   autoplayInterval,
+  hoverPauseDelay,
   isPaused,
   ignoreHover,
   isAtEnd,
@@ -42,13 +43,13 @@ export function useCarouselAutoPlay({
       if (active && withDelay) {
         hoverTimerRef.current = setTimeout(
           () => setIsInternalPaused(true),
-          SAFE_INTERACTION_SETTINGS.hoverPauseDelay,
+          hoverPauseDelay,
         );
       } else {
         setIsInternalPaused(active);
       }
     },
-    [clearHoverTimer],
+    [clearHoverTimer, hoverPauseDelay],
   );
 
   const onHover = useCallback(

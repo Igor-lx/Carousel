@@ -1,4 +1,5 @@
 import type { AnimationMode, State, StepAction } from ".";
+import type { CarouselRepeatedClickSettings } from "../diagnostic";
 import {
   clamp,
   getAlignedVirtualIndex,
@@ -8,7 +9,6 @@ import {
   normalizePageIndex,
   type CarouselLayout,
 } from "../../utilities";
-import { SAFE_REPEATED_CLICK_SETTINGS } from "../normalization";
 
 export const initialState = (currentLayout: CarouselLayout): State => ({
   currentLayout,
@@ -199,10 +199,12 @@ export const resolveRepeatedClickPlan = ({
   state,
   fromVirtualIndex,
   step,
+  repeatedClickSettings,
 }: {
   state: State;
   fromVirtualIndex: number;
   step: number;
+  repeatedClickSettings: CarouselRepeatedClickSettings;
 }) => {
   const { currentLayout: layout } = state;
   const direction = Math.sign(step);
@@ -222,7 +224,7 @@ export const resolveRepeatedClickPlan = ({
     return null;
   }
 
-  const { destinationPosition } = SAFE_REPEATED_CLICK_SETTINGS;
+  const { destinationPosition } = repeatedClickSettings;
   const currentPageOrigin =
     direction > 0
       ? Math.floor(fromVirtualIndex / stepSize) * stepSize

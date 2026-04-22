@@ -1,11 +1,10 @@
 import {
+  isValidElement,
   memo,
   useCallback,
-  useEffect,
   useMemo,
   useReducer,
   useRef,
-  useState,
 } from "react";
 
 import styles from "./Carousel.module.scss";
@@ -18,14 +17,12 @@ import {
   useCarouselEngine,
   useCarouselGesture,
   useCarouselMotion,
-  usePartialPageLayoutNotice,
   useCarouselSlides,
   useCarouselMotionDuration,
   useCarouselSlideStyles,
 } from "./hooks";
 
 import {
-  type DevNoticeEntry,
   manageFocusShift,
   mergeStyles,
   resolveSlots,
@@ -44,17 +41,16 @@ import {
   reconcileStateToLayout,
   reducer,
 } from "./model/reducer";
+import { CAROUSEL_SLOTS, DEFAULT_SETTINGS } from "./model/config";
 import {
-  CAROUSEL_SLOTS,
-  DEFAULT_SETTINGS,
-} from "./model/config";
+  type CarouselDiagnosticPayload,
+  type CarouselDiagnosticPropsInput,
+  type CarouselDiagnosticResolver,
+  resolveRawCarouselRuntimeSettings,
+} from "./model/diagnostic";
 import {
-  normalizeCarouselSettings,
-  SAFE_INTERACTION_SETTINGS,
-} from "./model/normalization";
-import {
+  CarouselDiagnosticContext,
   CarouselModuleApiContext,
-  CarouselNormalizationContext,
 } from "./model/context";
 import {
   type CarouselExternalControlHandle,
@@ -72,6 +68,22 @@ import {
 } from "./utilities";
 
 const INTERNAL_CLASS_NAMES = styles;
+const EMPTY_DIAGNOSTIC_CORRECTIONS: CarouselDiagnosticPayload["correctionEntries"] =
+  [];
+
+const getAttachedDiagnosticResolver = (
+  slot: unknown,
+): CarouselDiagnosticResolver | null => {
+  if (!isValidElement(slot)) {
+    return null;
+  }
+
+  const resolver = (
+    slot.type as { resolveDiagnostic?: CarouselDiagnosticResolver }
+  ).resolveDiagnostic;
+
+  return typeof resolver === "function" ? resolver : null;
+};
 
 const Carousel = memo((props: CarouselProps) => {
   const rawVisibleSlidesNr = props.visibleSlidesNr;
@@ -107,39 +119,6 @@ const Carousel = memo((props: CarouselProps) => {
 
   const isReducedMotion = isInstantMotion ?? useIsReducedMotion();
   const isTouch = isTouchDevice ?? useIsTouchDevice();
-  const safeSettings = useMemo(
-    () =>
-      normalizeCarouselSettings({
-        visibleSlidesNr: rawVisibleSlidesNr,
-        durationAutoplay: rawDurationAutoplay,
-        durationStep: rawDurationStep,
-        durationJump: rawDurationJump,
-        intervalAutoplay: rawIntervalAutoplay,
-        errAltPlaceholder: rawErrAltPlaceholder,
-      }),
-    [
-      rawDurationAutoplay,
-      rawDurationJump,
-      rawDurationStep,
-      rawErrAltPlaceholder,
-      rawIntervalAutoplay,
-      rawVisibleSlidesNr,
-    ],
-  );
-  const { visible: isVisible } = useComponentVisibility({
-    elementRef: containerRef,
-    threshold: SAFE_INTERACTION_SETTINGS.visibilityThreshold,
-  });
-
-  const {
-    visibleSlidesCount,
-    autoplayDuration,
-    stepDuration,
-    jumpDuration,
-    autoplayInterval,
-    errorAltPlaceholder,
-  } = safeSettings;
-
   const {
     instanceRef: externalControlRef,
     connectedChildren: childrenWithExternalControlRef,
@@ -149,10 +128,47 @@ const Carousel = memo((props: CarouselProps) => {
     () => resolveSlots(childrenWithExternalControlRef, CAROUSEL_SLOTS),
     [childrenWithExternalControlRef],
   );
-  const isNormalizationAttached = slots.normalization !== null;
+  const rawDiagnosticInput = useMemo<CarouselDiagnosticPropsInput>(
+    () => ({
+      visibleSlidesNr: rawVisibleSlidesNr,
+      durationAutoplay: rawDurationAutoplay,
+      durationStep: rawDurationStep,
+      durationJump: rawDurationJump,
+      intervalAutoplay: rawIntervalAutoplay,
+      errAltPlaceholder: rawErrAltPlaceholder,
+    }),
+    [
+      rawDurationAutoplay,
+      rawDurationJump,
+      rawDurationStep,
+      rawErrAltPlaceholder,
+      rawIntervalAutoplay,
+      rawVisibleSlidesNr,
+    ],
+  );
+  const rawRuntimeSettings =
+    resolveRawCarouselRuntimeSettings(rawDiagnosticInput);
+  const diagnosticResolver = getAttachedDiagnosticResolver(slots.diagnostic);
+  const diagnosticPayload = diagnosticResolver?.(rawDiagnosticInput) ?? null;
+  const runtimeSettings = diagnosticPayload?.settings ?? rawRuntimeSettings;
 
-  const [reportedLayoutNoticeEntries, setReportedLayoutNoticeEntries] =
-    useState<DevNoticeEntry[]>([]);
+  const {
+    visibleSlidesCount,
+    autoplayDuration,
+    stepDuration,
+    jumpDuration,
+    autoplayInterval,
+    errorAltPlaceholder,
+    repeatedClickSettings,
+    interactionSettings,
+    dragSettings,
+    dragDurationRampSettings,
+    motionSettings,
+  } = runtimeSettings;
+  const { visible: isVisible } = useComponentVisibility({
+    elementRef: containerRef,
+    threshold: interactionSettings.visibilityThreshold,
+  });
 
   const hasPartialPageLayoutMismatch = hasPartialPageLayout(
     totalSlides,
@@ -199,48 +215,22 @@ const Carousel = memo((props: CarouselProps) => {
 
   const { canSlide, pageCount, clampedVisible } = nextLayout;
 
-  const rawNormalizationInput = useMemo(
+  const perfectPageLayoutNoticeInput = useMemo(
     () => ({
-      visibleSlidesNr: rawVisibleSlidesNr,
-      durationAutoplay: rawDurationAutoplay,
-      durationStep: rawDurationStep,
-      durationJump: rawDurationJump,
-      intervalAutoplay: rawIntervalAutoplay,
-      errAltPlaceholder: rawErrAltPlaceholder,
+      hasPerfectPageLayout: !hasPartialPageLayoutMismatch,
+      rawLength: totalSlides,
+      extendedLength: layoutSlideRecords.length,
+      visibleSlidesCount: clampedVisible,
+      didExtendLayout: didExtendPartialPageLayout,
     }),
     [
-      rawDurationAutoplay,
-      rawDurationJump,
-      rawDurationStep,
-      rawErrAltPlaceholder,
-      rawIntervalAutoplay,
-      rawVisibleSlidesNr,
+      clampedVisible,
+      didExtendPartialPageLayout,
+      hasPartialPageLayoutMismatch,
+      layoutSlideRecords.length,
+      totalSlides,
     ],
   );
-  const captureLayoutNoticeEntries = useCallback((entries: DevNoticeEntry[]) => {
-    setReportedLayoutNoticeEntries((prevEntries) =>
-      prevEntries === entries ? prevEntries : entries,
-    );
-  }, []);
-
-  usePartialPageLayoutNotice({
-    hasPartialPageLayout: hasPartialPageLayoutMismatch,
-    rawLength: totalSlides,
-    extendedLength: layoutSlideRecords.length,
-    visibleSlidesCount: clampedVisible,
-    didExtendLayout: didExtendPartialPageLayout,
-    reporter: isNormalizationAttached
-      ? captureLayoutNoticeEntries
-      : undefined,
-  });
-
-  useEffect(() => {
-    if (!isNormalizationAttached) {
-      setReportedLayoutNoticeEntries((prevEntries) =>
-        prevEntries.length === 0 ? prevEntries : [],
-      );
-    }
-  }, [isNormalizationAttached]);
 
   const { isMoving, isJumping, isInstant, isIdle } = useMemo(
     () => getAnimStatus(animMode),
@@ -267,6 +257,7 @@ const Carousel = memo((props: CarouselProps) => {
       isInstantMode: isReducedMotion,
       isMoving,
       layout: nextLayout,
+      repeatedClickSettings,
     });
 
   const applyDragPosition = useCallback(
@@ -293,6 +284,7 @@ const Carousel = memo((props: CarouselProps) => {
       measureRef: containerRef,
       layout: nextLayout,
       baseVirtualIndex: virtualIndex,
+      dragDurationRampSettings,
       currentPositionRef: motionPositionRef,
       readCurrentPosition,
       applyDragPosition,
@@ -303,6 +295,7 @@ const Carousel = memo((props: CarouselProps) => {
     onDragMove: updateDrag,
     onDragEnd: finishDrag,
     enabled: canSlide,
+    dragSettings,
     measureRef: containerRef,
   });
 
@@ -318,6 +311,7 @@ const Carousel = memo((props: CarouselProps) => {
     enabled: isAuto && canSlide,
     ignoreHover: isTouch,
     autoplayInterval,
+    hoverPauseDelay: interactionSettings.hoverPauseDelay,
     isPaused,
     isAtEnd,
     onGoTo: goTo,
@@ -334,6 +328,9 @@ const Carousel = memo((props: CarouselProps) => {
     segmentStartVirtualIndex: fromVirtualIndex,
     targetVirtualIndex: virtualIndex,
     stepSize: clampedVisible,
+    dragDurationRampSettings,
+    motionSettings,
+    repeatedClickSettings,
     autoplayDuration,
     stepDuration,
     jumpDuration,
@@ -361,6 +358,7 @@ const Carousel = memo((props: CarouselProps) => {
     currentVirtualIndex: virtualIndex,
     windowStart,
     size: clampedVisible,
+    motionSettings,
     isMoving,
     animMode,
     reason: moveReason,
@@ -399,6 +397,7 @@ const Carousel = memo((props: CarouselProps) => {
     isJumping,
     moveReason,
     motionDuration,
+    autoplayPaginationFactor: interactionSettings.autoplayPaginationFactor,
     handlePageSelect,
     handlePrev,
     handleNext,
@@ -417,19 +416,25 @@ const Carousel = memo((props: CarouselProps) => {
   );
 
   const slideClassNames = usePickStyles(classNames, SLIDE_KEYS);
-  const normalizationContextValue = useMemo(
+  const diagnosticContextValue = useMemo(
     () => ({
-      rawNormalizationInput,
-      layoutNoticeEntries: reportedLayoutNoticeEntries,
+      correctionEntries:
+        diagnosticPayload?.correctionEntries ?? EMPTY_DIAGNOSTIC_CORRECTIONS,
+      perfectPageLayoutNoticeInput,
     }),
-    [reportedLayoutNoticeEntries, rawNormalizationInput],
+    [diagnosticPayload?.correctionEntries, perfectPageLayoutNoticeInput],
   );
 
-  if (totalSlides === 0) return null;
+  const hasControlsSlot = Boolean(slots.controls);
+  const shouldRenderControls = isControlsOn && canSlide && hasControlsSlot;
+
+  const hasPaginationSlot = Boolean(slots.pagination);
+  const shouldRenderPagination = isPaginationOn && hasPaginationSlot;
+
 
   return (
     <CarouselModuleApiContext.Provider value={moduleApi}>
-      <CarouselNormalizationContext.Provider value={normalizationContextValue}>
+      <CarouselDiagnosticContext.Provider value={diagnosticContextValue}>
         <div
           className={classNames.outerContainer}
           role="region"
@@ -470,12 +475,12 @@ const Carousel = memo((props: CarouselProps) => {
                 );
               })}
             </div>
-            {isControlsOn && canSlide && slots.controls}
+            {shouldRenderControls ? slots.controls : null}
           </div>
-          {isPaginationOn && slots.pagination}
-          {slots.normalization}
+          {shouldRenderPagination ? slots.pagination : null}
+          {slots.diagnostic}
         </div>
-      </CarouselNormalizationContext.Provider>
+      </CarouselDiagnosticContext.Provider>
     </CarouselModuleApiContext.Provider>
   );
 });

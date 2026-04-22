@@ -1,15 +1,28 @@
-import type { DevNoticeEntry } from "../../../../shared";
+import type { DevNoticeEntry } from "../../../../../shared";
 import {
   AUTOPLAY_PAGINATION_FACTOR,
   DEFAULT_SETTINGS,
   DRAG_DURATION_RAMP_CONFIG,
   DRAG_SETTINGS_CONFIG,
+  HOVER_PAUSE_DELAY,
+  MOTION_MONOTONIC_SPEED_FACTOR,
+  REPEATED_CLICK_DESTINATION_POSITION,
+  REPEATED_CLICK_SPEED_MULTIPLIER,
+  SNAP_BACK_DURATION,
+  VISIBILITY_THRESHOLD,
+} from "../../../core/model/config";
+import type {
+  CarouselDiagnosticPayload,
+  CarouselDiagnosticPropsInput,
+  CarouselRuntimePropSettings,
+} from "../../../core/model/diagnostic";
+import {
   HARD_DRAG_DURATION_RAMP_SETTINGS,
   HARD_DRAG_SETTINGS,
+  HARD_ERROR_ALT_PLACEHOLDER,
   HARD_INTERACTION_SETTINGS,
   HARD_MOTION_SETTINGS,
   HARD_REPEATED_CLICK_SETTINGS,
-  HOVER_PAUSE_DELAY,
   MAX_DRAG_DURATION_RATIO,
   MAX_DRAG_EMA_ALPHA,
   MAX_REPEATED_CLICK_DESTINATION_POSITION,
@@ -21,13 +34,8 @@ import {
   MIN_REPEATED_CLICK_SPEED_MULTIPLIER,
   MIN_VISIBLE_SLIDES,
   MIN_VISIBILITY_THRESHOLD,
-  MOTION_MONOTONIC_SPEED_FACTOR,
-  REPEATED_CLICK_DESTINATION_POSITION,
-  REPEATED_CLICK_SPEED_MULTIPLIER,
   SAFE_DURATION,
-  SNAP_BACK_DURATION,
-  VISIBILITY_THRESHOLD,
-} from "../../core/model/config";
+} from "./contracts";
 import {
   isValueProvided,
   normalizeAutoplayInterval,
@@ -42,32 +50,15 @@ import {
   normalizeRepeatedClickSpeedMultiplier,
   normalizeVisibilityThreshold,
   normalizeVisibleSlidesCount,
-} from "../../core/model/normalization/helpers";
-import {
-  SAFE_DEFAULT_SETTINGS,
-} from "../../core/model/normalization/runtime-config";
-
-type CarouselNormalizationNoticeInput = {
-  visibleSlidesNr?: unknown;
-  durationAutoplay?: unknown;
-  durationStep?: unknown;
-  durationJump?: unknown;
-  intervalAutoplay?: unknown;
-  errAltPlaceholder?: unknown;
-};
+} from "./helpers";
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 
-const getCorrectionFieldName = (field: string, isPropProvided: boolean) =>
-  isPropProvided ? field : `DEFAULT_SETTINGS.${field}`;
-
 const joinReasons = (...reasons: Array<string | undefined>) => {
   const definedReasons = reasons.filter(Boolean);
 
-  return definedReasons.length > 0
-    ? definedReasons.join("; ")
-    : undefined;
+  return definedReasons.length > 0 ? definedReasons.join("; ") : undefined;
 };
 
 const getPositiveIntegerReason = (value: unknown) => {
@@ -87,10 +78,24 @@ const getPositiveDurationReason = (value: unknown) =>
     ? "expected a finite positive duration"
     : undefined;
 
-const getPositiveIntervalReason = (value: unknown) =>
-  !isFiniteNumber(value) || value <= 0
-    ? "expected a finite positive interval"
-    : undefined;
+const getAutoplayDurationReason = ({
+  source,
+  normalizedAutoplayDuration,
+  reconciledAutoplayDuration,
+  stepDuration,
+}: {
+  source: unknown;
+  normalizedAutoplayDuration: number;
+  reconciledAutoplayDuration: number;
+  stepDuration: number;
+}) =>
+  joinReasons(
+    getPositiveDurationReason(source),
+    reconciledAutoplayDuration > normalizedAutoplayDuration &&
+    reconciledAutoplayDuration === stepDuration
+      ? "raised to durationStep"
+      : undefined,
+  );
 
 const getSafeAutoplayIntervalReason = (value: unknown) =>
   !isFiniteNumber(value) || value < MIN_AUTOPLAY_INTERVAL
@@ -102,79 +107,205 @@ const getNonEmptyStringReason = (value: unknown) =>
     ? undefined
     : "expected a non-empty string";
 
-const collectDefaultSettingsCorrections = (): DevNoticeEntry[] => {
-  const safeVisibleSlidesNr = normalizeVisibleSlidesCount(
-    DEFAULT_SETTINGS.visibleSlidesNr,
-    MIN_VISIBLE_SLIDES,
-  );
-  const safeDurationAutoplay = normalizePositiveDuration(
-    DEFAULT_SETTINGS.durationAutoplay,
-    SAFE_DURATION,
-  );
-  const safeDurationStep = normalizePositiveDuration(
-    DEFAULT_SETTINGS.durationStep,
-    SAFE_DURATION,
-  );
-  const safeDurationJump = normalizePositiveDuration(
-    DEFAULT_SETTINGS.durationJump,
-    SAFE_DURATION,
-  );
-  const safeIntervalAutoplay = normalizePositiveDuration(
-    DEFAULT_SETTINGS.intervalAutoplay,
-    SAFE_DURATION,
+const getStepDurationReason = ({
+  source,
+  normalizedStepDuration,
+  reconciledStepDuration,
+}: {
+  source: unknown;
+  normalizedStepDuration: number;
+  reconciledStepDuration: number;
+}) =>
+  joinReasons(
+    getPositiveDurationReason(source),
+    reconciledStepDuration > normalizedStepDuration
+      ? "raised to durationJump"
+      : undefined,
   );
 
+const createFallbackDefaultSettings = (): CarouselRuntimePropSettings => ({
+  visibleSlidesCount: MIN_VISIBLE_SLIDES,
+  autoplayDuration: SAFE_DURATION,
+  stepDuration: SAFE_DURATION,
+  jumpDuration: SAFE_DURATION,
+  autoplayInterval: SAFE_DURATION,
+  errorAltPlaceholder: HARD_ERROR_ALT_PLACEHOLDER,
+});
+
+const resolveRuntimePropSettings = (
+  {
+    visibleSlidesNr,
+    durationAutoplay,
+    durationStep,
+    durationJump,
+    intervalAutoplay,
+    errAltPlaceholder,
+  }: CarouselDiagnosticPropsInput,
+  fallbackSettings: CarouselRuntimePropSettings,
+  fieldNames: {
+    visibleSlidesNr: string;
+    durationAutoplay: string;
+    durationStep: string;
+    durationJump: string;
+    intervalAutoplay: string;
+    errAltPlaceholder: string;
+  },
+) => {
   const corrections: DevNoticeEntry[] = [];
 
-  if (safeVisibleSlidesNr !== DEFAULT_SETTINGS.visibleSlidesNr) {
+  const visibleSlidesSource = isValueProvided(visibleSlidesNr)
+    ? visibleSlidesNr
+    : fallbackSettings.visibleSlidesCount;
+  const visibleSlidesCount = normalizeVisibleSlidesCount(
+    visibleSlidesSource,
+    fallbackSettings.visibleSlidesCount,
+  );
+
+  if (!Object.is(visibleSlidesCount, visibleSlidesSource)) {
     corrections.push({
-      field: "DEFAULT_SETTINGS.visibleSlidesNr",
-      provided: DEFAULT_SETTINGS.visibleSlidesNr,
-      normalized: safeVisibleSlidesNr,
-      reason: getPositiveIntegerReason(DEFAULT_SETTINGS.visibleSlidesNr),
+      field: fieldNames.visibleSlidesNr,
+      provided: visibleSlidesSource,
+      normalized: visibleSlidesCount,
+      reason: getPositiveIntegerReason(visibleSlidesSource),
     });
   }
 
-  if (safeDurationAutoplay !== DEFAULT_SETTINGS.durationAutoplay) {
+  const autoplayDurationSource = isValueProvided(durationAutoplay)
+    ? durationAutoplay
+    : fallbackSettings.autoplayDuration;
+  const normalizedAutoplayDuration = normalizePositiveDuration(
+    autoplayDurationSource,
+    fallbackSettings.autoplayDuration,
+  );
+
+  const stepDurationSource = isValueProvided(durationStep)
+    ? durationStep
+    : fallbackSettings.stepDuration;
+  const normalizedStepDuration = normalizePositiveDuration(
+    stepDurationSource,
+    fallbackSettings.stepDuration,
+  );
+
+  const jumpDurationSource = isValueProvided(durationJump)
+    ? durationJump
+    : fallbackSettings.jumpDuration;
+  const normalizedJumpDuration = normalizePositiveDuration(
+    jumpDurationSource,
+    fallbackSettings.jumpDuration,
+  );
+
+  const stepDuration = Math.max(
+    normalizedStepDuration,
+    normalizedJumpDuration,
+  );
+  const autoplayDuration = Math.max(normalizedAutoplayDuration, stepDuration);
+  const jumpDuration = normalizedJumpDuration;
+
+  if (!Object.is(autoplayDuration, autoplayDurationSource)) {
     corrections.push({
-      field: "DEFAULT_SETTINGS.durationAutoplay",
-      provided: DEFAULT_SETTINGS.durationAutoplay,
-      normalized: safeDurationAutoplay,
-      reason: getPositiveDurationReason(DEFAULT_SETTINGS.durationAutoplay),
+      field: fieldNames.durationAutoplay,
+      provided: autoplayDurationSource,
+      normalized: autoplayDuration,
+      reason: getAutoplayDurationReason({
+        source: autoplayDurationSource,
+        normalizedAutoplayDuration,
+        reconciledAutoplayDuration: autoplayDuration,
+        stepDuration,
+      }),
     });
   }
 
-  if (safeDurationStep !== DEFAULT_SETTINGS.durationStep) {
+  if (!Object.is(stepDuration, stepDurationSource)) {
     corrections.push({
-      field: "DEFAULT_SETTINGS.durationStep",
-      provided: DEFAULT_SETTINGS.durationStep,
-      normalized: safeDurationStep,
-      reason: getPositiveDurationReason(DEFAULT_SETTINGS.durationStep),
+      field: fieldNames.durationStep,
+      provided: stepDurationSource,
+      normalized: stepDuration,
+      reason: getStepDurationReason({
+        source: stepDurationSource,
+        normalizedStepDuration,
+        reconciledStepDuration: stepDuration,
+      }),
     });
   }
 
-  if (safeDurationJump !== DEFAULT_SETTINGS.durationJump) {
+  if (!Object.is(jumpDuration, jumpDurationSource)) {
     corrections.push({
-      field: "DEFAULT_SETTINGS.durationJump",
-      provided: DEFAULT_SETTINGS.durationJump,
-      normalized: safeDurationJump,
-      reason: getPositiveDurationReason(DEFAULT_SETTINGS.durationJump),
+      field: fieldNames.durationJump,
+      provided: jumpDurationSource,
+      normalized: jumpDuration,
+      reason: getPositiveDurationReason(jumpDurationSource),
     });
   }
 
-  if (safeIntervalAutoplay !== DEFAULT_SETTINGS.intervalAutoplay) {
+  const autoplayIntervalSource = isValueProvided(intervalAutoplay)
+    ? intervalAutoplay
+    : fallbackSettings.autoplayInterval;
+  const autoplayInterval = normalizeAutoplayInterval(
+    autoplayIntervalSource,
+    fallbackSettings.autoplayInterval,
+  );
+
+  if (!Object.is(autoplayInterval, autoplayIntervalSource)) {
     corrections.push({
-      field: "DEFAULT_SETTINGS.intervalAutoplay",
-      provided: DEFAULT_SETTINGS.intervalAutoplay,
-      normalized: safeIntervalAutoplay,
-      reason: getPositiveIntervalReason(DEFAULT_SETTINGS.intervalAutoplay),
+      field: fieldNames.intervalAutoplay,
+      provided: autoplayIntervalSource,
+      normalized: autoplayInterval,
+      reason: getSafeAutoplayIntervalReason(autoplayIntervalSource),
     });
   }
 
-  return corrections;
+  const errorAltPlaceholderSource = isValueProvided(errAltPlaceholder)
+    ? errAltPlaceholder
+    : fallbackSettings.errorAltPlaceholder;
+  const errorAltPlaceholder = normalizeErrorAltPlaceholder(
+    errorAltPlaceholderSource,
+    fallbackSettings.errorAltPlaceholder,
+  );
+
+  if (!Object.is(errorAltPlaceholder, errorAltPlaceholderSource)) {
+    corrections.push({
+      field: fieldNames.errAltPlaceholder,
+      provided: errorAltPlaceholderSource,
+      normalized: errorAltPlaceholder,
+      reason: getNonEmptyStringReason(errorAltPlaceholderSource),
+    });
+  }
+
+  return {
+    settings: {
+      visibleSlidesCount,
+      autoplayDuration,
+      stepDuration,
+      jumpDuration,
+      autoplayInterval,
+      errorAltPlaceholder,
+    },
+    corrections,
+  };
 };
 
-const collectRepeatedClickCorrections = (): DevNoticeEntry[] => {
+const resolveDefaultPropSettings = () =>
+  resolveRuntimePropSettings(
+    {
+      visibleSlidesNr: DEFAULT_SETTINGS.visibleSlidesNr,
+      durationAutoplay: DEFAULT_SETTINGS.durationAutoplay,
+      durationStep: DEFAULT_SETTINGS.durationStep,
+      durationJump: DEFAULT_SETTINGS.durationJump,
+      intervalAutoplay: DEFAULT_SETTINGS.intervalAutoplay,
+      errAltPlaceholder: DEFAULT_SETTINGS.errAltPlaceholder,
+    },
+    createFallbackDefaultSettings(),
+    {
+      visibleSlidesNr: "DEFAULT_SETTINGS.visibleSlidesNr",
+      durationAutoplay: "DEFAULT_SETTINGS.durationAutoplay",
+      durationStep: "DEFAULT_SETTINGS.durationStep",
+      durationJump: "DEFAULT_SETTINGS.durationJump",
+      intervalAutoplay: "DEFAULT_SETTINGS.intervalAutoplay",
+      errAltPlaceholder: "DEFAULT_SETTINGS.errAltPlaceholder",
+    },
+  );
+
+const resolveRepeatedClickSettings = () => {
   const destinationPosition = normalizeRepeatedClickDestination(
     REPEATED_CLICK_DESTINATION_POSITION,
     HARD_REPEATED_CLICK_SETTINGS.destinationPosition,
@@ -190,10 +321,9 @@ const collectRepeatedClickCorrections = (): DevNoticeEntry[] => {
       field: "REPEATED_CLICK_DESTINATION_POSITION",
       provided: REPEATED_CLICK_DESTINATION_POSITION,
       normalized: destinationPosition,
-      reason:
-        isFiniteNumber(REPEATED_CLICK_DESTINATION_POSITION)
-          ? `clamped to [${MIN_REPEATED_CLICK_DESTINATION_POSITION}, ${MAX_REPEATED_CLICK_DESTINATION_POSITION}]`
-          : "expected a finite value between 0 and 1",
+      reason: isFiniteNumber(REPEATED_CLICK_DESTINATION_POSITION)
+        ? `clamped to [${MIN_REPEATED_CLICK_DESTINATION_POSITION}, ${MAX_REPEATED_CLICK_DESTINATION_POSITION}]`
+        : "expected a finite value between 0 and 1",
     });
   }
 
@@ -206,10 +336,16 @@ const collectRepeatedClickCorrections = (): DevNoticeEntry[] => {
     });
   }
 
-  return corrections;
+  return {
+    settings: {
+      destinationPosition,
+      speedMultiplier,
+    },
+    corrections,
+  };
 };
 
-const collectInteractionCorrections = (): DevNoticeEntry[] => {
+const resolveInteractionSettings = () => {
   const hoverPauseDelay = normalizeNonNegativeNumber(
     HOVER_PAUSE_DELAY,
     HARD_INTERACTION_SETTINGS.hoverPauseDelay,
@@ -253,10 +389,17 @@ const collectInteractionCorrections = (): DevNoticeEntry[] => {
     });
   }
 
-  return corrections;
+  return {
+    settings: {
+      hoverPauseDelay,
+      visibilityThreshold,
+      autoplayPaginationFactor,
+    },
+    corrections,
+  };
 };
 
-const collectDragCorrections = (): DevNoticeEntry[] => {
+const resolveDragSettings = () => {
   const resistance = normalizeNonNegativeNumber(
     DRAG_SETTINGS_CONFIG.RESISTANCE,
     HARD_DRAG_SETTINGS.RESISTANCE,
@@ -339,10 +482,20 @@ const collectDragCorrections = (): DevNoticeEntry[] => {
     });
   }
 
-  return corrections;
+  return {
+    settings: {
+      RESISTANCE: resistance,
+      RESISTANCE_CURVATURE: resistanceCurvature,
+      INTENT_THRESHOLD: intentThreshold,
+      MAX_VELOCITY: maxVelocity,
+      EMA_ALPHA: emaAlpha,
+      SWIPE_THRESHOLD_RATIO: swipeThresholdRatio,
+    },
+    corrections,
+  };
 };
 
-const collectDragDurationRampCorrections = (): DevNoticeEntry[] => {
+const resolveDragDurationRampSettings = () => {
   const velocityThreshold = normalizeNonNegativeNumber(
     DRAG_DURATION_RAMP_CONFIG.velocityThreshold,
     HARD_DRAG_DURATION_RAMP_SETTINGS.velocityThreshold,
@@ -420,10 +573,19 @@ const collectDragDurationRampCorrections = (): DevNoticeEntry[] => {
     });
   }
 
-  return corrections;
+  return {
+    settings: {
+      velocityThreshold,
+      rampEnd,
+      minDurationRatio,
+      minDuration,
+      inertiaBoost,
+    },
+    corrections,
+  };
 };
 
-const collectMotionCorrections = (): DevNoticeEntry[] => {
+const resolveMotionSettings = () => {
   const monotonicSpeedFactor = normalizePositiveNumber(
     MOTION_MONOTONIC_SPEED_FACTOR,
     HARD_MOTION_SETTINGS.monotonicSpeedFactor,
@@ -452,166 +614,54 @@ const collectMotionCorrections = (): DevNoticeEntry[] => {
     });
   }
 
-  return corrections;
+  return {
+    settings: {
+      monotonicSpeedFactor,
+      snapBackDuration,
+    },
+    corrections,
+  };
 };
 
-const INTERNAL_NORMALIZATION_NOTICE_ENTRIES = [
-  ...collectDefaultSettingsCorrections(),
-  ...collectRepeatedClickCorrections(),
-  ...collectInteractionCorrections(),
-  ...collectDragCorrections(),
-  ...collectDragDurationRampCorrections(),
-  ...collectMotionCorrections(),
-];
-
-const collectPropNormalizationCorrections = ({
-  visibleSlidesNr,
-  durationAutoplay,
-  durationStep,
-  durationJump,
-  intervalAutoplay,
-  errAltPlaceholder,
-}: CarouselNormalizationNoticeInput): DevNoticeEntry[] => {
-  const corrections: DevNoticeEntry[] = [];
-
-  const hasVisibleSlidesProp = isValueProvided(visibleSlidesNr);
-  const visibleSlidesSource = hasVisibleSlidesProp
-    ? visibleSlidesNr
-    : SAFE_DEFAULT_SETTINGS.visibleSlidesNr;
-  const visibleSlidesCount = normalizeVisibleSlidesCount(
-    visibleSlidesSource,
-    SAFE_DEFAULT_SETTINGS.visibleSlidesNr,
+export const resolveCarouselDiagnostic = (
+  props: CarouselDiagnosticPropsInput,
+): CarouselDiagnosticPayload => {
+  const defaultPropResolution = resolveDefaultPropSettings();
+  const repeatedClickResolution = resolveRepeatedClickSettings();
+  const interactionResolution = resolveInteractionSettings();
+  const dragResolution = resolveDragSettings();
+  const dragDurationRampResolution = resolveDragDurationRampSettings();
+  const motionResolution = resolveMotionSettings();
+  const propResolution = resolveRuntimePropSettings(
+    props,
+    defaultPropResolution.settings,
+    {
+      visibleSlidesNr: "visibleSlidesNr",
+      durationAutoplay: "durationAutoplay",
+      durationStep: "durationStep",
+      durationJump: "durationJump",
+      intervalAutoplay: "intervalAutoplay",
+      errAltPlaceholder: "errAltPlaceholder",
+    },
   );
 
-  if (!Object.is(visibleSlidesCount, visibleSlidesSource)) {
-    corrections.push({
-      field: getCorrectionFieldName("visibleSlidesNr", hasVisibleSlidesProp),
-      provided: visibleSlidesSource,
-      normalized: visibleSlidesCount,
-      reason: getPositiveIntegerReason(visibleSlidesSource),
-    });
-  }
-
-  const hasAutoplayDurationProp = isValueProvided(durationAutoplay);
-  const autoplayDurationSource = hasAutoplayDurationProp
-    ? durationAutoplay
-    : SAFE_DEFAULT_SETTINGS.durationAutoplay;
-  const autoplayDurationValue = normalizePositiveDuration(
-    autoplayDurationSource,
-    SAFE_DEFAULT_SETTINGS.durationAutoplay,
-  );
-
-  if (!Object.is(autoplayDurationValue, autoplayDurationSource)) {
-    corrections.push({
-      field: getCorrectionFieldName(
-        "durationAutoplay",
-        hasAutoplayDurationProp,
-      ),
-      provided: autoplayDurationSource,
-      normalized: autoplayDurationValue,
-      reason: getPositiveDurationReason(autoplayDurationSource),
-    });
-  }
-
-  const hasStepDurationProp = isValueProvided(durationStep);
-  const stepDurationSource = hasStepDurationProp
-    ? durationStep
-    : SAFE_DEFAULT_SETTINGS.durationStep;
-  const normalizedStepDuration = normalizePositiveDuration(
-    stepDurationSource,
-    SAFE_DEFAULT_SETTINGS.durationStep,
-  );
-  const stepDurationValue = Math.min(
-    autoplayDurationValue,
-    normalizedStepDuration,
-  );
-
-  if (!Object.is(stepDurationValue, stepDurationSource)) {
-    corrections.push({
-      field: getCorrectionFieldName("durationStep", hasStepDurationProp),
-      provided: stepDurationSource,
-      normalized: stepDurationValue,
-      reason: joinReasons(
-        getPositiveDurationReason(stepDurationSource),
-        stepDurationValue !== normalizedStepDuration
-          ? "capped to autoplayDuration"
-          : undefined,
-      ),
-    });
-  }
-
-  const hasJumpDurationProp = isValueProvided(durationJump);
-  const jumpDurationSource = hasJumpDurationProp
-    ? durationJump
-    : SAFE_DEFAULT_SETTINGS.durationJump;
-  const normalizedJumpDuration = normalizePositiveDuration(
-    jumpDurationSource,
-    SAFE_DEFAULT_SETTINGS.durationJump,
-  );
-  const jumpDurationValue = Math.min(stepDurationValue, normalizedJumpDuration);
-
-  if (!Object.is(jumpDurationValue, jumpDurationSource)) {
-    corrections.push({
-      field: getCorrectionFieldName("durationJump", hasJumpDurationProp),
-      provided: jumpDurationSource,
-      normalized: jumpDurationValue,
-      reason: joinReasons(
-        getPositiveDurationReason(jumpDurationSource),
-        jumpDurationValue !== normalizedJumpDuration
-          ? "capped to durationStep"
-          : undefined,
-      ),
-    });
-  }
-
-  const hasAutoplayIntervalProp = isValueProvided(intervalAutoplay);
-  const autoplayIntervalSource = hasAutoplayIntervalProp
-    ? intervalAutoplay
-    : SAFE_DEFAULT_SETTINGS.intervalAutoplay;
-  const autoplayIntervalValue = normalizeAutoplayInterval(
-    autoplayIntervalSource,
-    SAFE_DEFAULT_SETTINGS.intervalAutoplay,
-  );
-
-  if (!Object.is(autoplayIntervalValue, autoplayIntervalSource)) {
-    corrections.push({
-      field: getCorrectionFieldName(
-        "intervalAutoplay",
-        hasAutoplayIntervalProp,
-      ),
-      provided: autoplayIntervalSource,
-      normalized: autoplayIntervalValue,
-      reason: getSafeAutoplayIntervalReason(autoplayIntervalSource),
-    });
-  }
-
-  const hasErrorAltPlaceholderProp = isValueProvided(errAltPlaceholder);
-  const errorAltPlaceholderSource = hasErrorAltPlaceholderProp
-    ? errAltPlaceholder
-    : DEFAULT_SETTINGS.errAltPlaceholder;
-  const errorAltPlaceholderValue = normalizeErrorAltPlaceholder(
-    errorAltPlaceholderSource,
-    DEFAULT_SETTINGS.errAltPlaceholder,
-  );
-
-  if (!Object.is(errorAltPlaceholderValue, errorAltPlaceholderSource)) {
-    corrections.push({
-      field: getCorrectionFieldName(
-        "errAltPlaceholder",
-        hasErrorAltPlaceholderProp,
-      ),
-      provided: errorAltPlaceholderSource,
-      normalized: errorAltPlaceholderValue,
-      reason: getNonEmptyStringReason(errorAltPlaceholderSource),
-    });
-  }
-
-  return corrections;
+  return {
+    settings: {
+      ...propResolution.settings,
+      repeatedClickSettings: repeatedClickResolution.settings,
+      interactionSettings: interactionResolution.settings,
+      dragSettings: dragResolution.settings,
+      dragDurationRampSettings: dragDurationRampResolution.settings,
+      motionSettings: motionResolution.settings,
+    },
+    correctionEntries: [
+      ...defaultPropResolution.corrections,
+      ...repeatedClickResolution.corrections,
+      ...interactionResolution.corrections,
+      ...dragResolution.corrections,
+      ...dragDurationRampResolution.corrections,
+      ...motionResolution.corrections,
+      ...propResolution.corrections,
+    ],
+  };
 };
-
-export const collectCarouselNormalizationNoticeEntries = (
-  props: CarouselNormalizationNoticeInput,
-): DevNoticeEntry[] => [
-  ...INTERNAL_NORMALIZATION_NOTICE_ENTRIES,
-  ...collectPropNormalizationCorrections(props),
-];

@@ -42,6 +42,7 @@ import {
 import Carousel, { type Slide } from "../TEST-COMPONENT/Carousel";
 import { Controls } from "../TEST-COMPONENT/Carousel/modules/Controls/Controls";
 import { Pagination } from "../TEST-COMPONENT/Carousel/modules/Pagination/Pagination";
+import Diagnostic from "../TEST-COMPONENT/Carousel/modules/Diagnostic";
 
 //=====================================================================================================================================
 
@@ -126,11 +127,11 @@ function App() {
             slidesData={slidesData}
             isAuto={isAutoOn}
             isPaginationOn={true}
-           // isInstantMotion={true}
+            // isInstantMotion={true}
             isInteractive={true}
             durationAutoplay={7500}
             durationStep={5000}
-            durationJump={900}
+            durationJump={400}
             intervalAutoplay={3000}
             isLayoutClamped={true}
             isTouchDevice={isTouch}
@@ -138,6 +139,7 @@ function App() {
           >
             {isTouch ? <CarouselPaginationWidget /> : <Pagination />}
             <Controls />
+              <Diagnostic />
           </Carousel>
         </div>
       </section>

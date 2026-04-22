@@ -1,16 +1,17 @@
 import { type RefObject } from "react";
+import type { CarouselDragSettings } from "../model/diagnostic";
 import {
   type DragEndPayload,
   type DragListeners,
   useDrag,
 } from "../../../../shared/hooks/useDrag";
-import { SAFE_DRAG_SETTINGS } from "../model/normalization";
 
 interface GestureProps {
   onPressStart: () => void;
   onDragMove: (dragOffset: number) => void;
   onDragEnd: (payload: DragEndPayload) => void;
   enabled: boolean;
+  dragSettings: CarouselDragSettings;
   measureRef: RefObject<HTMLDivElement | null>;
 }
 
@@ -25,6 +26,7 @@ export function useCarouselGesture({
   onDragMove,
   onDragEnd,
   enabled,
+  dragSettings,
   measureRef,
 }: GestureProps): GestureResult {
   const { isDragging, isInteracting, dragListeners } = useDrag({
@@ -34,7 +36,7 @@ export function useCarouselGesture({
     onDragMove: (sample) => {
       onDragMove(sample.offset);
     },
-    config: SAFE_DRAG_SETTINGS,
+    config: dragSettings,
     onDragEnd,
   });
 

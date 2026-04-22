@@ -17,6 +17,7 @@ export const Pagination = memo(({ className }: PaginationProps) => {
     isReducedMotion,
     moveReason,
     pageCount,
+    autoplayPaginationFactor,
   } = useCarouselModuleApi();
 
   const classNames = useMemo(() => {
@@ -31,6 +32,7 @@ export const Pagination = memo(({ className }: PaginationProps) => {
     targetIndex: activePageIndex,
     isInstant: shouldSyncInstantly,
     duration: motionDuration,
+    autoplayPaginationFactor,
   });
 
   if (pageCount <= 1) return null;

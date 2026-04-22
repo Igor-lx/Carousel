@@ -18,7 +18,7 @@ import {
   MIN_REPEATED_CLICK_SPEED_MULTIPLIER,
   MIN_VISIBLE_SLIDES,
   MIN_VISIBILITY_THRESHOLD,
-} from "../config";
+} from "./contracts";
 
 export const isValueProvided = (value: unknown) => typeof value !== "undefined";
 

@@ -8,9 +8,9 @@ import {
   REPEATED_CLICK_ADVANCE_BEZIER,
   SNAP_BACK_BEZIER,
 } from "../model/config";
+import type { CarouselMotionSettings } from "../model/diagnostic";
 import type { AnimationMode, MoveReason } from "../model/reducer";
 import { applyTrackPositionStyle } from "../utilities";
-import { SAFE_MOTION_SETTINGS } from "../model/normalization";
 import { useIsomorphicLayoutEffect } from "../../../../shared";
 
 interface MotionProps {
@@ -22,6 +22,7 @@ interface MotionProps {
   currentVirtualIndex: number;
   windowStart: number;
   size: number;
+  motionSettings: CarouselMotionSettings;
   isMoving: boolean;
   animMode: AnimationMode;
   reason: MoveReason;
@@ -89,6 +90,7 @@ const clampRetargetVelocity = (
   velocity: number,
   distance: number,
   duration: number,
+  monotonicSpeedFactor: number,
 ) => {
   if (!Number.isFinite(velocity) || !Number.isFinite(distance) || duration <= 0) {
     return 0;
@@ -105,7 +107,7 @@ const clampRetargetVelocity = (
 
   const maxVelocity =
     (Math.abs(distance) / duration) *
-    SAFE_MOTION_SETTINGS.monotonicSpeedFactor;
+    monotonicSpeedFactor;
 
   return direction * Math.min(Math.abs(velocity), maxVelocity);
 };
@@ -116,6 +118,7 @@ const getInitialVelocity = (
   duration: number,
   animMode: AnimationMode,
   reason: MoveReason,
+  monotonicSpeedFactor: number,
   remainingDuration: number | null = null,
   bezier = getBezier(animMode, reason),
 ) => {
@@ -123,6 +126,7 @@ const getInitialVelocity = (
     currentVelocity,
     distance,
     duration,
+    monotonicSpeedFactor,
   );
 
   if (remainingDuration !== null && remainingDuration > EPSILON) {
@@ -130,6 +134,7 @@ const getInitialVelocity = (
       currentVelocity * (remainingDuration / duration),
       distance,
       duration,
+      monotonicSpeedFactor,
     );
 
     if (Math.abs(timeCompressionVelocity) > EPSILON) {
@@ -142,6 +147,7 @@ const getInitialVelocity = (
     (distance / duration) * slope,
     distance,
     duration,
+    monotonicSpeedFactor,
   );
 
   if (Math.abs(carriedVelocity) > EPSILON) {
@@ -158,6 +164,7 @@ const resolveInitialVelocity = ({
   animMode,
   reason,
   isRepeatedClickAdvance,
+  monotonicSpeedFactor,
   remainingDuration,
 }: {
   currentVelocity: number;
@@ -166,6 +173,7 @@ const resolveInitialVelocity = ({
   animMode: AnimationMode;
   reason: MoveReason;
   isRepeatedClickAdvance: boolean;
+  monotonicSpeedFactor: number;
   remainingDuration: number | null;
 }) => {
   if (isRepeatedClickAdvance) {
@@ -174,6 +182,7 @@ const resolveInitialVelocity = ({
       duration,
       animMode,
       reason,
+      monotonicSpeedFactor,
       REPEATED_CLICK_ADVANCE_BEZIER,
     );
   }
@@ -184,6 +193,7 @@ const resolveInitialVelocity = ({
     duration,
     animMode,
     reason,
+    monotonicSpeedFactor,
     remainingDuration,
   );
 };
@@ -193,6 +203,7 @@ const getDesiredVelocity = (
   duration: number,
   animMode: AnimationMode,
   reason: MoveReason,
+  monotonicSpeedFactor: number,
   bezier = getBezier(animMode, reason),
 ) => {
   const slope = getBezierStartSlope(bezier);
@@ -201,6 +212,7 @@ const getDesiredVelocity = (
     (distance / duration) * slope,
     distance,
     duration,
+    monotonicSpeedFactor,
   );
 };
 
@@ -211,6 +223,7 @@ const getJoinVelocity = ({
   followUpDistance,
   followUpDuration,
   followUpTerminalVelocity,
+  monotonicSpeedFactor,
 }: {
   distance: number;
   duration: number;
@@ -218,6 +231,7 @@ const getJoinVelocity = ({
   followUpDistance: number;
   followUpDuration: number;
   followUpTerminalVelocity: number;
+  monotonicSpeedFactor: number;
 }) => {
   if (duration <= EPSILON || followUpDuration <= EPSILON) {
     return 0;
@@ -238,11 +252,13 @@ const getJoinVelocity = ({
     initialVelocity,
     distance,
     duration,
+    monotonicSpeedFactor,
   );
   const safeFollowUpTerminalVelocity = clampRetargetVelocity(
     followUpTerminalVelocity,
     followUpDistance,
     followUpDuration,
+    monotonicSpeedFactor,
   );
   const denominator = 4 * (1 / duration + 1 / followUpDuration);
 
@@ -261,12 +277,14 @@ const getJoinVelocity = ({
     rawJoinVelocity,
     distance,
     duration,
+    monotonicSpeedFactor,
   );
 
   return clampRetargetVelocity(
     clampedForCurrent,
     followUpDistance,
     followUpDuration,
+    monotonicSpeedFactor,
   );
 };
 
@@ -277,6 +295,7 @@ const getTerminalVelocity = ({
   followUpVirtualIndex,
   followUpDuration,
   currentVirtualIndex,
+  monotonicSpeedFactor,
 }: {
   distance: number;
   duration: number;
@@ -284,6 +303,7 @@ const getTerminalVelocity = ({
   followUpVirtualIndex: number | null;
   followUpDuration: number;
   currentVirtualIndex: number;
+  monotonicSpeedFactor: number;
 }) => {
   if (
     followUpVirtualIndex === null ||
@@ -302,6 +322,7 @@ const getTerminalVelocity = ({
     followUpDistance,
     followUpDuration,
     followUpTerminalVelocity: 0,
+    monotonicSpeedFactor,
   });
 };
 
@@ -357,6 +378,7 @@ export function useCarouselMotion({
   currentVirtualIndex,
   windowStart,
   size,
+  motionSettings,
   isMoving,
   animMode,
   reason,
@@ -512,7 +534,7 @@ export function useCarouselMotion({
 
   useIsomorphicLayoutEffect(() => {
     const planKey =
-      `${enabled}:${isMoving}:${animMode}:${reason}:${duration}:${gestureReleaseVelocity}:${startVirtualIndex}:${currentVirtualIndex}:${isRepeatedClickAdvance}:${followUpVirtualIndex}:${followUpDuration}`;
+      `${enabled}:${isMoving}:${animMode}:${reason}:${duration}:${gestureReleaseVelocity}:${startVirtualIndex}:${currentVirtualIndex}:${isRepeatedClickAdvance}:${followUpVirtualIndex}:${followUpDuration}:${motionSettings.monotonicSpeedFactor}`;
     if (lastPlanRef.current === planKey) {
       if (!isMoving) {
         applyPosition(currentPositionRef.current);
@@ -597,6 +619,7 @@ export function useCarouselMotion({
       animMode,
       reason,
       isRepeatedClickAdvance,
+      monotonicSpeedFactor: motionSettings.monotonicSpeedFactor,
       remainingDuration: isSameTargetClickRetarget
         ? previousRemainingDuration
         : null,
@@ -608,6 +631,7 @@ export function useCarouselMotion({
       followUpVirtualIndex,
       followUpDuration,
       currentVirtualIndex,
+      monotonicSpeedFactor: motionSettings.monotonicSpeedFactor,
     });
 
     activeSegmentRef.current = {
@@ -648,6 +672,7 @@ export function useCarouselMotion({
     gestureReleaseVelocity,
     isRepeatedClickAdvance,
     isMoving,
+    motionSettings.monotonicSpeedFactor,
     currentPositionRef,
     readCurrentState,
     reason,

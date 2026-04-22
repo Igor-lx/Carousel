@@ -1,6 +1,6 @@
 import type { MoveReason } from "../reducer";
-import type { CarouselNormalizationInput } from "../normalization";
 import type { DevNoticeEntry } from "../../../../../shared";
+import type { CarouselPerfectPageLayoutNoticeInput } from "../diagnostic";
 
 export interface CarouselModuleApi {
   pageCount: number;
@@ -16,9 +16,10 @@ export interface CarouselModuleApi {
   canMoveNext: boolean;
   isTouch: boolean;
   isReducedMotion: boolean;
+  autoplayPaginationFactor: number;
 }
 
-export interface CarouselNormalizationContextValue {
-  rawNormalizationInput: CarouselNormalizationInput;
-  layoutNoticeEntries: DevNoticeEntry[];
+export interface CarouselDiagnosticContextValue {
+  correctionEntries: DevNoticeEntry[];
+  perfectPageLayoutNoticeInput: CarouselPerfectPageLayoutNoticeInput;
 }

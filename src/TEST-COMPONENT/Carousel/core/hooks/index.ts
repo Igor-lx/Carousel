@@ -8,4 +8,3 @@ export * from "./useCarouselMotion";
 export * from "./useCarouselSlides";
 export * from "./useCarouselMotionDuration";
 export * from "./useCarouselSlideStyles";
-export * from "./usePartialPageLayoutNotice";

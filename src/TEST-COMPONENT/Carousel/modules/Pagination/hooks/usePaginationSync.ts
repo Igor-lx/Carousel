@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { SAFE_INTERACTION_SETTINGS } from "../../../core/model/normalization";
 
 interface UsePaginationSyncProps {
   targetIndex: number;
   duration: number;
   isInstant: boolean;
+  autoplayPaginationFactor: number;
 }
 
 const resolvePaginationDelay = (duration: number, factor: number) => {
@@ -23,6 +23,7 @@ export const usePaginationSync = ({
   targetIndex,
   duration,
   isInstant,
+  autoplayPaginationFactor,
 }: UsePaginationSyncProps): number => {
   const [visualIndex, setVisualIndex] = useState(targetIndex);
   const timeoutRef = useRef<number | null>(null);
@@ -35,10 +36,7 @@ export const usePaginationSync = ({
 
     const delay = isInstant
       ? 0
-      : resolvePaginationDelay(
-          duration,
-          SAFE_INTERACTION_SETTINGS.autoplayPaginationFactor,
-        );
+      : resolvePaginationDelay(duration, autoplayPaginationFactor);
 
     if (delay <= 0) {
       setVisualIndex((prev) => (prev === targetIndex ? prev : targetIndex));
@@ -56,7 +54,7 @@ export const usePaginationSync = ({
         timeoutRef.current = null;
       }
     };
-  }, [targetIndex, duration, isInstant]);
+  }, [targetIndex, duration, isInstant, autoplayPaginationFactor]);
 
   return visualIndex;
 };

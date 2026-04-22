@@ -10,6 +10,7 @@ interface UseCarouselModuleApiValueProps {
   isJumping: boolean;
   moveReason: MoveReason;
   motionDuration: number;
+  autoplayPaginationFactor: number;
   handlePageSelect: (index: number) => void;
   handlePrev: () => void;
   handleNext: () => void;
@@ -26,6 +27,7 @@ export function useCarouselModuleApiValue({
   isJumping,
   moveReason,
   motionDuration,
+  autoplayPaginationFactor,
   handlePageSelect,
   handlePrev,
   handleNext,
@@ -42,6 +44,7 @@ export function useCarouselModuleApiValue({
       isJumping,
       moveReason,
       motionDuration,
+      autoplayPaginationFactor,
       handlePageSelect,
       handlePrev,
       handleNext,
@@ -57,6 +60,7 @@ export function useCarouselModuleApiValue({
       isJumping,
       moveReason,
       motionDuration,
+      autoplayPaginationFactor,
       handlePageSelect,
       handlePrev,
       handleNext,

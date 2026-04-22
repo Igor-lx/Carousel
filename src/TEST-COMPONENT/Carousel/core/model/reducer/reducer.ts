@@ -93,6 +93,7 @@ export function reducer(state: State, action: ReducerAction): State {
               state: syncedState,
               fromVirtualIndex: nextFromVirtualIndex,
               step: action.step,
+              repeatedClickSettings: action.repeatedClickSettings,
             })
           : null;
       const plannedTargetIndex =

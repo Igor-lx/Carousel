@@ -5,5 +5,5 @@ export const AUTOPLAY_PAGINATION_FACTOR = 0.4;
 export const CAROUSEL_SLOTS = [
   "pagination",
   "controls",
-  "normalization",
+  "diagnostic",
 ] as const;

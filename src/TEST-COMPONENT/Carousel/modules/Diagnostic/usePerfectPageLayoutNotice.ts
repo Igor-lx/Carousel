@@ -1,35 +1,22 @@
-import { useEffect, useMemo } from "react";
-import {
-  type DevNoticeEntry,
-  type DevNoticeReporter,
-  useGroupedDevNotice,
-} from "../../../../shared";
+import { useMemo } from "react";
+import { type DevNoticeEntry, useGroupedDevNotice } from "../../../../shared";
+import type { CarouselPerfectPageLayoutNoticeInput } from "../../core/model/diagnostic";
 
-interface PartialPageLayoutNoticeProps {
-  hasPartialPageLayout: boolean;
-  rawLength: number;
-  extendedLength: number;
-  visibleSlidesCount: number;
-  didExtendLayout: boolean;
-  reporter?: DevNoticeReporter;
-}
-
-export const PARTIAL_PAGE_LAYOUT_NOTICE_SCOPE = "usePartialPageLayoutNotice";
-export const PARTIAL_PAGE_LAYOUT_NOTICE_SUMMARY =
-  "Partial-page layout detected.";
+export const PERFECT_PAGE_LAYOUT_NOTICE_SCOPE = "usePerfectPageLayoutNotice";
+export const PERFECT_PAGE_LAYOUT_NOTICE_SUMMARY =
+  "Perfect page layout conditions were not met.";
 
 const EMPTY_NOTICE_ENTRIES: DevNoticeEntry[] = [];
 
-export function usePartialPageLayoutNotice({
-  hasPartialPageLayout,
+export function usePerfectPageLayoutNotice({
+  hasPerfectPageLayout,
   rawLength,
   extendedLength,
   visibleSlidesCount,
   didExtendLayout,
-  reporter,
-}: PartialPageLayoutNoticeProps): void {
+}: CarouselPerfectPageLayoutNoticeInput): void {
   const entries = useMemo<DevNoticeEntry[]>(() => {
-    if (!hasPartialPageLayout) {
+    if (hasPerfectPageLayout) {
       return EMPTY_NOTICE_ENTRIES;
     }
 
@@ -39,7 +26,7 @@ export function usePartialPageLayoutNotice({
     if (!didExtendLayout) {
       return [
         {
-          field: "partial page layout",
+          field: "perfect page layout",
           message:
             `${mismatchMessage} Pagination will keep fixed page steps, while the rendered window cycles through raw slides and may drift between groups.`,
         },
@@ -53,7 +40,7 @@ export function usePartialPageLayoutNotice({
 
     return [
       {
-        field: "partial page layout",
+        field: "perfect page layout",
         message: mismatchMessage,
       },
       {
@@ -66,19 +53,15 @@ export function usePartialPageLayoutNotice({
     ];
   }, [
     didExtendLayout,
-    hasPartialPageLayout,
     extendedLength,
+    hasPerfectPageLayout,
     rawLength,
     visibleSlidesCount,
   ]);
 
-  useEffect(() => {
-    reporter?.(entries);
-  }, [entries, reporter]);
-
   useGroupedDevNotice({
-    scope: PARTIAL_PAGE_LAYOUT_NOTICE_SCOPE,
-    summary: PARTIAL_PAGE_LAYOUT_NOTICE_SUMMARY,
-    entries: reporter ? EMPTY_NOTICE_ENTRIES : entries,
+    scope: PERFECT_PAGE_LAYOUT_NOTICE_SCOPE,
+    summary: PERFECT_PAGE_LAYOUT_NOTICE_SUMMARY,
+    entries,
   });
 }
