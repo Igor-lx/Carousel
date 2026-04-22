@@ -116,23 +116,34 @@ export function useDrag({
     dispatch({ type: "SET_PHASE", phase });
   }, []);
 
+  const ensurePointerCapture = useCallback(
+    (target: HTMLElement, pointerId: number) => {
+      const currentGesture = gesture.current;
+
+      if (currentGesture.hasPointerCapture) {
+        return;
+      }
+
+      try {
+        target.setPointerCapture(pointerId);
+        currentGesture.hasPointerCapture = true;
+      } catch {}
+    },
+    [],
+  );
+
   const activateDragOwnership = useCallback(
     (target: HTMLElement, pointerId: number) => {
       const currentGesture = gesture.current;
 
-      if (!currentGesture.hasPointerCapture) {
-        try {
-          target.setPointerCapture(pointerId);
-          currentGesture.hasPointerCapture = true;
-        } catch {}
-      }
+      ensurePointerCapture(target, pointerId);
 
       if (!currentGesture.isDragActivated) {
         currentGesture.isDragActivated = true;
         onPressStart?.();
       }
     },
-    [onPressStart],
+    [ensurePointerCapture, onPressStart],
   );
 
   const createSample = useCallback(
@@ -301,11 +312,15 @@ export function useDrag({
       setReleasedVelocity(0);
       setPhase("PRESS");
 
-      if (!interactiveTarget) {
+      if (interactiveTarget) {
+        // Keep pointer events flowing on interactive slide content so the drag
+        // intent threshold can still be reached reliably on touch devices.
+        ensurePointerCapture(target, e.pointerId);
+      } else {
         activateDragOwnership(target, e.pointerId);
       }
     },
-    [activateDragOwnership, enabled, setPhase],
+    [activateDragOwnership, enabled, ensurePointerCapture, setPhase],
   );
 
   const handlePointerMove = useCallback(
