@@ -83,6 +83,7 @@ function App() {
 
   const isTouch = useIsTouchDevice();
   const [isAutoOn, setIsAutoOn] = useState(false);
+  const [isInteractive, setIsInteractive] = useState(true);
 
   const device = useMatchMedia({
     DESKTOP: "DESKTOP",
@@ -119,6 +120,12 @@ function App() {
           >
             {theme === "light" ? "☀️" : "🌙"}
           </button>
+          <button
+            className={appStyles.button}
+            onClick={() => setIsInteractive((prev) => !prev)}
+          >
+            {isInteractive === true ? "INT" : "NO"}
+          </button>
         </div>
 
         <div className={appStyles.component}>
@@ -128,7 +135,7 @@ function App() {
             isAuto={isAutoOn}
             isPaginationOn={true}
             // isInstantMotion={true}
-            isInteractive={true}
+            isInteractive={isInteractive}
             durationAutoplay={7500}
             durationStep={15000}
             durationJump={400}
