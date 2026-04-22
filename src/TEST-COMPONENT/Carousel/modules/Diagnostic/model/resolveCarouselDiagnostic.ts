@@ -25,6 +25,7 @@ import {
   HARD_REPEATED_CLICK_SETTINGS,
   MAX_DRAG_DURATION_RATIO,
   MAX_DRAG_EMA_ALPHA,
+  MAX_REASONABLE_JUMP_DURATION,
   MAX_REPEATED_CLICK_DESTINATION_POSITION,
   MAX_VISIBILITY_THRESHOLD,
   MIN_AUTOPLAY_INTERVAL,
@@ -123,6 +124,21 @@ const getStepDurationReason = ({
       : undefined,
   );
 
+const getUnreasonablyHighJumpDurationMessage = ({
+  jumpDuration,
+  stepDuration,
+  autoplayDuration,
+}: {
+  jumpDuration: number;
+  stepDuration: number;
+  autoplayDuration: number;
+}) =>
+  `durationJump exceeds reasonable UX threshold (${MAX_REASONABLE_JUMP_DURATION}ms); ` +
+  `this is not invalid, but it is higher than the expected visual/behavioral range. ` +
+  `To preserve the invariant, durationStep resolved to ${stepDuration}ms and ` +
+  `durationAutoplay resolved to ${autoplayDuration}ms together with durationJump=${jumpDuration}ms, ` +
+  `so the resulting motion may feel unexpectedly slow.`;
+
 const createFallbackDefaultSettings = (): CarouselRuntimePropSettings => ({
   visibleSlidesCount: MIN_VISIBLE_SLIDES,
   autoplayDuration: SAFE_DURATION,
@@ -194,6 +210,8 @@ const resolveRuntimePropSettings = (
     fallbackSettings.jumpDuration,
   );
 
+  const hasUnreasonablyHighJumpDuration =
+    normalizedJumpDuration > MAX_REASONABLE_JUMP_DURATION;
   const stepDuration = Math.max(
     normalizedStepDuration,
     normalizedJumpDuration,
@@ -234,6 +252,19 @@ const resolveRuntimePropSettings = (
       provided: jumpDurationSource,
       normalized: jumpDuration,
       reason: getPositiveDurationReason(jumpDurationSource),
+    });
+  }
+
+  if (hasUnreasonablyHighJumpDuration) {
+    corrections.push({
+      field: fieldNames.durationJump,
+      provided: jumpDurationSource,
+      normalized: jumpDuration,
+      message: getUnreasonablyHighJumpDurationMessage({
+        jumpDuration,
+        stepDuration,
+        autoplayDuration,
+      }),
     });
   }
 
