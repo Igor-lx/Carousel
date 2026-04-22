@@ -41,7 +41,19 @@ import {
   reconcileStateToLayout,
   reducer,
 } from "./model/reducer";
-import { CAROUSEL_SLOTS, DEFAULT_SETTINGS } from "./model/config";
+import {
+  AUTOPLAY_PAGINATION_FACTOR,
+  CAROUSEL_SLOTS,
+  DEFAULT_SETTINGS,
+  DRAG_DURATION_RAMP_CONFIG,
+  DRAG_SETTINGS_CONFIG,
+  HOVER_PAUSE_DELAY,
+  MOTION_MONOTONIC_SPEED_FACTOR,
+  REPEATED_CLICK_DESTINATION_POSITION,
+  REPEATED_CLICK_SPEED_MULTIPLIER,
+  SNAP_BACK_DURATION,
+  VISIBILITY_THRESHOLD,
+} from "./model/config";
 import {
   type CarouselDiagnosticPayload,
   type CarouselDiagnosticPropsInput,
@@ -146,10 +158,59 @@ const Carousel = memo((props: CarouselProps) => {
       rawVisibleSlidesNr,
     ],
   );
-  const rawRuntimeSettings =
-    resolveRawCarouselRuntimeSettings(rawDiagnosticInput);
-  const diagnosticResolver = getAttachedDiagnosticResolver(slots.diagnostic);
-  const diagnosticPayload = diagnosticResolver?.(rawDiagnosticInput) ?? null;
+  const rawRuntimeSettings = useMemo(
+    () => resolveRawCarouselRuntimeSettings(rawDiagnosticInput),
+    [
+      rawDiagnosticInput,
+      AUTOPLAY_PAGINATION_FACTOR,
+      DRAG_DURATION_RAMP_CONFIG.inertiaBoost,
+      DRAG_DURATION_RAMP_CONFIG.minDuration,
+      DRAG_DURATION_RAMP_CONFIG.minDurationRatio,
+      DRAG_DURATION_RAMP_CONFIG.rampEnd,
+      DRAG_DURATION_RAMP_CONFIG.velocityThreshold,
+      DRAG_SETTINGS_CONFIG.EMA_ALPHA,
+      DRAG_SETTINGS_CONFIG.INTENT_THRESHOLD,
+      DRAG_SETTINGS_CONFIG.MAX_VELOCITY,
+      DRAG_SETTINGS_CONFIG.RESISTANCE,
+      DRAG_SETTINGS_CONFIG.RESISTANCE_CURVATURE,
+      DRAG_SETTINGS_CONFIG.SWIPE_THRESHOLD_RATIO,
+      HOVER_PAUSE_DELAY,
+      MOTION_MONOTONIC_SPEED_FACTOR,
+      REPEATED_CLICK_DESTINATION_POSITION,
+      REPEATED_CLICK_SPEED_MULTIPLIER,
+      SNAP_BACK_DURATION,
+      VISIBILITY_THRESHOLD,
+    ],
+  );
+  const diagnosticResolver = useMemo(
+    () => getAttachedDiagnosticResolver(slots.diagnostic),
+    [slots.diagnostic],
+  );
+  const diagnosticPayload = useMemo(
+    () => diagnosticResolver?.(rawDiagnosticInput) ?? null,
+    [
+      diagnosticResolver,
+      rawDiagnosticInput,
+      AUTOPLAY_PAGINATION_FACTOR,
+      DRAG_DURATION_RAMP_CONFIG.inertiaBoost,
+      DRAG_DURATION_RAMP_CONFIG.minDuration,
+      DRAG_DURATION_RAMP_CONFIG.minDurationRatio,
+      DRAG_DURATION_RAMP_CONFIG.rampEnd,
+      DRAG_DURATION_RAMP_CONFIG.velocityThreshold,
+      DRAG_SETTINGS_CONFIG.EMA_ALPHA,
+      DRAG_SETTINGS_CONFIG.INTENT_THRESHOLD,
+      DRAG_SETTINGS_CONFIG.MAX_VELOCITY,
+      DRAG_SETTINGS_CONFIG.RESISTANCE,
+      DRAG_SETTINGS_CONFIG.RESISTANCE_CURVATURE,
+      DRAG_SETTINGS_CONFIG.SWIPE_THRESHOLD_RATIO,
+      HOVER_PAUSE_DELAY,
+      MOTION_MONOTONIC_SPEED_FACTOR,
+      REPEATED_CLICK_DESTINATION_POSITION,
+      REPEATED_CLICK_SPEED_MULTIPLIER,
+      SNAP_BACK_DURATION,
+      VISIBILITY_THRESHOLD,
+    ],
+  );
   const runtimeSettings = diagnosticPayload?.settings ?? rawRuntimeSettings;
 
   const {
