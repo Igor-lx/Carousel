@@ -4,6 +4,7 @@ export type PaginationWidgetAnimationMode = "IDLE" | "WAITING" | "MOVING";
 
 export interface PaginationWidgetState {
   step: number;
+  requestId: number;
   mode: PaginationWidgetAnimationMode;
   lastDirection: "next" | "prev" | null;
 }

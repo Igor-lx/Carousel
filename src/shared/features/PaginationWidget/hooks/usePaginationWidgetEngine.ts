@@ -16,8 +16,8 @@ export function usePaginationWidgetEngine(
   dispatch: React.Dispatch<PaginationWidgetAction>,
   config: { delay: number; duration: number; isFreezed: boolean },
 ) {
-  const waitTimer = useTimer();
-  const moveTimer = useTimer();
+  const { set: setWaitTimer, clear: clearWaitTimer } = useTimer();
+  const { set: setMoveTimer, clear: clearMoveTimer } = useTimer();
   const defaultDurationRef = useRef(config.duration);
   const configuredDurationRef = useRef<number | null>(null);
   const activeDurationRef = useRef(config.duration);
@@ -38,41 +38,56 @@ export function usePaginationWidgetEngine(
       return;
     }
 
-    waitTimer.clear();
-    moveTimer.clear();
+    clearWaitTimer();
+    clearMoveTimer();
 
     if (state.mode !== "IDLE") {
       dispatch({ type: "RESET" });
     }
-  }, [config.isFreezed, dispatch, moveTimer, state.mode, waitTimer]);
+  }, [clearMoveTimer, clearWaitTimer, config.isFreezed, dispatch, state.mode]);
 
   useEffect(() => {
     if (config.isFreezed) {
-      waitTimer.clear();
+      clearWaitTimer();
       return;
     }
 
     if (state.mode === "WAITING") {
       const run = () => dispatch({ type: "START_ANIMATION" });
-      config.delay > 0 ? waitTimer.set(run, config.delay) : run();
+      config.delay > 0 ? setWaitTimer(run, config.delay) : run();
     }
-    return () => waitTimer.clear();
-  }, [config.delay, config.isFreezed, dispatch, state.mode, waitTimer]);
+    return clearWaitTimer;
+  }, [
+    clearWaitTimer,
+    config.delay,
+    config.isFreezed,
+    dispatch,
+    setWaitTimer,
+    state.mode,
+    state.requestId,
+  ]);
 
   useEffect(() => {
     if (config.isFreezed) {
-      moveTimer.clear();
+      clearMoveTimer();
       return;
     }
 
     if (state.mode === "MOVING") {
-      moveTimer.set(
+      setMoveTimer(
         () => dispatch({ type: "END_STEP" }),
         activeDurationRef.current + ANIMATION_END_BUFFER,
       );
     }
-    return () => moveTimer.clear();
-  }, [config.isFreezed, dispatch, moveTimer, state.mode]);
+    return clearMoveTimer;
+  }, [
+    clearMoveTimer,
+    config.isFreezed,
+    dispatch,
+    setMoveTimer,
+    state.mode,
+    state.step,
+  ]);
 
   const rotateWidget = useCallback(
     (direction: "next" | "prev") => {
@@ -98,7 +113,11 @@ export function usePaginationWidgetEngine(
   const setDuration = useCallback(
     (duration: number | null) => {
       configuredDurationRef.current =
-        typeof duration === "number" && duration > 0 ? duration : null;
+        typeof duration === "number" &&
+        Number.isFinite(duration) &&
+        duration > 0
+          ? duration
+          : null;
 
       if (state.mode === "IDLE") {
         activeDurationRef.current =

@@ -28,6 +28,32 @@ import {
   usePaginationWidgetSpatialField,
 } from "./hooks";
 
+const normalizeFiniteNumber = (value: number, fallback: number) =>
+  Number.isFinite(value) ? value : fallback;
+
+const normalizePositiveNumber = (
+  value: number,
+  fallback: number,
+  min = 1,
+) => {
+  const safeValue = normalizeFiniteNumber(value, fallback);
+
+  return safeValue >= min ? safeValue : fallback;
+};
+
+const normalizeNonNegativeNumber = (value: number, fallback: number) => {
+  const safeValue = normalizeFiniteNumber(value, fallback);
+
+  return safeValue >= 0 ? safeValue : fallback;
+};
+
+const normalizeVisibleDotsCount = (value: number, fallback: number) => {
+  const safeValue = normalizeFiniteNumber(value, fallback);
+  const integerValue = Math.max(Math.floor(safeValue), 3);
+
+  return integerValue % 2 === 0 ? integerValue + 1 : integerValue;
+};
+
 export const PaginationWidget = memo(
   forwardRef<PaginationWidgetHandler, PaginationWidgetProps>((props, ref) => {
     const {
@@ -39,6 +65,31 @@ export const PaginationWidget = memo(
       scaleFactor = PAGINATION_WIDGET_DEFAULTS.scaleFactor,
       className,
     } = props;
+    const normalizedVisibleDots = normalizeVisibleDotsCount(
+      visibleDots,
+      PAGINATION_WIDGET_DEFAULTS.visibleDots,
+    );
+    const normalizedDotSize = normalizePositiveNumber(
+      dotSize,
+      PAGINATION_WIDGET_DEFAULTS.dotSize,
+    );
+    const normalizedDotGap = normalizeNonNegativeNumber(
+      dotGap,
+      PAGINATION_WIDGET_DEFAULTS.dotGap,
+    );
+    const normalizedDelay = normalizeNonNegativeNumber(
+      delay,
+      PAGINATION_WIDGET_DEFAULTS.delay,
+    );
+    const normalizedDuration = normalizePositiveNumber(
+      duration,
+      PAGINATION_WIDGET_DEFAULTS.duration,
+    );
+    const normalizedScaleFactor = normalizePositiveNumber(
+      scaleFactor,
+      PAGINATION_WIDGET_DEFAULTS.scaleFactor,
+      0.01,
+    );
 
     const [localIsFreezed, setLocalIsFreezed] = useReducer(
       (_: boolean, next: boolean) => next,
@@ -57,28 +108,28 @@ export const PaginationWidget = memo(
 
     const widgetSpatialConfig = useMemo(
       () => ({
-        size: dotSize,
-        gap: dotGap,
-        scaleFactor,
+        size: normalizedDotSize,
+        gap: normalizedDotGap,
+        scaleFactor: normalizedScaleFactor,
       }),
-      [dotSize, dotGap, scaleFactor],
+      [normalizedDotGap, normalizedDotSize, normalizedScaleFactor],
     );
 
     const { dotsData, actualVisibleDots } = usePaginationWidgetSpatialField({
-      visibleDots,
+      visibleDots: normalizedVisibleDots,
       config: widgetSpatialConfig,
       step: widgetState.step,
     });
 
     usePaginationWidgetLayoutNotice({
-      visibleDots,
-      actualVisibleDots,
+      requestedVisibleDots: visibleDots,
+      normalizedVisibleDots: actualVisibleDots,
     });
 
     const { rotateWidget, activeDuration, setDuration } =
       usePaginationWidgetEngine(widgetState, dispatchWidgetAction, {
-        delay,
-        duration,
+        delay: normalizedDelay,
+        duration: normalizedDuration,
         isFreezed: localIsFreezed,
       });
 
@@ -98,18 +149,18 @@ export const PaginationWidget = memo(
         widgetState.mode === "MOVING" && !localIsFreezed;
       return {
         "--duration": `${isAnimating ? activeDuration : 0}ms`,
-        "--delay": `${widgetState.mode === "WAITING" ? delay : 0}ms`,
+        "--delay": `${widgetState.mode === "WAITING" ? normalizedDelay : 0}ms`,
         "--visible-dots-count": String(actualVisibleDots),
-        "--dot-size": `${dotSize}px`,
-        "--dots-gap": `${dotGap}px`,
+        "--dot-size": `${normalizedDotSize}px`,
+        "--dots-gap": `${normalizedDotGap}px`,
       };
     }, [
       widgetState.mode,
       activeDuration,
-      delay,
+      normalizedDelay,
       actualVisibleDots,
-      dotSize,
-      dotGap,
+      normalizedDotSize,
+      normalizedDotGap,
       localIsFreezed,
     ]);
 

@@ -5,6 +5,7 @@ import type {
 
 export const initialPaginationWidgetState: PaginationWidgetState = {
   step: 0,
+  requestId: 0,
   mode: "IDLE",
   lastDirection: null,
 };
@@ -18,6 +19,7 @@ export function paginationWidgetReducer(
       const isMoving = state.mode === "MOVING";
       return {
         ...state,
+        requestId: state.requestId + 1,
         mode: isMoving ? "MOVING" : "WAITING",
         lastDirection: action.direction,
         step: isMoving

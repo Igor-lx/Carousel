@@ -29,9 +29,21 @@ export function usePaginationWidgetSpatialField({
     [config.size, config.gap, config.scaleFactor],
   );
 
+  const safeVisibleDots = useMemo(() => {
+    const fallback = 3;
+    const finiteVisibleDots =
+      typeof visibleDots === "number" && Number.isFinite(visibleDots)
+        ? visibleDots
+        : fallback;
+    const integerVisibleDots = Math.max(Math.floor(finiteVisibleDots), fallback);
+
+    return integerVisibleDots % 2 === 0
+      ? integerVisibleDots + 1
+      : integerVisibleDots;
+  }, [visibleDots]);
+
   const layoutModel = useMemo((): PaginationWidgetLayoutModel => {
-    const count = Math.max(Number(visibleDots) || 3, 3);
-    const actualCount = count % 2 === 0 ? count + 1 : count;
+    const actualCount = safeVisibleDots;
     const centerIndex = Math.floor(actualCount / 2);
 
     const scales = precomputeScales(
@@ -49,7 +61,7 @@ export function usePaginationWidgetSpatialField({
         unit: safeConfig.size + safeConfig.gap,
       },
     };
-  }, [visibleDots, safeConfig]);
+  }, [safeConfig, safeVisibleDots]);
 
   const baseStep = Math.round(step);
   const pool = useMemo(() => {
