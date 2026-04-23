@@ -8,7 +8,7 @@ import {
 } from "react";
 import { initialState, dragReducer } from "./model/reducer";
 import {
-  DRAG_CONFIG as DEFAULT_CONFIG,
+  DEFAULT_DRAG_CONFIG,
   SHARED_DRAG_STYLES,
 } from "./model/settings";
 import type {
@@ -81,7 +81,7 @@ export function useDrag({
   config = {},
 }: DragProps): DragResult {
   const settings = useMemo(
-    () => ({ ...DEFAULT_CONFIG, ...config }) as Required<DragConfig>,
+    () => ({ ...DEFAULT_DRAG_CONFIG, ...config }) as Required<DragConfig>,
     [config],
   );
 

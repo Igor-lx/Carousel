@@ -1,2 +1,0 @@
-export const MIN_VISIBLE_SLIDES = 1;
-export const RENDER_WINDOW_BUFFER_MULTIPLIER = 2;

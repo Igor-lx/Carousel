@@ -1,9 +1,10 @@
 import type { DevNoticeEntry } from "../../../../../shared";
 import {
   AUTOPLAY_PAGINATION_FACTOR,
+  CAROUSEL_DRAG_CONFIG,
+  CAROUSEL_DRAG_RELEASE_EPSILON,
+  CAROUSEL_DRAG_SPEED_CONFIG,
   DEFAULT_SETTINGS,
-  DRAG_DURATION_RAMP_CONFIG,
-  DRAG_SETTINGS_CONFIG,
   HOVER_PAUSE_DELAY,
   MIN_VISIBLE_SLIDES as RUNTIME_MIN_VISIBLE_SLIDES,
   MOTION_EPSILON,
@@ -21,8 +22,9 @@ import type {
   CarouselRuntimePropSettings,
 } from "../../../core/model/diagnostic";
 import {
-  HARD_DRAG_DURATION_RAMP_SETTINGS,
-  HARD_DRAG_SETTINGS,
+  HARD_DRAG_CONFIG,
+  HARD_DRAG_RELEASE_EPSILON,
+  HARD_DRAG_SPEED_CONFIG,
   HARD_ERROR_ALT_PLACEHOLDER,
   HARD_INTERACTION_SETTINGS,
   HARD_LAYOUT_SETTINGS,
@@ -522,152 +524,139 @@ const resolveInteractionSettings = () => {
   };
 };
 
-const resolveDragSettings = () => {
+const resolveDragConfig = () => {
   const cooldownMs = normalizeNonNegativeNumber(
-    DRAG_SETTINGS_CONFIG.COOLDOWN_MS,
-    HARD_DRAG_SETTINGS.COOLDOWN_MS,
+    CAROUSEL_DRAG_CONFIG.COOLDOWN_MS,
+    HARD_DRAG_CONFIG.COOLDOWN_MS,
   );
   const resistance = normalizeNonNegativeNumber(
-    DRAG_SETTINGS_CONFIG.RESISTANCE,
-    HARD_DRAG_SETTINGS.RESISTANCE,
+    CAROUSEL_DRAG_CONFIG.RESISTANCE,
+    HARD_DRAG_CONFIG.RESISTANCE,
   );
   const resistanceCurvature = normalizeNonNegativeNumber(
-    DRAG_SETTINGS_CONFIG.RESISTANCE_CURVATURE,
-    HARD_DRAG_SETTINGS.RESISTANCE_CURVATURE,
+    CAROUSEL_DRAG_CONFIG.RESISTANCE_CURVATURE,
+    HARD_DRAG_CONFIG.RESISTANCE_CURVATURE,
   );
   const intentThreshold = normalizeNonNegativeNumber(
-    DRAG_SETTINGS_CONFIG.INTENT_THRESHOLD,
-    HARD_DRAG_SETTINGS.INTENT_THRESHOLD,
+    CAROUSEL_DRAG_CONFIG.INTENT_THRESHOLD,
+    HARD_DRAG_CONFIG.INTENT_THRESHOLD,
   );
   const maxVelocity = normalizePositiveNumber(
-    DRAG_SETTINGS_CONFIG.MAX_VELOCITY,
-    HARD_DRAG_SETTINGS.MAX_VELOCITY,
+    CAROUSEL_DRAG_CONFIG.MAX_VELOCITY,
+    HARD_DRAG_CONFIG.MAX_VELOCITY,
   );
   const emaAlpha = normalizeDragEmaAlpha(
-    DRAG_SETTINGS_CONFIG.EMA_ALPHA,
-    HARD_DRAG_SETTINGS.EMA_ALPHA,
+    CAROUSEL_DRAG_CONFIG.EMA_ALPHA,
+    HARD_DRAG_CONFIG.EMA_ALPHA,
   );
   const swipeVelocityLimit = normalizeNonNegativeNumber(
-    DRAG_SETTINGS_CONFIG.SWIPE_VELOCITY_LIMIT,
-    HARD_DRAG_SETTINGS.SWIPE_VELOCITY_LIMIT,
+    CAROUSEL_DRAG_CONFIG.SWIPE_VELOCITY_LIMIT,
+    HARD_DRAG_CONFIG.SWIPE_VELOCITY_LIMIT,
   );
   const quickSwipeMinOffset = normalizeNonNegativeNumber(
-    DRAG_SETTINGS_CONFIG.QUICK_SWIPE_MIN_OFFSET,
-    HARD_DRAG_SETTINGS.QUICK_SWIPE_MIN_OFFSET,
+    CAROUSEL_DRAG_CONFIG.QUICK_SWIPE_MIN_OFFSET,
+    HARD_DRAG_CONFIG.QUICK_SWIPE_MIN_OFFSET,
   );
   const minSwipeDistance = normalizeNonNegativeNumber(
-    DRAG_SETTINGS_CONFIG.MIN_SWIPE_DISTANCE,
-    HARD_DRAG_SETTINGS.MIN_SWIPE_DISTANCE,
+    CAROUSEL_DRAG_CONFIG.MIN_SWIPE_DISTANCE,
+    HARD_DRAG_CONFIG.MIN_SWIPE_DISTANCE,
   );
   const swipeThresholdRatio = normalizeNonNegativeNumber(
-    DRAG_SETTINGS_CONFIG.SWIPE_THRESHOLD_RATIO,
-    HARD_DRAG_SETTINGS.SWIPE_THRESHOLD_RATIO,
-  );
-  const releaseEpsilon = normalizePositiveNumber(
-    DRAG_SETTINGS_CONFIG.RELEASE_EPSILON,
-    HARD_DRAG_SETTINGS.RELEASE_EPSILON,
+    CAROUSEL_DRAG_CONFIG.SWIPE_THRESHOLD_RATIO,
+    HARD_DRAG_CONFIG.SWIPE_THRESHOLD_RATIO,
   );
   const corrections: DevNoticeEntry[] = [];
 
-  if (cooldownMs !== DRAG_SETTINGS_CONFIG.COOLDOWN_MS) {
+  if (cooldownMs !== CAROUSEL_DRAG_CONFIG.COOLDOWN_MS) {
     corrections.push({
-      field: "DRAG_SETTINGS_CONFIG.COOLDOWN_MS",
-      provided: DRAG_SETTINGS_CONFIG.COOLDOWN_MS,
+      field: "CAROUSEL_DRAG_CONFIG.COOLDOWN_MS",
+      provided: CAROUSEL_DRAG_CONFIG.COOLDOWN_MS,
       normalized: cooldownMs,
       unit: DURATION_UNIT,
-      reason: getNonNegativeDurationReason(DRAG_SETTINGS_CONFIG.COOLDOWN_MS),
+      reason: getNonNegativeDurationReason(CAROUSEL_DRAG_CONFIG.COOLDOWN_MS),
     });
   }
 
-  if (resistance !== DRAG_SETTINGS_CONFIG.RESISTANCE) {
+  if (resistance !== CAROUSEL_DRAG_CONFIG.RESISTANCE) {
     corrections.push({
-      field: "DRAG_SETTINGS_CONFIG.RESISTANCE",
-      provided: DRAG_SETTINGS_CONFIG.RESISTANCE,
+      field: "CAROUSEL_DRAG_CONFIG.RESISTANCE",
+      provided: CAROUSEL_DRAG_CONFIG.RESISTANCE,
       normalized: resistance,
       reason: "expected a finite non-negative value",
     });
   }
 
-  if (resistanceCurvature !== DRAG_SETTINGS_CONFIG.RESISTANCE_CURVATURE) {
+  if (resistanceCurvature !== CAROUSEL_DRAG_CONFIG.RESISTANCE_CURVATURE) {
     corrections.push({
-      field: "DRAG_SETTINGS_CONFIG.RESISTANCE_CURVATURE",
-      provided: DRAG_SETTINGS_CONFIG.RESISTANCE_CURVATURE,
+      field: "CAROUSEL_DRAG_CONFIG.RESISTANCE_CURVATURE",
+      provided: CAROUSEL_DRAG_CONFIG.RESISTANCE_CURVATURE,
       normalized: resistanceCurvature,
       reason: "expected a finite non-negative value",
     });
   }
 
-  if (intentThreshold !== DRAG_SETTINGS_CONFIG.INTENT_THRESHOLD) {
+  if (intentThreshold !== CAROUSEL_DRAG_CONFIG.INTENT_THRESHOLD) {
     corrections.push({
-      field: "DRAG_SETTINGS_CONFIG.INTENT_THRESHOLD",
-      provided: DRAG_SETTINGS_CONFIG.INTENT_THRESHOLD,
+      field: "CAROUSEL_DRAG_CONFIG.INTENT_THRESHOLD",
+      provided: CAROUSEL_DRAG_CONFIG.INTENT_THRESHOLD,
       normalized: intentThreshold,
       reason: "expected a finite non-negative value",
     });
   }
 
-  if (maxVelocity !== DRAG_SETTINGS_CONFIG.MAX_VELOCITY) {
+  if (maxVelocity !== CAROUSEL_DRAG_CONFIG.MAX_VELOCITY) {
     corrections.push({
-      field: "DRAG_SETTINGS_CONFIG.MAX_VELOCITY",
-      provided: DRAG_SETTINGS_CONFIG.MAX_VELOCITY,
+      field: "CAROUSEL_DRAG_CONFIG.MAX_VELOCITY",
+      provided: CAROUSEL_DRAG_CONFIG.MAX_VELOCITY,
       normalized: maxVelocity,
       reason: "expected a finite positive value",
     });
   }
 
-  if (emaAlpha !== DRAG_SETTINGS_CONFIG.EMA_ALPHA) {
+  if (emaAlpha !== CAROUSEL_DRAG_CONFIG.EMA_ALPHA) {
     corrections.push({
-      field: "DRAG_SETTINGS_CONFIG.EMA_ALPHA",
-      provided: DRAG_SETTINGS_CONFIG.EMA_ALPHA,
+      field: "CAROUSEL_DRAG_CONFIG.EMA_ALPHA",
+      provided: CAROUSEL_DRAG_CONFIG.EMA_ALPHA,
       normalized: emaAlpha,
-      reason: isFiniteNumber(DRAG_SETTINGS_CONFIG.EMA_ALPHA)
+      reason: isFiniteNumber(CAROUSEL_DRAG_CONFIG.EMA_ALPHA)
         ? `clamped to [${MIN_DRAG_EMA_ALPHA}, ${MAX_DRAG_EMA_ALPHA}]`
         : "expected a finite value between 0 and 1",
     });
   }
 
-  if (swipeVelocityLimit !== DRAG_SETTINGS_CONFIG.SWIPE_VELOCITY_LIMIT) {
+  if (swipeVelocityLimit !== CAROUSEL_DRAG_CONFIG.SWIPE_VELOCITY_LIMIT) {
     corrections.push({
-      field: "DRAG_SETTINGS_CONFIG.SWIPE_VELOCITY_LIMIT",
-      provided: DRAG_SETTINGS_CONFIG.SWIPE_VELOCITY_LIMIT,
+      field: "CAROUSEL_DRAG_CONFIG.SWIPE_VELOCITY_LIMIT",
+      provided: CAROUSEL_DRAG_CONFIG.SWIPE_VELOCITY_LIMIT,
       normalized: swipeVelocityLimit,
       reason: "expected a finite non-negative value",
     });
   }
 
-  if (quickSwipeMinOffset !== DRAG_SETTINGS_CONFIG.QUICK_SWIPE_MIN_OFFSET) {
+  if (quickSwipeMinOffset !== CAROUSEL_DRAG_CONFIG.QUICK_SWIPE_MIN_OFFSET) {
     corrections.push({
-      field: "DRAG_SETTINGS_CONFIG.QUICK_SWIPE_MIN_OFFSET",
-      provided: DRAG_SETTINGS_CONFIG.QUICK_SWIPE_MIN_OFFSET,
+      field: "CAROUSEL_DRAG_CONFIG.QUICK_SWIPE_MIN_OFFSET",
+      provided: CAROUSEL_DRAG_CONFIG.QUICK_SWIPE_MIN_OFFSET,
       normalized: quickSwipeMinOffset,
       reason: "expected a finite non-negative value",
     });
   }
 
-  if (minSwipeDistance !== DRAG_SETTINGS_CONFIG.MIN_SWIPE_DISTANCE) {
+  if (minSwipeDistance !== CAROUSEL_DRAG_CONFIG.MIN_SWIPE_DISTANCE) {
     corrections.push({
-      field: "DRAG_SETTINGS_CONFIG.MIN_SWIPE_DISTANCE",
-      provided: DRAG_SETTINGS_CONFIG.MIN_SWIPE_DISTANCE,
+      field: "CAROUSEL_DRAG_CONFIG.MIN_SWIPE_DISTANCE",
+      provided: CAROUSEL_DRAG_CONFIG.MIN_SWIPE_DISTANCE,
       normalized: minSwipeDistance,
       reason: "expected a finite non-negative value",
     });
   }
 
-  if (swipeThresholdRatio !== DRAG_SETTINGS_CONFIG.SWIPE_THRESHOLD_RATIO) {
+  if (swipeThresholdRatio !== CAROUSEL_DRAG_CONFIG.SWIPE_THRESHOLD_RATIO) {
     corrections.push({
-      field: "DRAG_SETTINGS_CONFIG.SWIPE_THRESHOLD_RATIO",
-      provided: DRAG_SETTINGS_CONFIG.SWIPE_THRESHOLD_RATIO,
+      field: "CAROUSEL_DRAG_CONFIG.SWIPE_THRESHOLD_RATIO",
+      provided: CAROUSEL_DRAG_CONFIG.SWIPE_THRESHOLD_RATIO,
       normalized: swipeThresholdRatio,
       reason: "expected a finite non-negative value",
-    });
-  }
-
-  if (releaseEpsilon !== DRAG_SETTINGS_CONFIG.RELEASE_EPSILON) {
-    corrections.push({
-      field: "DRAG_SETTINGS_CONFIG.RELEASE_EPSILON",
-      provided: DRAG_SETTINGS_CONFIG.RELEASE_EPSILON,
-      normalized: releaseEpsilon,
-      reason: "expected a finite positive value",
     });
   }
 
@@ -683,52 +672,51 @@ const resolveDragSettings = () => {
       QUICK_SWIPE_MIN_OFFSET: quickSwipeMinOffset,
       MIN_SWIPE_DISTANCE: minSwipeDistance,
       SWIPE_THRESHOLD_RATIO: swipeThresholdRatio,
-      RELEASE_EPSILON: releaseEpsilon,
     },
     corrections,
   };
 };
 
-const resolveDragDurationRampSettings = () => {
+const resolveDragSpeedConfig = () => {
   const velocityThreshold = normalizeNonNegativeNumber(
-    DRAG_DURATION_RAMP_CONFIG.velocityThreshold,
-    HARD_DRAG_DURATION_RAMP_SETTINGS.velocityThreshold,
+    CAROUSEL_DRAG_SPEED_CONFIG.velocityThreshold,
+    HARD_DRAG_SPEED_CONFIG.velocityThreshold,
   );
   const normalizedRampEnd = normalizeNonNegativeNumber(
-    DRAG_DURATION_RAMP_CONFIG.rampEnd,
-    HARD_DRAG_DURATION_RAMP_SETTINGS.rampEnd,
+    CAROUSEL_DRAG_SPEED_CONFIG.rampEnd,
+    HARD_DRAG_SPEED_CONFIG.rampEnd,
   );
   const rampEnd = Math.max(velocityThreshold, normalizedRampEnd);
   const minDurationRatio = normalizeDragDurationRatio(
-    DRAG_DURATION_RAMP_CONFIG.minDurationRatio,
-    HARD_DRAG_DURATION_RAMP_SETTINGS.minDurationRatio,
+    CAROUSEL_DRAG_SPEED_CONFIG.minDurationRatio,
+    HARD_DRAG_SPEED_CONFIG.minDurationRatio,
   );
   const minDuration = normalizePositiveDuration(
-    DRAG_DURATION_RAMP_CONFIG.minDuration,
-    HARD_DRAG_DURATION_RAMP_SETTINGS.minDuration,
+    CAROUSEL_DRAG_SPEED_CONFIG.minDuration,
+    HARD_DRAG_SPEED_CONFIG.minDuration,
   );
   const inertiaBoost = normalizeNonNegativeNumber(
-    DRAG_DURATION_RAMP_CONFIG.inertiaBoost,
-    HARD_DRAG_DURATION_RAMP_SETTINGS.inertiaBoost,
+    CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost,
+    HARD_DRAG_SPEED_CONFIG.inertiaBoost,
   );
   const corrections: DevNoticeEntry[] = [];
 
-  if (velocityThreshold !== DRAG_DURATION_RAMP_CONFIG.velocityThreshold) {
+  if (velocityThreshold !== CAROUSEL_DRAG_SPEED_CONFIG.velocityThreshold) {
     corrections.push({
-      field: "DRAG_DURATION_RAMP_CONFIG.velocityThreshold",
-      provided: DRAG_DURATION_RAMP_CONFIG.velocityThreshold,
+      field: "CAROUSEL_DRAG_SPEED_CONFIG.velocityThreshold",
+      provided: CAROUSEL_DRAG_SPEED_CONFIG.velocityThreshold,
       normalized: velocityThreshold,
       reason: "expected a finite non-negative value",
     });
   }
 
-  if (rampEnd !== DRAG_DURATION_RAMP_CONFIG.rampEnd) {
+  if (rampEnd !== CAROUSEL_DRAG_SPEED_CONFIG.rampEnd) {
     corrections.push({
-      field: "DRAG_DURATION_RAMP_CONFIG.rampEnd",
-      provided: DRAG_DURATION_RAMP_CONFIG.rampEnd,
+      field: "CAROUSEL_DRAG_SPEED_CONFIG.rampEnd",
+      provided: CAROUSEL_DRAG_SPEED_CONFIG.rampEnd,
       normalized: rampEnd,
       reason: joinReasons(
-        normalizedRampEnd !== DRAG_DURATION_RAMP_CONFIG.rampEnd
+        normalizedRampEnd !== CAROUSEL_DRAG_SPEED_CONFIG.rampEnd
           ? "expected a finite non-negative value"
           : undefined,
         rampEnd !== normalizedRampEnd
@@ -738,31 +726,31 @@ const resolveDragDurationRampSettings = () => {
     });
   }
 
-  if (minDurationRatio !== DRAG_DURATION_RAMP_CONFIG.minDurationRatio) {
+  if (minDurationRatio !== CAROUSEL_DRAG_SPEED_CONFIG.minDurationRatio) {
     corrections.push({
-      field: "DRAG_DURATION_RAMP_CONFIG.minDurationRatio",
-      provided: DRAG_DURATION_RAMP_CONFIG.minDurationRatio,
+      field: "CAROUSEL_DRAG_SPEED_CONFIG.minDurationRatio",
+      provided: CAROUSEL_DRAG_SPEED_CONFIG.minDurationRatio,
       normalized: minDurationRatio,
-      reason: isFiniteNumber(DRAG_DURATION_RAMP_CONFIG.minDurationRatio)
+      reason: isFiniteNumber(CAROUSEL_DRAG_SPEED_CONFIG.minDurationRatio)
         ? `clamped to [${MIN_DRAG_DURATION_RATIO}, ${MAX_DRAG_DURATION_RATIO}]`
         : "expected a finite value between 0 and 1",
     });
   }
 
-  if (minDuration !== DRAG_DURATION_RAMP_CONFIG.minDuration) {
+  if (minDuration !== CAROUSEL_DRAG_SPEED_CONFIG.minDuration) {
     corrections.push({
-      field: "DRAG_DURATION_RAMP_CONFIG.minDuration",
-      provided: DRAG_DURATION_RAMP_CONFIG.minDuration,
+      field: "CAROUSEL_DRAG_SPEED_CONFIG.minDuration",
+      provided: CAROUSEL_DRAG_SPEED_CONFIG.minDuration,
       normalized: minDuration,
       unit: DURATION_UNIT,
-      reason: getPositiveDurationReason(DRAG_DURATION_RAMP_CONFIG.minDuration),
+      reason: getPositiveDurationReason(CAROUSEL_DRAG_SPEED_CONFIG.minDuration),
     });
   }
 
-  if (inertiaBoost !== DRAG_DURATION_RAMP_CONFIG.inertiaBoost) {
+  if (inertiaBoost !== CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost) {
     corrections.push({
-      field: "DRAG_DURATION_RAMP_CONFIG.inertiaBoost",
-      provided: DRAG_DURATION_RAMP_CONFIG.inertiaBoost,
+      field: "CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost",
+      provided: CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost,
       normalized: inertiaBoost,
       reason: "expected a finite non-negative value",
     });
@@ -776,6 +764,28 @@ const resolveDragDurationRampSettings = () => {
       minDuration,
       inertiaBoost,
     },
+    corrections,
+  };
+};
+
+const resolveDragReleaseEpsilon = () => {
+  const dragReleaseEpsilon = normalizePositiveNumber(
+    CAROUSEL_DRAG_RELEASE_EPSILON,
+    HARD_DRAG_RELEASE_EPSILON,
+  );
+  const corrections: DevNoticeEntry[] = [];
+
+  if (dragReleaseEpsilon !== CAROUSEL_DRAG_RELEASE_EPSILON) {
+    corrections.push({
+      field: "CAROUSEL_DRAG_RELEASE_EPSILON",
+      provided: CAROUSEL_DRAG_RELEASE_EPSILON,
+      normalized: dragReleaseEpsilon,
+      reason: "expected a finite positive value",
+    });
+  }
+
+  return {
+    setting: dragReleaseEpsilon,
     corrections,
   };
 };
@@ -842,8 +852,9 @@ export const resolveCarouselDiagnostic = (
   );
   const repeatedClickResolution = resolveRepeatedClickSettings();
   const interactionResolution = resolveInteractionSettings();
-  const dragResolution = resolveDragSettings();
-  const dragDurationRampResolution = resolveDragDurationRampSettings();
+  const dragConfigResolution = resolveDragConfig();
+  const dragSpeedConfigResolution = resolveDragSpeedConfig();
+  const dragReleaseEpsilonResolution = resolveDragReleaseEpsilon();
   const motionResolution = resolveMotionSettings();
   const propResolution = resolveRuntimePropSettings(
     props,
@@ -865,8 +876,9 @@ export const resolveCarouselDiagnostic = (
       layoutSettings: layoutResolution.settings,
       repeatedClickSettings: repeatedClickResolution.settings,
       interactionSettings: interactionResolution.settings,
-      dragSettings: dragResolution.settings,
-      dragDurationRampSettings: dragDurationRampResolution.settings,
+      dragConfig: dragConfigResolution.settings,
+      dragSpeedConfig: dragSpeedConfigResolution.settings,
+      dragReleaseEpsilon: dragReleaseEpsilonResolution.setting,
       motionSettings: motionResolution.settings,
     },
     correctionEntries: [
@@ -874,8 +886,9 @@ export const resolveCarouselDiagnostic = (
       ...defaultPropResolution.corrections,
       ...repeatedClickResolution.corrections,
       ...interactionResolution.corrections,
-      ...dragResolution.corrections,
-      ...dragDurationRampResolution.corrections,
+      ...dragConfigResolution.corrections,
+      ...dragSpeedConfigResolution.corrections,
+      ...dragReleaseEpsilonResolution.corrections,
       ...motionResolution.corrections,
       ...propResolution.corrections,
     ],

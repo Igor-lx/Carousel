@@ -1,10 +1,9 @@
+
 export const REPEATED_CLICK_DESTINATION_POSITION = 0.65;
-export const REPEATED_CLICK_SPEED_MULTIPLIER = 9;
-export const REPEATED_CLICK_EPSILON = 0.0001;
+export const REPEATED_CLICK_SPEED_MULTIPLIER = 7;
 
 export const SNAP_BACK_DURATION = 900;
-export const MOTION_MONOTONIC_SPEED_FACTOR = 3;
-export const MOTION_EPSILON = 0.0001;
+
 
 export const JUMP_BEZIER = "cubic-bezier(0.16, 1, 0.3, 1)";
 export const MOVE_CLICK_BEZIER = "cubic-bezier(0.2, 0.9, 0.32, 1)";

@@ -1,8 +1,5 @@
 import type { CarouselLayout } from "../../utilities/types";
-import type {
-  CarouselDragSettings,
-  CarouselRepeatedClickSettings,
-} from "../diagnostic";
+import type { CarouselRepeatedClickSettings } from "../diagnostic";
 
 export type AnimationMode = "normal" | "jump" | "instant" | "snap" | "none";
 
@@ -55,7 +52,7 @@ export type Action = StepAction | DragAction | LifecycleAction;
 
 export type ReducerAction = Action & {
   layout: CarouselLayout;
-  dragSettings: CarouselDragSettings;
+  dragReleaseEpsilon: number;
   repeatedClickSettings: CarouselRepeatedClickSettings;
 };
 

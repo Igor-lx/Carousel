@@ -1,7 +1,7 @@
-import type { DragSpeedConfig } from "../../../../../shared";
+import type { DragConfig, DragSpeedConfig } from "../../../../../shared";
 import type { DevNoticeEntry } from "../../../../../shared";
 
-export type { DragSpeedConfig } from "../../../../../shared";
+export type { DragConfig, DragSpeedConfig } from "../../../../../shared";
 
 export interface CarouselRuntimePropSettings {
   visibleSlidesCount: number;
@@ -29,19 +29,7 @@ export interface CarouselInteractionSettings {
   autoplayPaginationFactor: number;
 }
 
-export interface CarouselDragSettings {
-  COOLDOWN_MS: number;
-  INTENT_THRESHOLD: number;
-  RESISTANCE: number;
-  RESISTANCE_CURVATURE: number;
-  MAX_VELOCITY: number;
-  EMA_ALPHA: number;
-  SWIPE_VELOCITY_LIMIT: number;
-  QUICK_SWIPE_MIN_OFFSET: number;
-  MIN_SWIPE_DISTANCE: number;
-  SWIPE_THRESHOLD_RATIO: number;
-  RELEASE_EPSILON: number;
-}
+export type CarouselDragConfig = Required<DragConfig>;
 
 export interface CarouselMotionSettings {
   monotonicSpeedFactor: number;
@@ -53,8 +41,9 @@ export interface CarouselRuntimeSettings extends CarouselRuntimePropSettings {
   layoutSettings: CarouselLayoutSettings;
   repeatedClickSettings: CarouselRepeatedClickSettings;
   interactionSettings: CarouselInteractionSettings;
-  dragSettings: CarouselDragSettings;
-  dragDurationRampSettings: DragSpeedConfig;
+  dragConfig: CarouselDragConfig;
+  dragSpeedConfig: DragSpeedConfig;
+  dragReleaseEpsilon: number;
   motionSettings: CarouselMotionSettings;
 }
 

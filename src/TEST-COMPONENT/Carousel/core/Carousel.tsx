@@ -165,8 +165,9 @@ const Carousel = memo((props: CarouselProps) => {
     layoutSettings,
     repeatedClickSettings,
     interactionSettings,
-    dragSettings,
-    dragDurationRampSettings,
+    dragConfig,
+    dragSpeedConfig,
+    dragReleaseEpsilon,
     motionSettings,
   } = runtimeSettings;
   const { visible: isVisible } = useComponentVisibility({
@@ -283,7 +284,7 @@ const Carousel = memo((props: CarouselProps) => {
       isInstantMode: isReducedMotion,
       isMoving,
       layout: nextLayout,
-      dragSettings,
+      dragReleaseEpsilon,
       repeatedClickSettings,
     });
 
@@ -311,8 +312,8 @@ const Carousel = memo((props: CarouselProps) => {
       measureRef: containerRef,
       layout: nextLayout,
       baseVirtualIndex: virtualIndex,
-      dragSettings,
-      dragDurationRampSettings,
+      dragReleaseEpsilon,
+      dragSpeedConfig,
       currentPositionRef: motionPositionRef,
       readCurrentPosition,
       applyDragPosition,
@@ -323,7 +324,7 @@ const Carousel = memo((props: CarouselProps) => {
     onDragMove: updateDrag,
     onDragEnd: finishDrag,
     enabled: canSlide,
-    dragSettings,
+    dragConfig,
     measureRef: containerRef,
   });
 
@@ -356,7 +357,7 @@ const Carousel = memo((props: CarouselProps) => {
     segmentStartVirtualIndex: fromVirtualIndex,
     targetVirtualIndex: virtualIndex,
     stepSize: clampedVisible,
-    dragDurationRampSettings,
+    dragSpeedConfig,
     motionSettings,
     repeatedClickSettings,
     autoplayDuration,

@@ -67,7 +67,7 @@ const CAROUSEL_DATA = [
 ];
 
 const VIS_CONFIG = {
-  DESKTOP: 2,
+  DESKTOP: 3,
   TABLET: 2,
   MOBILE: 1,
   DEFAULT: 3,
@@ -136,8 +136,8 @@ function App() {
             isPaginationOn={true}
             // isInstantMotion={true}
             isInteractive={isInteractive}
-            durationAutoplay={7500}
-            durationStep={5000}
+            durationAutoplay={9500}
+            durationStep={3000}
             durationJump={400}
             intervalAutoplay={3000}
             isLayoutClamped={true}
@@ -146,7 +146,7 @@ function App() {
           >
             {isTouch ? <CarouselPaginationWidget /> : <Pagination />}
             <Controls />
-            <Diagnostic />
+       <Diagnostic/>
           </Carousel>
         </div>
       </section>

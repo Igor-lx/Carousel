@@ -1,8 +1,9 @@
 import {
   AUTOPLAY_PAGINATION_FACTOR,
+  CAROUSEL_DRAG_CONFIG,
+  CAROUSEL_DRAG_RELEASE_EPSILON,
+  CAROUSEL_DRAG_SPEED_CONFIG,
   DEFAULT_SETTINGS,
-  DRAG_DURATION_RAMP_CONFIG,
-  DRAG_SETTINGS_CONFIG,
   HOVER_PAUSE_DELAY,
   MIN_VISIBLE_SLIDES,
   MOTION_EPSILON,
@@ -62,12 +63,13 @@ export const resolveRawCarouselRuntimeSettings = ({
     visibilityThreshold: VISIBILITY_THRESHOLD,
     autoplayPaginationFactor: AUTOPLAY_PAGINATION_FACTOR,
   },
-  dragSettings: {
-    ...DRAG_SETTINGS_CONFIG,
+  dragConfig: {
+    ...CAROUSEL_DRAG_CONFIG,
   },
-  dragDurationRampSettings: {
-    ...DRAG_DURATION_RAMP_CONFIG,
+  dragSpeedConfig: {
+    ...CAROUSEL_DRAG_SPEED_CONFIG,
   },
+  dragReleaseEpsilon: CAROUSEL_DRAG_RELEASE_EPSILON,
   motionSettings: {
     monotonicSpeedFactor: MOTION_MONOTONIC_SPEED_FACTOR,
     snapBackDuration: SNAP_BACK_DURATION,

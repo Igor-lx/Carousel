@@ -1,9 +1,6 @@
 import { useCallback, useRef } from "react";
 import type { Action, MoveReason } from "../model/reducer";
-import type {
-  CarouselDragSettings,
-  DragSpeedConfig,
-} from "../model/diagnostic";
+import type { DragSpeedConfig } from "../model/diagnostic";
 import {
   clamp,
   getAlignedVirtualIndex,
@@ -26,8 +23,8 @@ interface ControllerProps {
   measureRef: React.RefObject<HTMLDivElement | null>;
   layout: CarouselLayout;
   baseVirtualIndex: number;
-  dragSettings: CarouselDragSettings;
-  dragDurationRampSettings: DragSpeedConfig;
+  dragReleaseEpsilon: number;
+  dragSpeedConfig: DragSpeedConfig;
   currentPositionRef: React.MutableRefObject<number>;
   readCurrentPosition: () => number;
   applyDragPosition: (position: number) => void;
@@ -51,8 +48,8 @@ export function useCarouselController({
   measureRef,
   layout,
   baseVirtualIndex,
-  dragSettings,
-  dragDurationRampSettings,
+  dragReleaseEpsilon,
+  dragSpeedConfig,
   currentPositionRef,
   readCurrentPosition,
   applyDragPosition,
@@ -109,10 +106,10 @@ export function useCarouselController({
       return scaleVelocityToInertia({
         velocity: releaseVirtualVelocity,
         responseVelocity,
-        dragSpeedConfig: dragDurationRampSettings,
+        dragSpeedConfig,
       });
     },
-    [dragDurationRampSettings, layout.clampedVisible, measureRef],
+    [dragSpeedConfig, layout.clampedVisible, measureRef],
   );
 
   const move = useCallback(
@@ -210,8 +207,7 @@ export function useCarouselController({
         targetVirtualIndex,
         isSnap:
           isSnap ||
-          Math.abs(targetVirtualIndex - releasePosition) <
-            dragSettings.RELEASE_EPSILON,
+          Math.abs(targetVirtualIndex - releasePosition) < dragReleaseEpsilon,
         releaseVelocity: resolveReleaseVirtualVelocity(payload.releaseVelocity),
       });
 
@@ -220,9 +216,9 @@ export function useCarouselController({
     [
       applyDragPosition,
       dispatchAction,
+      dragReleaseEpsilon,
       enabled,
       layout,
-      dragSettings.RELEASE_EPSILON,
       resolveFromVirtualIndex,
       resolveReleaseVirtualVelocity,
     ],

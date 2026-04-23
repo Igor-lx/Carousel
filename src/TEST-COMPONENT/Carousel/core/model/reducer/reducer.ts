@@ -42,7 +42,7 @@ export function reducer(state: State, action: ReducerAction): State {
 
       if (
         Math.abs(dragReleaseOrigin - action.targetVirtualIndex) <
-        action.dragSettings.RELEASE_EPSILON
+        action.dragReleaseEpsilon
       ) {
         return {
           ...syncedState,

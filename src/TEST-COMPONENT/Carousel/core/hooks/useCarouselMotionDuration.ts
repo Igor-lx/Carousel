@@ -21,7 +21,7 @@ interface MotionDurationProps {
   segmentStartVirtualIndex: number;
   targetVirtualIndex: number;
   stepSize: number;
-  dragDurationRampSettings: DragSpeedConfig;
+  dragSpeedConfig: DragSpeedConfig;
   motionSettings: CarouselMotionSettings;
   repeatedClickSettings: CarouselRepeatedClickSettings;
   autoplayDuration: number;
@@ -39,7 +39,7 @@ export function useCarouselMotionDuration({
   segmentStartVirtualIndex,
   targetVirtualIndex,
   stepSize,
-  dragDurationRampSettings,
+  dragSpeedConfig,
   motionSettings,
   repeatedClickSettings,
   autoplayDuration,
@@ -92,11 +92,11 @@ export function useCarouselMotionDuration({
     });
 
     return Math.max(
-      dragDurationRampSettings.minDuration,
+      dragSpeedConfig.minDuration,
       Math.min(motionSettings.snapBackDuration, scaledDuration),
     );
   }, [
-    dragDurationRampSettings.minDuration,
+    dragSpeedConfig.minDuration,
     motionSettings.snapBackDuration,
     segmentStartVirtualIndex,
     stepSize,
@@ -139,9 +139,9 @@ export function useCarouselMotionDuration({
       mapVelocityToDuration({
         velocity: scaleVirtualVelocityToPageVelocity(velocity, stepSize),
         baseDuration,
-        dragSpeedConfig: dragDurationRampSettings,
+        dragSpeedConfig,
       }),
-    [baseDuration, dragDurationRampSettings, stepSize, velocity],
+    [baseDuration, dragSpeedConfig, stepSize, velocity],
   );
 
   const velocityPreservingGestureDuration = useMemo(() => {
@@ -175,7 +175,7 @@ export function useCarouselMotionDuration({
     if (isInstant || animMode === "jump") return jumpDuration;
     if (reason === "gesture") {
       return Math.max(
-        dragDurationRampSettings.minDuration,
+        dragSpeedConfig.minDuration,
         Math.min(velocityScaledDuration, velocityPreservingGestureDuration),
       );
     }
@@ -184,7 +184,7 @@ export function useCarouselMotionDuration({
   }, [
     animMode,
     baseDuration,
-    dragDurationRampSettings.minDuration,
+    dragSpeedConfig.minDuration,
     velocityScaledDuration,
     isDragging,
     isInstant,
