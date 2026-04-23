@@ -6,6 +6,7 @@ export interface DevNoticeEntry {
   normalized?: unknown;
   reason?: string;
   message?: string;
+  unit?: string;
 }
 
 export type DevNoticeReporter = (entries: DevNoticeEntry[]) => void;
@@ -48,11 +49,22 @@ export const formatNoticeValue = (value: unknown) => {
 export const getNoticeEntrySignature = (entry: DevNoticeEntry) =>
   [
     entry.field,
-    formatNoticeValue(entry.provided),
-    formatNoticeValue(entry.normalized),
+    formatNoticeEntryValue(entry.provided, entry.unit),
+    formatNoticeEntryValue(entry.normalized, entry.unit),
     entry.reason ?? "",
     entry.message ?? "",
+    entry.unit ?? "",
   ].join("|");
+
+const formatNoticeEntryValue = (value: unknown, unit?: string) => {
+  const formattedValue = formatNoticeValue(value);
+
+  if (!unit || typeof value !== "number" || !Number.isFinite(value)) {
+    return formattedValue;
+  }
+
+  return `${formattedValue}${unit}`;
+};
 
 export const formatNoticeEntry = (entry: DevNoticeEntry) => {
   if (entry.message) {
@@ -60,7 +72,8 @@ export const formatNoticeEntry = (entry: DevNoticeEntry) => {
   }
 
   const transition =
-    `${formatNoticeValue(entry.provided)} -> ${formatNoticeValue(entry.normalized)}`;
+    `${formatNoticeEntryValue(entry.provided, entry.unit)} -> ` +
+    `${formatNoticeEntryValue(entry.normalized, entry.unit)}`;
 
   if (entry.reason) {
     return `- ${entry.field}: ${transition} (${entry.reason})`;

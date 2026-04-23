@@ -6,15 +6,14 @@ import type {
 } from "./types";
 import { clamp, mod, normalizePageIndex } from "./math";
 
-const RENDER_WINDOW_BUFFER_MULTIPLIER = 2;
-
 export const getPageStart = (pageIndex: number, visibleSlidesNr: number) =>
   pageIndex * visibleSlidesNr;
 
 const getClampedVisibleSlidesCount = (
   slidesLength: number,
   visibleSlidesNr: number,
-) => Math.max(1, Math.min(visibleSlidesNr, slidesLength));
+  minVisibleSlides: number,
+) => Math.max(minVisibleSlides, Math.min(visibleSlidesNr, slidesLength));
 
 const getSlideContentKey = (slideData: Slide) =>
   `${slideData.id}-${typeof slideData.content === "string" ? slideData.content : "obj"}`;
@@ -39,12 +38,14 @@ export const buildSlideRecords = (
 export const hasPartialPageLayout = (
   slidesLength: number,
   visibleSlidesNr: number,
+  minVisibleSlides: number,
 ): boolean => {
   if (slidesLength === 0) return false;
 
   const clampedVisibleCount = getClampedVisibleSlidesCount(
     slidesLength,
     visibleSlidesNr,
+    minVisibleSlides,
   );
 
   return slidesLength % clampedVisibleCount !== 0;
@@ -53,16 +54,18 @@ export const hasPartialPageLayout = (
 export const extendSlideRecordsToFullPages = (
   slideRecords: CarouselSlideRecord[],
   visibleSlidesNr: number,
+  minVisibleSlides: number,
 ): CarouselSlideRecord[] => {
   const length = slideRecords.length;
 
-  if (!hasPartialPageLayout(length, visibleSlidesNr)) {
+  if (!hasPartialPageLayout(length, visibleSlidesNr, minVisibleSlides)) {
     return slideRecords;
   }
 
   const clampedVisibleCount = getClampedVisibleSlidesCount(
     length,
     visibleSlidesNr,
+    minVisibleSlides,
   );
   const extendedLength =
     Math.ceil(length / clampedVisibleCount) * clampedVisibleCount;
@@ -82,9 +85,14 @@ export const getCarouselLayout = (
   slideRecords: CarouselSlideRecord[],
   visibleSlidesNr: number,
   isFinite: boolean,
+  minVisibleSlides: number,
 ): CarouselLayout => {
   const length = slideRecords.length;
-  const clampedVisible = getClampedVisibleSlidesCount(length, visibleSlidesNr);
+  const clampedVisible = getClampedVisibleSlidesCount(
+    length,
+    visibleSlidesNr,
+    minVisibleSlides,
+  );
   const canSlide = length > clampedVisible;
   const pageCount = Math.ceil(length / clampedVisible);
   const cloneCount = canSlide && !isFinite ? clampedVisible : 0;
@@ -148,6 +156,7 @@ export const getRenderWindow = (
   fromVirtualIndex: number,
   toVirtualIndex: number,
   layout: CarouselLayout,
+  renderWindowBufferMultiplier: number,
 ): RenderWindow => {
   if (!layout.canSlide) {
     return {
@@ -161,7 +170,7 @@ export const getRenderWindow = (
     Math.ceil(Math.max(fromVirtualIndex, toVirtualIndex)) +
     layout.clampedVisible -
     1;
-  const buffer = layout.clampedVisible * RENDER_WINDOW_BUFFER_MULTIPLIER;
+  const buffer = layout.clampedVisible * renderWindowBufferMultiplier;
 
   if (layout.isFinite) {
     return {

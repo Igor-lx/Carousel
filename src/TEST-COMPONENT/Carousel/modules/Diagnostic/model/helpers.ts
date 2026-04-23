@@ -4,7 +4,7 @@ import {
   coerceNonNegativeNumber,
   coercePositiveNumber,
   isFiniteNumber,
-} from "../../../../../shared/normalization";
+} from "../../../../../shared/value-resolution";
 import {
   HARD_ERROR_ALT_PLACEHOLDER,
   MAX_DRAG_DURATION_RATIO,
@@ -35,14 +35,21 @@ export const normalizePositiveDuration = (
   safeValue: number,
 ) => normalizePositiveNumber(value, safeValue);
 
+export const normalizePositiveInteger = (
+  value: unknown,
+  safeValue: number,
+  minValue = 1,
+) =>
+  Math.max(
+    minValue,
+    Math.floor(normalizePositiveNumber(value, safeValue)),
+  );
+
 export const normalizeVisibleSlidesCount = (
   value: unknown,
   safeValue: number,
-) =>
-  Math.max(
-    MIN_VISIBLE_SLIDES,
-    Math.floor(normalizePositiveNumber(value, safeValue)),
-  );
+  minVisibleSlides = MIN_VISIBLE_SLIDES,
+) => normalizePositiveInteger(value, safeValue, minVisibleSlides);
 
 export const normalizeAutoplayInterval = (
   value: unknown,

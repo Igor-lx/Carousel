@@ -19,7 +19,6 @@ import {
   useCarouselMotion,
   useCarouselSlides,
   useCarouselMotionDuration,
-  useCarouselSlideStyles,
 } from "./hooks";
 
 import {
@@ -42,20 +41,10 @@ import {
   reducer,
 } from "./model/reducer";
 import {
-  AUTOPLAY_PAGINATION_FACTOR,
-  CAROUSEL_SLOTS,
   DEFAULT_SETTINGS,
-  DRAG_DURATION_RAMP_CONFIG,
-  DRAG_SETTINGS_CONFIG,
-  HOVER_PAUSE_DELAY,
-  MOTION_MONOTONIC_SPEED_FACTOR,
-  REPEATED_CLICK_DESTINATION_POSITION,
-  REPEATED_CLICK_SPEED_MULTIPLIER,
-  SNAP_BACK_DURATION,
-  VISIBILITY_THRESHOLD,
 } from "./model/config";
 import {
-  type CarouselDiagnosticPayload,
+  EMPTY_DIAGNOSTIC_CORRECTIONS,
   type CarouselDiagnosticPropsInput,
   type CarouselDiagnosticResolver,
   resolveRawCarouselRuntimeSettings,
@@ -64,6 +53,7 @@ import {
   CarouselDiagnosticContext,
   CarouselModuleApiContext,
 } from "./model/context";
+import { CAROUSEL_SLOTS } from "./model/slots";
 import {
   type CarouselExternalControlHandle,
   useCarouselExternalControlSync,
@@ -75,27 +65,10 @@ import {
   extendSlideRecordsToFullPages,
   getCarouselLayout,
   getDurationByVirtualSpan,
+  getSlideFlexStyle,
   hasPartialPageLayout,
   type CarouselLayout,
 } from "./utilities";
-
-const INTERNAL_CLASS_NAMES = styles;
-const EMPTY_DIAGNOSTIC_CORRECTIONS: CarouselDiagnosticPayload["correctionEntries"] =
-  [];
-
-const getAttachedDiagnosticResolver = (
-  slot: unknown,
-): CarouselDiagnosticResolver | null => {
-  if (!isValidElement(slot)) {
-    return null;
-  }
-
-  const resolver = (
-    slot.type as { resolveDiagnostic?: CarouselDiagnosticResolver }
-  ).resolveDiagnostic;
-
-  return typeof resolver === "function" ? resolver : null;
-};
 
 const Carousel = memo((props: CarouselProps) => {
   const rawVisibleSlidesNr = props.visibleSlidesNr;
@@ -160,56 +133,25 @@ const Carousel = memo((props: CarouselProps) => {
   );
   const rawRuntimeSettings = useMemo(
     () => resolveRawCarouselRuntimeSettings(rawDiagnosticInput),
-    [
-      rawDiagnosticInput,
-      AUTOPLAY_PAGINATION_FACTOR,
-      DRAG_DURATION_RAMP_CONFIG.inertiaBoost,
-      DRAG_DURATION_RAMP_CONFIG.minDuration,
-      DRAG_DURATION_RAMP_CONFIG.minDurationRatio,
-      DRAG_DURATION_RAMP_CONFIG.rampEnd,
-      DRAG_DURATION_RAMP_CONFIG.velocityThreshold,
-      DRAG_SETTINGS_CONFIG.EMA_ALPHA,
-      DRAG_SETTINGS_CONFIG.INTENT_THRESHOLD,
-      DRAG_SETTINGS_CONFIG.MAX_VELOCITY,
-      DRAG_SETTINGS_CONFIG.RESISTANCE,
-      DRAG_SETTINGS_CONFIG.RESISTANCE_CURVATURE,
-      DRAG_SETTINGS_CONFIG.SWIPE_THRESHOLD_RATIO,
-      HOVER_PAUSE_DELAY,
-      MOTION_MONOTONIC_SPEED_FACTOR,
-      REPEATED_CLICK_DESTINATION_POSITION,
-      REPEATED_CLICK_SPEED_MULTIPLIER,
-      SNAP_BACK_DURATION,
-      VISIBILITY_THRESHOLD,
-    ],
+    [rawDiagnosticInput],
   );
   const diagnosticResolver = useMemo(
-    () => getAttachedDiagnosticResolver(slots.diagnostic),
+    () => {
+      if (!isValidElement(slots.diagnostic)) {
+        return null;
+      }
+
+      const resolver = (
+        slots.diagnostic.type as { resolveDiagnostic?: CarouselDiagnosticResolver }
+      ).resolveDiagnostic;
+
+      return typeof resolver === "function" ? resolver : null;
+    },
     [slots.diagnostic],
   );
   const diagnosticPayload = useMemo(
     () => diagnosticResolver?.(rawDiagnosticInput) ?? null,
-    [
-      diagnosticResolver,
-      rawDiagnosticInput,
-      AUTOPLAY_PAGINATION_FACTOR,
-      DRAG_DURATION_RAMP_CONFIG.inertiaBoost,
-      DRAG_DURATION_RAMP_CONFIG.minDuration,
-      DRAG_DURATION_RAMP_CONFIG.minDurationRatio,
-      DRAG_DURATION_RAMP_CONFIG.rampEnd,
-      DRAG_DURATION_RAMP_CONFIG.velocityThreshold,
-      DRAG_SETTINGS_CONFIG.EMA_ALPHA,
-      DRAG_SETTINGS_CONFIG.INTENT_THRESHOLD,
-      DRAG_SETTINGS_CONFIG.MAX_VELOCITY,
-      DRAG_SETTINGS_CONFIG.RESISTANCE,
-      DRAG_SETTINGS_CONFIG.RESISTANCE_CURVATURE,
-      DRAG_SETTINGS_CONFIG.SWIPE_THRESHOLD_RATIO,
-      HOVER_PAUSE_DELAY,
-      MOTION_MONOTONIC_SPEED_FACTOR,
-      REPEATED_CLICK_DESTINATION_POSITION,
-      REPEATED_CLICK_SPEED_MULTIPLIER,
-      SNAP_BACK_DURATION,
-      VISIBILITY_THRESHOLD,
-    ],
+    [diagnosticResolver, rawDiagnosticInput],
   );
   const runtimeSettings = diagnosticPayload?.settings ?? rawRuntimeSettings;
 
@@ -220,6 +162,7 @@ const Carousel = memo((props: CarouselProps) => {
     jumpDuration,
     autoplayInterval,
     errorAltPlaceholder,
+    layoutSettings,
     repeatedClickSettings,
     interactionSettings,
     dragSettings,
@@ -234,6 +177,7 @@ const Carousel = memo((props: CarouselProps) => {
   const hasPartialPageLayoutMismatch = hasPartialPageLayout(
     totalSlides,
     visibleSlidesCount,
+    layoutSettings.minVisibleSlides,
   );
   const didExtendPartialPageLayout =
     isLayoutClampingEnabled && hasPartialPageLayoutMismatch;
@@ -246,14 +190,34 @@ const Carousel = memo((props: CarouselProps) => {
   const layoutSlideRecords = useMemo(
     () =>
       didExtendPartialPageLayout
-        ? extendSlideRecordsToFullPages(baseSlideRecords, visibleSlidesCount)
+        ? extendSlideRecordsToFullPages(
+            baseSlideRecords,
+            visibleSlidesCount,
+            layoutSettings.minVisibleSlides,
+          )
         : baseSlideRecords,
-    [didExtendPartialPageLayout, baseSlideRecords, visibleSlidesCount],
+    [
+      didExtendPartialPageLayout,
+      baseSlideRecords,
+      visibleSlidesCount,
+      layoutSettings.minVisibleSlides,
+    ],
   );
 
   const nextLayout = useMemo<CarouselLayout>(
-    () => getCarouselLayout(layoutSlideRecords, visibleSlidesCount, isFinite),
-    [layoutSlideRecords, visibleSlidesCount, isFinite],
+    () =>
+      getCarouselLayout(
+        layoutSlideRecords,
+        visibleSlidesCount,
+        isFinite,
+        layoutSettings.minVisibleSlides,
+      ),
+    [
+      layoutSlideRecords,
+      visibleSlidesCount,
+      isFinite,
+      layoutSettings.minVisibleSlides,
+    ],
   );
 
   const [state, baseDispatch] = useReducer(reducer, nextLayout, initialState);
@@ -308,6 +272,7 @@ const Carousel = memo((props: CarouselProps) => {
     prev: fromVirtualIndex,
     isMoving,
     targetIndex,
+    renderWindowBufferMultiplier: layoutSettings.renderWindowBufferMultiplier,
     layout: nextLayout,
     slidesData: layoutSlideRecords,
   });
@@ -318,6 +283,7 @@ const Carousel = memo((props: CarouselProps) => {
       isInstantMode: isReducedMotion,
       isMoving,
       layout: nextLayout,
+      dragSettings,
       repeatedClickSettings,
     });
 
@@ -345,6 +311,7 @@ const Carousel = memo((props: CarouselProps) => {
       measureRef: containerRef,
       layout: nextLayout,
       baseVirtualIndex: virtualIndex,
+      dragSettings,
       dragDurationRampSettings,
       currentPositionRef: motionPositionRef,
       readCurrentPosition,
@@ -441,9 +408,10 @@ const Carousel = memo((props: CarouselProps) => {
     shouldSyncMotion: shouldSyncExternalControlMotion,
   });
 
-  const { slideStyle } = useCarouselSlideStyles({
-    visibleSlidesCount: clampedVisible,
-  });
+  const slideStyle = useMemo(
+    () => getSlideFlexStyle(clampedVisible),
+    [clampedVisible],
+  );
 
   useIsomorphicLayoutEffect(() => {
     if (isIdle) {
@@ -471,25 +439,39 @@ const Carousel = memo((props: CarouselProps) => {
   const classNames = useMemo(
     () =>
       className
-        ? mergeStyles(INTERNAL_CLASS_NAMES, className)
-        : INTERNAL_CLASS_NAMES,
+        ? mergeStyles(styles, className)
+        : styles,
     [className],
   );
 
   const slideClassNames = usePickStyles(classNames, SLIDE_KEYS);
+  const hasControlsSlot = Boolean(slots.controls);
+  const hasPaginationSlot = Boolean(slots.pagination);
+  const slotAttachmentNoticeInput = useMemo(
+    () => ({
+      isControlsOn,
+      hasControlsSlot,
+      isPaginationOn,
+      hasPaginationSlot,
+    }),
+    [hasControlsSlot, hasPaginationSlot, isControlsOn, isPaginationOn],
+  );
   const diagnosticContextValue = useMemo(
     () => ({
       correctionEntries:
         diagnosticPayload?.correctionEntries ?? EMPTY_DIAGNOSTIC_CORRECTIONS,
       perfectPageLayoutNoticeInput,
+      slotAttachmentNoticeInput,
     }),
-    [diagnosticPayload?.correctionEntries, perfectPageLayoutNoticeInput],
+    [
+      diagnosticPayload?.correctionEntries,
+      perfectPageLayoutNoticeInput,
+      slotAttachmentNoticeInput,
+    ],
   );
 
-  const hasControlsSlot = Boolean(slots.controls);
   const shouldRenderControls = isControlsOn && canSlide && hasControlsSlot;
 
-  const hasPaginationSlot = Boolean(slots.pagination);
   const shouldRenderPagination = isPaginationOn && hasPaginationSlot;
 
 

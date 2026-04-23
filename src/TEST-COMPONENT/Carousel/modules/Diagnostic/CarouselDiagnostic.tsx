@@ -1,10 +1,11 @@
 import { memo, useEffect } from "react";
-import { injectSlot, useGroupedDevNotice } from "../../../../shared";
+import { useGroupedDevNotice } from "../../../../shared";
 import {
   type CarouselDiagnosticResolver,
 } from "../../core/model/diagnostic";
 import { useCarouselDiagnosticContext } from "../../core/model/context";
 import { resolveCarouselDiagnostic } from "./model/resolveCarouselDiagnostic";
+import { useMissingSlotAttachmentNotice } from "./useMissingSlotAttachmentNotice";
 import { usePerfectPageLayoutNotice } from "./usePerfectPageLayoutNotice";
 
 const DIAGNOSTIC_NOTICE_SCOPE = "CarouselDiagnostic";
@@ -13,10 +14,18 @@ const DIAGNOSTIC_NOTICE_SUMMARY =
 const DIAGNOSTIC_MODE_BANNER = "DIAGNOSTIC MODE ON";
 
 const CarouselDiagnosticView = memo(() => {
-  const { correctionEntries, perfectPageLayoutNoticeInput } =
+  const {
+    correctionEntries,
+    perfectPageLayoutNoticeInput,
+    slotAttachmentNoticeInput,
+  } =
     useCarouselDiagnosticContext();
 
   useEffect(() => {
+    if (!import.meta.env.DEV) {
+      return;
+    }
+
     console.info(DIAGNOSTIC_MODE_BANNER);
   }, []);
 
@@ -26,6 +35,7 @@ const CarouselDiagnosticView = memo(() => {
     entries: correctionEntries,
   });
 
+  useMissingSlotAttachmentNotice(slotAttachmentNoticeInput);
   usePerfectPageLayoutNotice(perfectPageLayoutNoticeInput);
 
   return null;
@@ -36,11 +46,10 @@ type CarouselDiagnosticSlotComponent = typeof CarouselDiagnosticView & {
   resolveDiagnostic: CarouselDiagnosticResolver;
 };
 
-export const CarouselDiagnostic = injectSlot(
-  CarouselDiagnosticView,
-  "diagnostic",
-) as CarouselDiagnosticSlotComponent;
+export const CarouselDiagnostic =
+  CarouselDiagnosticView as CarouselDiagnosticSlotComponent;
 
+CarouselDiagnostic.slot = "diagnostic";
 CarouselDiagnostic.resolveDiagnostic = resolveCarouselDiagnostic;
 
 export default CarouselDiagnostic;

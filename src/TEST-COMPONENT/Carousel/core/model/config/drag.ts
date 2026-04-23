@@ -1,16 +1,21 @@
 export const DRAG_SETTINGS_CONFIG = {
-  RESISTANCE: 0.5, // Larger value -> stiffer drag feel.
-  RESISTANCE_CURVATURE: 0.004, // Larger value -> resistance ramps up sooner on long drags.
-  INTENT_THRESHOLD: 8, // Larger value -> later drag takeover.
-  MAX_VELOCITY: 4.5, // Larger value -> wider release-speed response range.
-  EMA_ALPHA: 0.8, // Larger value -> release speed reacts more to the latest move.
-  SWIPE_THRESHOLD_RATIO: 0.16, // Larger value -> later swipe registration.
+  COOLDOWN_MS: 150,
+  INTENT_THRESHOLD: 8,
+  RESISTANCE: 0.5,
+  RESISTANCE_CURVATURE: 0.004,
+  MAX_VELOCITY: 4.5,
+  EMA_ALPHA: 0.8,
+  SWIPE_VELOCITY_LIMIT: 0.5,
+  QUICK_SWIPE_MIN_OFFSET: 10,
+  MIN_SWIPE_DISTANCE: 20,
+  SWIPE_THRESHOLD_RATIO: 0.16,
+  RELEASE_EPSILON: 0.001,
 } as const;
 
 export const DRAG_DURATION_RAMP_CONFIG = {
-  velocityThreshold: 0.4, // Larger value -> fast-swipe response starts later.
-  rampEnd: 1.35, // Smaller value -> max gesture response is reached sooner.
-  minDurationRatio: 0.14, // Smaller value -> strong swipes settle faster.
-  minDuration: 220, // Smaller value -> the fastest releases can finish sooner.
-  inertiaBoost: 4.6, // Larger value -> stronger inertia response after release.
+  velocityThreshold: 0.4,
+  rampEnd: 1.35,
+  minDurationRatio: 0.14,
+  minDuration: 220,
+  inertiaBoost: 4.6,
 } as const;

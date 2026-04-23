@@ -1,6 +1,9 @@
 import type { MoveReason } from "../reducer";
 import type { DevNoticeEntry } from "../../../../../shared";
-import type { CarouselPerfectPageLayoutNoticeInput } from "../diagnostic";
+import type {
+  CarouselPerfectPageLayoutNoticeInput,
+  CarouselSlotAttachmentNoticeInput,
+} from "../diagnostic";
 
 export interface CarouselModuleApi {
   pageCount: number;
@@ -22,4 +25,5 @@ export interface CarouselModuleApi {
 export interface CarouselDiagnosticContextValue {
   correctionEntries: DevNoticeEntry[];
   perfectPageLayoutNoticeInput: CarouselPerfectPageLayoutNoticeInput;
+  slotAttachmentNoticeInput: CarouselSlotAttachmentNoticeInput;
 }

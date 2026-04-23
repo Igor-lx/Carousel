@@ -23,7 +23,7 @@ export function resolveSlots<T extends string>(
     if (import.meta.env.DEV) {
       if (!slotSet.has(slotName as T)) {
         console.warn(
-          `[ExtractSlots]: Unknown slot detected: "${slotName}". ` +
+          `[resolveSlots]: Unknown slot detected: "${slotName}". ` +
             `Expected one of: [${slots.join(", ")}]. ` +
             `This component will be ignored.`,
         );
@@ -36,8 +36,8 @@ export function resolveSlots<T extends string>(
     if (import.meta.env.DEV) {
       if (result[validSlotName]) {
         console.warn(
-          `[ExtractSlots]: Multiple components found for slot "${validSlotName}". ` +
-            `Only the last child will will be rendered. `,
+          `[resolveSlots]: Multiple components found for slot "${validSlotName}". ` +
+            `Only the last child will be rendered. `,
         );
       }
     }

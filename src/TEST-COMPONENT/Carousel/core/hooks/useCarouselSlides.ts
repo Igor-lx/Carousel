@@ -15,6 +15,7 @@ interface SlidesProps {
   prev: number;
   isMoving: boolean;
   targetIndex: number;
+  renderWindowBufferMultiplier: number;
   layout: CarouselLayout;
   slidesData: CarouselSlideRecord[];
 }
@@ -31,13 +32,21 @@ export function useCarouselSlides({
   prev,
   isMoving,
   targetIndex,
+  renderWindowBufferMultiplier,
   layout,
   slidesData,
 }: SlidesProps): SlidesResult {
-  const renderWindowRef = useRef(getRenderWindow(prev, current, layout));
+  const renderWindowRef = useRef(
+    getRenderWindow(prev, current, layout, renderWindowBufferMultiplier),
+  );
 
   const renderWindow = useMemo(() => {
-    const nextWindow = getRenderWindow(prev, current, layout);
+    const nextWindow = getRenderWindow(
+      prev,
+      current,
+      layout,
+      renderWindowBufferMultiplier,
+    );
 
     if (!layout.canSlide || !isMoving) {
       renderWindowRef.current = nextWindow;
@@ -62,7 +71,7 @@ export function useCarouselSlides({
 
     renderWindowRef.current = expandedWindow;
     return expandedWindow;
-  }, [prev, current, layout, isMoving]);
+  }, [prev, current, layout, isMoving, renderWindowBufferMultiplier]);
 
   const { isAtStart, isAtEnd } = useMemo(() => {
     if (!layout.isFinite) {

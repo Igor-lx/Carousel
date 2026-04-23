@@ -32,8 +32,6 @@ export const getAnimStatus = (mode: AnimationMode) => ({
   isAnimating: mode === "normal" || mode === "jump" || mode === "snap",
 });
 
-const REPEATED_CLICK_EPSILON = 0.0001;
-
 const hasSameLayout = (
   prevLayout: CarouselLayout,
   nextLayout: CarouselLayout,
@@ -209,8 +207,9 @@ export const resolveRepeatedClickPlan = ({
   const { currentLayout: layout } = state;
   const direction = Math.sign(step);
   const stepSize = layout.clampedVisible;
+  const epsilon = repeatedClickSettings.epsilon;
 
-  if (direction === 0 || stepSize <= REPEATED_CLICK_EPSILON) {
+  if (direction === 0 || stepSize <= epsilon) {
     return null;
   }
 
@@ -245,8 +244,7 @@ export const resolveRepeatedClickPlan = ({
     ? clamp(targetPageIndex, 0, layout.pageCount - 1)
     : normalizePageIndex(targetPageIndex, layout.pageCount);
   const followUpVirtualIndex =
-    Math.abs(nextTargetVirtualIndex - nextAdvanceVirtualIndex) >=
-    REPEATED_CLICK_EPSILON
+    Math.abs(nextTargetVirtualIndex - nextAdvanceVirtualIndex) >= epsilon
       ? nextTargetVirtualIndex
       : null;
 

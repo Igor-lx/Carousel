@@ -1,6 +1,9 @@
 import { useCallback, useRef } from "react";
 import type { Action, MoveReason } from "../model/reducer";
-import type { DragSpeedConfig } from "../../../../shared";
+import type {
+  CarouselDragSettings,
+  DragSpeedConfig,
+} from "../model/diagnostic";
 import {
   clamp,
   getAlignedVirtualIndex,
@@ -23,6 +26,7 @@ interface ControllerProps {
   measureRef: React.RefObject<HTMLDivElement | null>;
   layout: CarouselLayout;
   baseVirtualIndex: number;
+  dragSettings: CarouselDragSettings;
   dragDurationRampSettings: DragSpeedConfig;
   currentPositionRef: React.MutableRefObject<number>;
   readCurrentPosition: () => number;
@@ -47,6 +51,7 @@ export function useCarouselController({
   measureRef,
   layout,
   baseVirtualIndex,
+  dragSettings,
   dragDurationRampSettings,
   currentPositionRef,
   readCurrentPosition,
@@ -203,7 +208,10 @@ export function useCarouselController({
         fromVirtualIndex: releasePosition,
         targetIndex,
         targetVirtualIndex,
-        isSnap: isSnap || Math.abs(targetVirtualIndex - releasePosition) < 0.001,
+        isSnap:
+          isSnap ||
+          Math.abs(targetVirtualIndex - releasePosition) <
+            dragSettings.RELEASE_EPSILON,
         releaseVelocity: resolveReleaseVirtualVelocity(payload.releaseVelocity),
       });
 
@@ -214,6 +222,7 @@ export function useCarouselController({
       dispatchAction,
       enabled,
       layout,
+      dragSettings.RELEASE_EPSILON,
       resolveFromVirtualIndex,
       resolveReleaseVirtualVelocity,
     ],

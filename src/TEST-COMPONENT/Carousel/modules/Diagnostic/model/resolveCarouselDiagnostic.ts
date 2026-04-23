@@ -5,8 +5,12 @@ import {
   DRAG_DURATION_RAMP_CONFIG,
   DRAG_SETTINGS_CONFIG,
   HOVER_PAUSE_DELAY,
+  MIN_VISIBLE_SLIDES as RUNTIME_MIN_VISIBLE_SLIDES,
+  MOTION_EPSILON,
   MOTION_MONOTONIC_SPEED_FACTOR,
+  RENDER_WINDOW_BUFFER_MULTIPLIER,
   REPEATED_CLICK_DESTINATION_POSITION,
+  REPEATED_CLICK_EPSILON,
   REPEATED_CLICK_SPEED_MULTIPLIER,
   SNAP_BACK_DURATION,
   VISIBILITY_THRESHOLD,
@@ -21,6 +25,7 @@ import {
   HARD_DRAG_SETTINGS,
   HARD_ERROR_ALT_PLACEHOLDER,
   HARD_INTERACTION_SETTINGS,
+  HARD_LAYOUT_SETTINGS,
   HARD_MOTION_SETTINGS,
   HARD_REPEATED_CLICK_SETTINGS,
   MAX_DRAG_DURATION_RATIO,
@@ -31,6 +36,7 @@ import {
   MIN_AUTOPLAY_INTERVAL,
   MIN_DRAG_DURATION_RATIO,
   MIN_DRAG_EMA_ALPHA,
+  MIN_RENDER_WINDOW_BUFFER_MULTIPLIER,
   MIN_REPEATED_CLICK_DESTINATION_POSITION,
   MIN_REPEATED_CLICK_SPEED_MULTIPLIER,
   MIN_VISIBLE_SLIDES,
@@ -46,6 +52,7 @@ import {
   normalizeErrorAltPlaceholder,
   normalizeNonNegativeNumber,
   normalizePositiveDuration,
+  normalizePositiveInteger,
   normalizePositiveNumber,
   normalizeRepeatedClickDestination,
   normalizeRepeatedClickSpeedMultiplier,
@@ -55,6 +62,8 @@ import {
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
+
+const DURATION_UNIT = "ms";
 
 const joinReasons = (...reasons: Array<string | undefined>) => {
   const definedReasons = reasons.filter(Boolean);
@@ -76,7 +85,12 @@ const getPositiveIntegerReason = (value: unknown) => {
 
 const getPositiveDurationReason = (value: unknown) =>
   !isFiniteNumber(value) || value <= 0
-    ? "expected a finite positive duration"
+    ? `expected a finite positive duration in ${DURATION_UNIT}`
+    : undefined;
+
+const getNonNegativeDurationReason = (value: unknown) =>
+  !isFiniteNumber(value) || value < 0
+    ? `expected a finite non-negative duration in ${DURATION_UNIT}`
     : undefined;
 
 const getAutoplayDurationReason = ({
@@ -94,13 +108,13 @@ const getAutoplayDurationReason = ({
     getPositiveDurationReason(source),
     reconciledAutoplayDuration > normalizedAutoplayDuration &&
     reconciledAutoplayDuration === stepDuration
-      ? "raised to durationStep"
+      ? `raised to durationStep (${stepDuration}${DURATION_UNIT})`
       : undefined,
   );
 
 const getSafeAutoplayIntervalReason = (value: unknown) =>
   !isFiniteNumber(value) || value < MIN_AUTOPLAY_INTERVAL
-    ? `expected a finite interval of at least ${MIN_AUTOPLAY_INTERVAL}ms`
+    ? `expected a finite interval of at least ${MIN_AUTOPLAY_INTERVAL}${DURATION_UNIT}`
     : undefined;
 
 const getNonEmptyStringReason = (value: unknown) =>
@@ -120,7 +134,18 @@ const getStepDurationReason = ({
   joinReasons(
     getPositiveDurationReason(source),
     reconciledStepDuration > normalizedStepDuration
-      ? "raised to durationJump"
+      ? `raised to durationJump (${reconciledStepDuration}${DURATION_UNIT})`
+      : undefined,
+  );
+
+const getVisibleSlidesCountReason = (
+  value: unknown,
+  minVisibleSlides: number,
+) =>
+  joinReasons(
+    getPositiveIntegerReason(value),
+    isFiniteNumber(value) && value < minVisibleSlides
+      ? `must be greater than or equal to minVisibleSlides (${minVisibleSlides})`
       : undefined,
   );
 
@@ -133,14 +158,16 @@ const getUnreasonablyHighJumpDurationMessage = ({
   stepDuration: number;
   autoplayDuration: number;
 }) =>
-  `durationJump exceeds reasonable UX threshold (${MAX_REASONABLE_JUMP_DURATION}ms); ` +
+  `durationJump exceeds reasonable UX threshold (${MAX_REASONABLE_JUMP_DURATION}${DURATION_UNIT}); ` +
   `this is not invalid, but it is higher than the expected visual/behavioral range. ` +
-  `To preserve the invariant, durationStep resolved to ${stepDuration}ms and ` +
-  `durationAutoplay resolved to ${autoplayDuration}ms together with durationJump=${jumpDuration}ms, ` +
+  `To preserve the invariant, durationStep resolved to ${stepDuration}${DURATION_UNIT} and ` +
+  `durationAutoplay resolved to ${autoplayDuration}${DURATION_UNIT} together with durationJump=${jumpDuration}${DURATION_UNIT}, ` +
   `so the resulting motion may feel unexpectedly slow.`;
 
-const createFallbackDefaultSettings = (): CarouselRuntimePropSettings => ({
-  visibleSlidesCount: MIN_VISIBLE_SLIDES,
+const createFallbackDefaultSettings = (
+  minVisibleSlides: number,
+): CarouselRuntimePropSettings => ({
+  visibleSlidesCount: minVisibleSlides,
   autoplayDuration: SAFE_DURATION,
   stepDuration: SAFE_DURATION,
   jumpDuration: SAFE_DURATION,
@@ -166,6 +193,7 @@ const resolveRuntimePropSettings = (
     intervalAutoplay: string;
     errAltPlaceholder: string;
   },
+  minVisibleSlides: number,
 ) => {
   const corrections: DevNoticeEntry[] = [];
 
@@ -175,6 +203,7 @@ const resolveRuntimePropSettings = (
   const visibleSlidesCount = normalizeVisibleSlidesCount(
     visibleSlidesSource,
     fallbackSettings.visibleSlidesCount,
+    minVisibleSlides,
   );
 
   if (!Object.is(visibleSlidesCount, visibleSlidesSource)) {
@@ -182,7 +211,10 @@ const resolveRuntimePropSettings = (
       field: fieldNames.visibleSlidesNr,
       provided: visibleSlidesSource,
       normalized: visibleSlidesCount,
-      reason: getPositiveIntegerReason(visibleSlidesSource),
+      reason: getVisibleSlidesCountReason(
+        visibleSlidesSource,
+        minVisibleSlides,
+      ),
     });
   }
 
@@ -224,6 +256,7 @@ const resolveRuntimePropSettings = (
       field: fieldNames.durationAutoplay,
       provided: autoplayDurationSource,
       normalized: autoplayDuration,
+      unit: DURATION_UNIT,
       reason: getAutoplayDurationReason({
         source: autoplayDurationSource,
         normalizedAutoplayDuration,
@@ -238,6 +271,7 @@ const resolveRuntimePropSettings = (
       field: fieldNames.durationStep,
       provided: stepDurationSource,
       normalized: stepDuration,
+      unit: DURATION_UNIT,
       reason: getStepDurationReason({
         source: stepDurationSource,
         normalizedStepDuration,
@@ -251,6 +285,7 @@ const resolveRuntimePropSettings = (
       field: fieldNames.durationJump,
       provided: jumpDurationSource,
       normalized: jumpDuration,
+      unit: DURATION_UNIT,
       reason: getPositiveDurationReason(jumpDurationSource),
     });
   }
@@ -281,6 +316,7 @@ const resolveRuntimePropSettings = (
       field: fieldNames.intervalAutoplay,
       provided: autoplayIntervalSource,
       normalized: autoplayInterval,
+      unit: DURATION_UNIT,
       reason: getSafeAutoplayIntervalReason(autoplayIntervalSource),
     });
   }
@@ -315,7 +351,47 @@ const resolveRuntimePropSettings = (
   };
 };
 
-const resolveDefaultPropSettings = () =>
+const resolveLayoutSettings = () => {
+  const minVisibleSlides = normalizePositiveInteger(
+    RUNTIME_MIN_VISIBLE_SLIDES,
+    HARD_LAYOUT_SETTINGS.minVisibleSlides,
+    MIN_VISIBLE_SLIDES,
+  );
+  const renderWindowBufferMultiplier = normalizePositiveInteger(
+    RENDER_WINDOW_BUFFER_MULTIPLIER,
+    HARD_LAYOUT_SETTINGS.renderWindowBufferMultiplier,
+    MIN_RENDER_WINDOW_BUFFER_MULTIPLIER,
+  );
+  const corrections: DevNoticeEntry[] = [];
+
+  if (minVisibleSlides !== RUNTIME_MIN_VISIBLE_SLIDES) {
+    corrections.push({
+      field: "MIN_VISIBLE_SLIDES",
+      provided: RUNTIME_MIN_VISIBLE_SLIDES,
+      normalized: minVisibleSlides,
+      reason: getPositiveIntegerReason(RUNTIME_MIN_VISIBLE_SLIDES),
+    });
+  }
+
+  if (renderWindowBufferMultiplier !== RENDER_WINDOW_BUFFER_MULTIPLIER) {
+    corrections.push({
+      field: "RENDER_WINDOW_BUFFER_MULTIPLIER",
+      provided: RENDER_WINDOW_BUFFER_MULTIPLIER,
+      normalized: renderWindowBufferMultiplier,
+      reason: getPositiveIntegerReason(RENDER_WINDOW_BUFFER_MULTIPLIER),
+    });
+  }
+
+  return {
+    settings: {
+      minVisibleSlides,
+      renderWindowBufferMultiplier,
+    },
+    corrections,
+  };
+};
+
+const resolveDefaultPropSettings = (minVisibleSlides: number) =>
   resolveRuntimePropSettings(
     {
       visibleSlidesNr: DEFAULT_SETTINGS.visibleSlidesNr,
@@ -325,7 +401,7 @@ const resolveDefaultPropSettings = () =>
       intervalAutoplay: DEFAULT_SETTINGS.intervalAutoplay,
       errAltPlaceholder: DEFAULT_SETTINGS.errAltPlaceholder,
     },
-    createFallbackDefaultSettings(),
+    createFallbackDefaultSettings(minVisibleSlides),
     {
       visibleSlidesNr: "DEFAULT_SETTINGS.visibleSlidesNr",
       durationAutoplay: "DEFAULT_SETTINGS.durationAutoplay",
@@ -334,6 +410,7 @@ const resolveDefaultPropSettings = () =>
       intervalAutoplay: "DEFAULT_SETTINGS.intervalAutoplay",
       errAltPlaceholder: "DEFAULT_SETTINGS.errAltPlaceholder",
     },
+    minVisibleSlides,
   );
 
 const resolveRepeatedClickSettings = () => {
@@ -344,6 +421,10 @@ const resolveRepeatedClickSettings = () => {
   const speedMultiplier = normalizeRepeatedClickSpeedMultiplier(
     REPEATED_CLICK_SPEED_MULTIPLIER,
     HARD_REPEATED_CLICK_SETTINGS.speedMultiplier,
+  );
+  const epsilon = normalizePositiveNumber(
+    REPEATED_CLICK_EPSILON,
+    HARD_REPEATED_CLICK_SETTINGS.epsilon,
   );
   const corrections: DevNoticeEntry[] = [];
 
@@ -367,10 +448,20 @@ const resolveRepeatedClickSettings = () => {
     });
   }
 
+  if (epsilon !== REPEATED_CLICK_EPSILON) {
+    corrections.push({
+      field: "REPEATED_CLICK_EPSILON",
+      provided: REPEATED_CLICK_EPSILON,
+      normalized: epsilon,
+      reason: "expected a finite positive value",
+    });
+  }
+
   return {
     settings: {
       destinationPosition,
       speedMultiplier,
+      epsilon,
     },
     corrections,
   };
@@ -396,7 +487,8 @@ const resolveInteractionSettings = () => {
       field: "HOVER_PAUSE_DELAY",
       provided: HOVER_PAUSE_DELAY,
       normalized: hoverPauseDelay,
-      reason: "expected a finite non-negative delay",
+      unit: DURATION_UNIT,
+      reason: getNonNegativeDurationReason(HOVER_PAUSE_DELAY),
     });
   }
 
@@ -431,6 +523,10 @@ const resolveInteractionSettings = () => {
 };
 
 const resolveDragSettings = () => {
+  const cooldownMs = normalizeNonNegativeNumber(
+    DRAG_SETTINGS_CONFIG.COOLDOWN_MS,
+    HARD_DRAG_SETTINGS.COOLDOWN_MS,
+  );
   const resistance = normalizeNonNegativeNumber(
     DRAG_SETTINGS_CONFIG.RESISTANCE,
     HARD_DRAG_SETTINGS.RESISTANCE,
@@ -451,11 +547,37 @@ const resolveDragSettings = () => {
     DRAG_SETTINGS_CONFIG.EMA_ALPHA,
     HARD_DRAG_SETTINGS.EMA_ALPHA,
   );
+  const swipeVelocityLimit = normalizeNonNegativeNumber(
+    DRAG_SETTINGS_CONFIG.SWIPE_VELOCITY_LIMIT,
+    HARD_DRAG_SETTINGS.SWIPE_VELOCITY_LIMIT,
+  );
+  const quickSwipeMinOffset = normalizeNonNegativeNumber(
+    DRAG_SETTINGS_CONFIG.QUICK_SWIPE_MIN_OFFSET,
+    HARD_DRAG_SETTINGS.QUICK_SWIPE_MIN_OFFSET,
+  );
+  const minSwipeDistance = normalizeNonNegativeNumber(
+    DRAG_SETTINGS_CONFIG.MIN_SWIPE_DISTANCE,
+    HARD_DRAG_SETTINGS.MIN_SWIPE_DISTANCE,
+  );
   const swipeThresholdRatio = normalizeNonNegativeNumber(
     DRAG_SETTINGS_CONFIG.SWIPE_THRESHOLD_RATIO,
     HARD_DRAG_SETTINGS.SWIPE_THRESHOLD_RATIO,
   );
+  const releaseEpsilon = normalizePositiveNumber(
+    DRAG_SETTINGS_CONFIG.RELEASE_EPSILON,
+    HARD_DRAG_SETTINGS.RELEASE_EPSILON,
+  );
   const corrections: DevNoticeEntry[] = [];
+
+  if (cooldownMs !== DRAG_SETTINGS_CONFIG.COOLDOWN_MS) {
+    corrections.push({
+      field: "DRAG_SETTINGS_CONFIG.COOLDOWN_MS",
+      provided: DRAG_SETTINGS_CONFIG.COOLDOWN_MS,
+      normalized: cooldownMs,
+      unit: DURATION_UNIT,
+      reason: getNonNegativeDurationReason(DRAG_SETTINGS_CONFIG.COOLDOWN_MS),
+    });
+  }
 
   if (resistance !== DRAG_SETTINGS_CONFIG.RESISTANCE) {
     corrections.push({
@@ -504,6 +626,33 @@ const resolveDragSettings = () => {
     });
   }
 
+  if (swipeVelocityLimit !== DRAG_SETTINGS_CONFIG.SWIPE_VELOCITY_LIMIT) {
+    corrections.push({
+      field: "DRAG_SETTINGS_CONFIG.SWIPE_VELOCITY_LIMIT",
+      provided: DRAG_SETTINGS_CONFIG.SWIPE_VELOCITY_LIMIT,
+      normalized: swipeVelocityLimit,
+      reason: "expected a finite non-negative value",
+    });
+  }
+
+  if (quickSwipeMinOffset !== DRAG_SETTINGS_CONFIG.QUICK_SWIPE_MIN_OFFSET) {
+    corrections.push({
+      field: "DRAG_SETTINGS_CONFIG.QUICK_SWIPE_MIN_OFFSET",
+      provided: DRAG_SETTINGS_CONFIG.QUICK_SWIPE_MIN_OFFSET,
+      normalized: quickSwipeMinOffset,
+      reason: "expected a finite non-negative value",
+    });
+  }
+
+  if (minSwipeDistance !== DRAG_SETTINGS_CONFIG.MIN_SWIPE_DISTANCE) {
+    corrections.push({
+      field: "DRAG_SETTINGS_CONFIG.MIN_SWIPE_DISTANCE",
+      provided: DRAG_SETTINGS_CONFIG.MIN_SWIPE_DISTANCE,
+      normalized: minSwipeDistance,
+      reason: "expected a finite non-negative value",
+    });
+  }
+
   if (swipeThresholdRatio !== DRAG_SETTINGS_CONFIG.SWIPE_THRESHOLD_RATIO) {
     corrections.push({
       field: "DRAG_SETTINGS_CONFIG.SWIPE_THRESHOLD_RATIO",
@@ -513,14 +662,28 @@ const resolveDragSettings = () => {
     });
   }
 
+  if (releaseEpsilon !== DRAG_SETTINGS_CONFIG.RELEASE_EPSILON) {
+    corrections.push({
+      field: "DRAG_SETTINGS_CONFIG.RELEASE_EPSILON",
+      provided: DRAG_SETTINGS_CONFIG.RELEASE_EPSILON,
+      normalized: releaseEpsilon,
+      reason: "expected a finite positive value",
+    });
+  }
+
   return {
     settings: {
+      COOLDOWN_MS: cooldownMs,
+      INTENT_THRESHOLD: intentThreshold,
       RESISTANCE: resistance,
       RESISTANCE_CURVATURE: resistanceCurvature,
-      INTENT_THRESHOLD: intentThreshold,
       MAX_VELOCITY: maxVelocity,
       EMA_ALPHA: emaAlpha,
+      SWIPE_VELOCITY_LIMIT: swipeVelocityLimit,
+      QUICK_SWIPE_MIN_OFFSET: quickSwipeMinOffset,
+      MIN_SWIPE_DISTANCE: minSwipeDistance,
       SWIPE_THRESHOLD_RATIO: swipeThresholdRatio,
+      RELEASE_EPSILON: releaseEpsilon,
     },
     corrections,
   };
@@ -591,7 +754,8 @@ const resolveDragDurationRampSettings = () => {
       field: "DRAG_DURATION_RAMP_CONFIG.minDuration",
       provided: DRAG_DURATION_RAMP_CONFIG.minDuration,
       normalized: minDuration,
-      reason: "expected a finite positive duration",
+      unit: DURATION_UNIT,
+      reason: getPositiveDurationReason(DRAG_DURATION_RAMP_CONFIG.minDuration),
     });
   }
 
@@ -625,6 +789,10 @@ const resolveMotionSettings = () => {
     SNAP_BACK_DURATION,
     HARD_MOTION_SETTINGS.snapBackDuration,
   );
+  const epsilon = normalizePositiveNumber(
+    MOTION_EPSILON,
+    HARD_MOTION_SETTINGS.epsilon,
+  );
   const corrections: DevNoticeEntry[] = [];
 
   if (monotonicSpeedFactor !== MOTION_MONOTONIC_SPEED_FACTOR) {
@@ -641,7 +809,17 @@ const resolveMotionSettings = () => {
       field: "SNAP_BACK_DURATION",
       provided: SNAP_BACK_DURATION,
       normalized: snapBackDuration,
-      reason: "expected a finite positive duration",
+      unit: DURATION_UNIT,
+      reason: getPositiveDurationReason(SNAP_BACK_DURATION),
+    });
+  }
+
+  if (epsilon !== MOTION_EPSILON) {
+    corrections.push({
+      field: "MOTION_EPSILON",
+      provided: MOTION_EPSILON,
+      normalized: epsilon,
+      reason: "expected a finite positive value",
     });
   }
 
@@ -649,6 +827,7 @@ const resolveMotionSettings = () => {
     settings: {
       monotonicSpeedFactor,
       snapBackDuration,
+      epsilon,
     },
     corrections,
   };
@@ -657,7 +836,10 @@ const resolveMotionSettings = () => {
 export const resolveCarouselDiagnostic = (
   props: CarouselDiagnosticPropsInput,
 ): CarouselDiagnosticPayload => {
-  const defaultPropResolution = resolveDefaultPropSettings();
+  const layoutResolution = resolveLayoutSettings();
+  const defaultPropResolution = resolveDefaultPropSettings(
+    layoutResolution.settings.minVisibleSlides,
+  );
   const repeatedClickResolution = resolveRepeatedClickSettings();
   const interactionResolution = resolveInteractionSettings();
   const dragResolution = resolveDragSettings();
@@ -674,11 +856,13 @@ export const resolveCarouselDiagnostic = (
       intervalAutoplay: "intervalAutoplay",
       errAltPlaceholder: "errAltPlaceholder",
     },
+    layoutResolution.settings.minVisibleSlides,
   );
 
   return {
     settings: {
       ...propResolution.settings,
+      layoutSettings: layoutResolution.settings,
       repeatedClickSettings: repeatedClickResolution.settings,
       interactionSettings: interactionResolution.settings,
       dragSettings: dragResolution.settings,
@@ -686,6 +870,7 @@ export const resolveCarouselDiagnostic = (
       motionSettings: motionResolution.settings,
     },
     correctionEntries: [
+      ...layoutResolution.corrections,
       ...defaultPropResolution.corrections,
       ...repeatedClickResolution.corrections,
       ...interactionResolution.corrections,
