@@ -7,8 +7,6 @@ export const getTrackSlotSize = (
   viewport: HTMLElement,
   visibleSlidesNr: number,
 ) => {
-  if (visibleSlidesNr <= 0) return 0;
-
   const viewportWidth = viewport.offsetWidth;
   const styles = window.getComputedStyle(viewport);
   const gapValue =
@@ -38,7 +36,6 @@ export const getVirtualIndexFromDragOffset = ({
   if (!viewport) return fallback;
 
   const slotSize = getTrackSlotSize(viewport, visibleSlidesNr);
-  if (slotSize <= 0) return fallback;
 
   return baseVirtualIndex - dragOffset / slotSize;
 };

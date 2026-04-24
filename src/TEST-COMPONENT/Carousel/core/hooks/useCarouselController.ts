@@ -90,7 +90,6 @@ export function useCarouselController({
       if (!viewport) return 0;
 
       const slotSize = getTrackSlotSize(viewport, layout.clampedVisible);
-      if (slotSize <= 0) return 0;
 
       return -pointerVelocity / slotSize;
     },

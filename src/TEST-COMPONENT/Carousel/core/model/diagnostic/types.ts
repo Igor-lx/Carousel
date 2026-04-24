@@ -13,15 +13,14 @@ export interface CarouselRuntimePropSettings {
 }
 
 export interface CarouselLayoutSettings {
-  minVisibleSlides: number;
   renderWindowBufferMultiplier: number;
 }
 
 export interface CarouselRepeatedClickSettings {
   destinationPosition: number;
   speedMultiplier: number;
-  startAcceleration: number;
-  endDeceleration: number;
+  accelerationDistanceShare: number;
+  decelerationDistanceShare: number;
   epsilon: number;
 }
 

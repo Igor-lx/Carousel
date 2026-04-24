@@ -14,24 +14,16 @@ export const MIN_VISIBILITY_THRESHOLD = 0;
 export const MAX_VISIBILITY_THRESHOLD = 1;
 export const MIN_DRAG_EMA_ALPHA = 0;
 export const MAX_DRAG_EMA_ALPHA = 1;
-export const MIN_DRAG_DURATION_RATIO = 0;
-export const MAX_DRAG_DURATION_RATIO = 1;
 export const MIN_DRAG_INERTIA_BOOST = 1;
 export const MIN_DRAG_INERTIA_BOOST_RAMP_END_RATIO = 1;
 
 export const HARD_ERROR_ALT_PLACEHOLDER = "Downloading Error";
 
-export const HARD_LAYOUT_SETTINGS = {
-  minVisibleSlides: 1,
-  renderWindowBufferMultiplier: 2,
-} as const;
-
 export const HARD_REPEATED_CLICK_SETTINGS = {
   destinationPosition: 0.65,
   speedMultiplier: 3,
-  startAcceleration: 0.5,
-  endDeceleration: 0.5,
-  epsilon: 0.0001,
+  accelerationDistanceShare: 0.5,
+  decelerationDistanceShare: 0.5,
 } as const;
 
 export const HARD_INTERACTION_SETTINGS = {
@@ -54,17 +46,12 @@ export const HARD_DRAG_CONFIG = {
 } as const;
 
 export const HARD_DRAG_SPEED_CONFIG = {
-  inertiaBoostRampEndRatio: 1.35,
-  minDurationRatio: 0.14,
   minDuration: 220,
   inertiaBoost: 3,
   releaseAccelerationDistanceShare: 0.35,
   releaseDecelerationDistanceShare: 0.65,
 } as const;
 
-export const HARD_DRAG_RELEASE_EPSILON = 0.001;
-
 export const HARD_MOTION_SETTINGS = {
   snapBackDuration: 900,
-  epsilon: 0.0001,
 } as const;

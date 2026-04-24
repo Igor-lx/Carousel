@@ -10,7 +10,7 @@ import { usePerfectPageLayoutNotice } from "./usePerfectPageLayoutNotice";
 
 const DIAGNOSTIC_NOTICE_SCOPE = "CarouselDiagnostic";
 const DIAGNOSTIC_NOTICE_SUMMARY =
-  "Carousel diagnostic adjustments detected.";
+  "Carousel diagnostic notices detected.";
 const DIAGNOSTIC_MODE_BANNER = "DIAGNOSTIC MODE ON";
 
 const CarouselDiagnosticView = memo(() => {

@@ -3,6 +3,7 @@ import {
   DEFAULT_DRAG_CONFIG,
   DEFAULT_DRAG_SPEED_CONFIG,
 } from "../../../../../../shared";
+import { DRAG_INERTIA_BOOST_RAMP_END_RATIO } from "../constants";
 
 const CAROUSEL_DRAG_CONFIG_OVERRIDE: Partial<DragConfig> = {
   // После отпускания свайпа новые drag/click-жесты игнорируются на это время.
@@ -47,14 +48,6 @@ const CAROUSEL_DRAG_CONFIG_OVERRIDE: Partial<DragConfig> = {
 } as const;
 
 const CAROUSEL_DRAG_SPEED_CONFIG_OVERRIDE: Partial<DragSpeedConfig> = {
-  // Во сколько раз release должен быть быстрее обычного MOVE, чтобы inertiaBoost применился полностью.
-  // 1 = полный boost сразу после превышения normal-speed; 1.35 = полный boost при скорости на 35% выше normal MOVE.
-  inertiaBoostRampEndRatio: 1.15,
-
-  // Нижняя граница gesture-duration как доля от обычной duration этого же пути.
-  // Меньше значение -> быстрый release может завершаться заметно резче.
-  minDurationRatio: 0.14,
-
   // Абсолютная нижняя граница gesture-duration в миллисекундах.
   // Не дает даже очень быстрому flick превратиться в визуальный телепорт.
   minDuration: 200,
@@ -79,5 +72,6 @@ export const CAROUSEL_DRAG_CONFIG: Required<DragConfig> = {
 
 export const CAROUSEL_DRAG_SPEED_CONFIG: DragSpeedConfig = {
   ...DEFAULT_DRAG_SPEED_CONFIG,
+  inertiaBoostRampEndRatio: DRAG_INERTIA_BOOST_RAMP_END_RATIO,
   ...CAROUSEL_DRAG_SPEED_CONFIG_OVERRIDE,
 };

@@ -178,7 +178,6 @@ const Carousel = memo((props: CarouselProps) => {
   const hasPartialPageLayoutMismatch = hasPartialPageLayout(
     totalSlides,
     visibleSlidesCount,
-    layoutSettings.minVisibleSlides,
   );
   const didExtendPartialPageLayout =
     isLayoutClampingEnabled && hasPartialPageLayoutMismatch;
@@ -194,14 +193,12 @@ const Carousel = memo((props: CarouselProps) => {
         ? extendSlideRecordsToFullPages(
             baseSlideRecords,
             visibleSlidesCount,
-            layoutSettings.minVisibleSlides,
           )
         : baseSlideRecords,
     [
       didExtendPartialPageLayout,
       baseSlideRecords,
       visibleSlidesCount,
-      layoutSettings.minVisibleSlides,
     ],
   );
 
@@ -211,13 +208,11 @@ const Carousel = memo((props: CarouselProps) => {
         layoutSlideRecords,
         visibleSlidesCount,
         isFinite,
-        layoutSettings.minVisibleSlides,
       ),
     [
       layoutSlideRecords,
       visibleSlidesCount,
       isFinite,
-      layoutSettings.minVisibleSlides,
     ],
   );
 

@@ -12,8 +12,7 @@ export const getPageStart = (pageIndex: number, visibleSlidesNr: number) =>
 const getClampedVisibleSlidesCount = (
   slidesLength: number,
   visibleSlidesNr: number,
-  minVisibleSlides: number,
-) => Math.max(minVisibleSlides, Math.min(visibleSlidesNr, slidesLength));
+) => Math.min(visibleSlidesNr, slidesLength);
 
 const getSlideContentKey = (slideData: Slide) =>
   `${slideData.id}-${typeof slideData.content === "string" ? slideData.content : "obj"}`;
@@ -38,14 +37,12 @@ export const buildSlideRecords = (
 export const hasPartialPageLayout = (
   slidesLength: number,
   visibleSlidesNr: number,
-  minVisibleSlides: number,
 ): boolean => {
   if (slidesLength === 0) return false;
 
   const clampedVisibleCount = getClampedVisibleSlidesCount(
     slidesLength,
     visibleSlidesNr,
-    minVisibleSlides,
   );
 
   return slidesLength % clampedVisibleCount !== 0;
@@ -54,18 +51,16 @@ export const hasPartialPageLayout = (
 export const extendSlideRecordsToFullPages = (
   slideRecords: CarouselSlideRecord[],
   visibleSlidesNr: number,
-  minVisibleSlides: number,
 ): CarouselSlideRecord[] => {
   const length = slideRecords.length;
 
-  if (!hasPartialPageLayout(length, visibleSlidesNr, minVisibleSlides)) {
+  if (!hasPartialPageLayout(length, visibleSlidesNr)) {
     return slideRecords;
   }
 
   const clampedVisibleCount = getClampedVisibleSlidesCount(
     length,
     visibleSlidesNr,
-    minVisibleSlides,
   );
   const extendedLength =
     Math.ceil(length / clampedVisibleCount) * clampedVisibleCount;
@@ -85,13 +80,11 @@ export const getCarouselLayout = (
   slideRecords: CarouselSlideRecord[],
   visibleSlidesNr: number,
   isFinite: boolean,
-  minVisibleSlides: number,
 ): CarouselLayout => {
   const length = slideRecords.length;
   const clampedVisible = getClampedVisibleSlidesCount(
     length,
     visibleSlidesNr,
-    minVisibleSlides,
   );
   const canSlide = length > clampedVisible;
   const pageCount = Math.ceil(length / clampedVisible);

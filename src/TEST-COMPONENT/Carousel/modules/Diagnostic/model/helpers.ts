@@ -7,19 +7,12 @@ import {
 } from "../../../../../shared/value-resolution";
 import {
   HARD_ERROR_ALT_PLACEHOLDER,
-  MAX_DRAG_DURATION_RATIO,
-  MAX_DRAG_EMA_ALPHA,
   MAX_REPEATED_CLICK_DESTINATION_POSITION,
   MAX_REPEATED_CLICK_PROFILE_SHARE,
   MAX_VISIBILITY_THRESHOLD,
   MIN_AUTOPLAY_INTERVAL,
-  MIN_DRAG_DURATION_RATIO,
-  MIN_DRAG_EMA_ALPHA,
-  MIN_DRAG_INERTIA_BOOST,
-  MIN_DRAG_INERTIA_BOOST_RAMP_END_RATIO,
   MIN_REPEATED_CLICK_DESTINATION_POSITION,
   MIN_REPEATED_CLICK_PROFILE_SHARE,
-  MIN_REPEATED_CLICK_SPEED_MULTIPLIER,
   MIN_VISIBLE_SLIDES,
   MIN_VISIBILITY_THRESHOLD,
 } from "./contracts";
@@ -75,15 +68,6 @@ export const normalizeRepeatedClickDestination = (
     MAX_REPEATED_CLICK_DESTINATION_POSITION,
   );
 
-export const normalizeRepeatedClickSpeedMultiplier = (
-  value: unknown,
-  safeValue: number,
-) =>
-  Math.max(
-    MIN_REPEATED_CLICK_SPEED_MULTIPLIER,
-    normalizePositiveNumber(value, safeValue),
-  );
-
 export const normalizeRepeatedClickProfileShare = (
   value: unknown,
   safeValue: number,
@@ -114,43 +98,6 @@ export const normalizeAutoplayPaginationFactor = (
 
   return clampNumber(source, Number.EPSILON, 1 - Number.EPSILON);
 };
-
-export const normalizeDragEmaAlpha = (value: unknown, safeValue: number) =>
-  coerceClampedNumber(
-    value,
-    safeValue,
-    MIN_DRAG_EMA_ALPHA,
-    MAX_DRAG_EMA_ALPHA,
-  );
-
-export const normalizeDragDurationRatio = (
-  value: unknown,
-  safeValue: number,
-) =>
-  coerceClampedNumber(
-    value,
-    safeValue,
-    MIN_DRAG_DURATION_RATIO,
-    MAX_DRAG_DURATION_RATIO,
-  );
-
-export const normalizeDragInertiaBoost = (
-  value: unknown,
-  safeValue: number,
-) =>
-  Math.max(
-    MIN_DRAG_INERTIA_BOOST,
-    normalizePositiveNumber(value, safeValue),
-  );
-
-export const normalizeDragInertiaBoostRampEndRatio = (
-  value: unknown,
-  safeValue: number,
-) =>
-  Math.max(
-    MIN_DRAG_INERTIA_BOOST_RAMP_END_RATIO,
-    normalizePositiveNumber(value, safeValue),
-  );
 
 export const normalizeErrorAltPlaceholder = (
   value: unknown,

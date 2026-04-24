@@ -257,16 +257,16 @@ const normalizeProfileShare = (value: number) =>
   Number.isFinite(value) ? clamp(value, 0, 1) : 0;
 
 const getProfileShares = (
-  startAcceleration: number,
-  endDeceleration: number,
+  accelerationDistanceShare: number,
+  decelerationDistanceShare: number,
 ) => {
-  let accelerationShare = normalizeProfileShare(startAcceleration);
-  let decelerationShare = normalizeProfileShare(endDeceleration);
+  let accelerationShare = normalizeProfileShare(accelerationDistanceShare);
+  let decelerationShare = normalizeProfileShare(decelerationDistanceShare);
   const shapingShare = accelerationShare + decelerationShare;
 
   if (shapingShare > 1) {
-    accelerationShare /= shapingShare;
-    decelerationShare /= shapingShare;
+    accelerationShare = 0.5;
+    decelerationShare = 0.5;
   }
 
   return {
@@ -433,16 +433,16 @@ const createVelocityProfile = ({
   startSpeed,
   peakSpeed,
   endSpeed,
-  startAcceleration,
-  endDeceleration,
+  accelerationDistanceShare,
+  decelerationDistanceShare,
   targetDuration,
 }: {
   distance: number;
   startSpeed: number;
   peakSpeed: number;
   endSpeed: number;
-  startAcceleration: number;
-  endDeceleration: number;
+  accelerationDistanceShare: number;
+  decelerationDistanceShare: number;
   targetDuration?: number;
 }): VelocityProfile => {
   const safeDistance = Math.abs(distance);
@@ -453,7 +453,10 @@ const createVelocityProfile = ({
     accelerationShare,
     cruiseShare,
     decelerationShare,
-  } = getProfileShares(startAcceleration, endDeceleration);
+  } = getProfileShares(
+    accelerationDistanceShare,
+    decelerationDistanceShare,
+  );
   const durationBoundPeakSpeed =
     typeof targetDuration === "number" && targetDuration > 0
       ? solvePeakSpeedForDuration({
@@ -605,8 +608,8 @@ const createProfileSegment = ({
   currentVelocity,
   peakVelocity,
   endVelocity,
-  startAcceleration,
-  endDeceleration,
+  accelerationDistanceShare,
+  decelerationDistanceShare,
   targetDuration,
 }: {
   strategy: ProfileMotionSegment["strategy"];
@@ -616,8 +619,8 @@ const createProfileSegment = ({
   currentVelocity: number;
   peakVelocity: number;
   endVelocity: number;
-  startAcceleration: number;
-  endDeceleration: number;
+  accelerationDistanceShare: number;
+  decelerationDistanceShare: number;
   targetDuration?: number;
 }): ProfileMotionSegment => {
   const distance = to - from;
@@ -633,8 +636,8 @@ const createProfileSegment = ({
     startSpeed,
     peakSpeed,
     endSpeed: getSameDirectionSpeed(endVelocity, distance),
-    startAcceleration,
-    endDeceleration,
+    accelerationDistanceShare,
+    decelerationDistanceShare,
     targetDuration,
   });
 
@@ -902,8 +905,8 @@ export function useCarouselMotion({
       followUpDuration,
       stepDuration,
       repeatedClickSettings.speedMultiplier,
-      repeatedClickSettings.startAcceleration,
-      repeatedClickSettings.endDeceleration,
+      repeatedClickSettings.accelerationDistanceShare,
+      repeatedClickSettings.decelerationDistanceShare,
       dragSpeedConfig.releaseAccelerationDistanceShare,
       dragSpeedConfig.releaseDecelerationDistanceShare,
       dragSpeedConfig.inertiaBoost,
@@ -988,8 +991,12 @@ export function useCarouselMotion({
       getNormalMoveSpeed(size, stepDuration) ||
       getAverageSpeed(distance, duration);
     const normalVelocity = getSignedVelocity(normalMoveSpeed, distance);
+    const repeatedSpeedMultiplier = Math.max(
+      1,
+      repeatedClickSettings.speedMultiplier,
+    );
     const repeatedVelocity = getSignedVelocity(
-      normalMoveSpeed * repeatedClickSettings.speedMultiplier,
+      normalMoveSpeed * repeatedSpeedMultiplier,
       distance,
     );
     const gestureIntentSpeed = getSameDirectionSpeed(
@@ -1019,8 +1026,10 @@ export function useCarouselMotion({
         currentVelocity: nowState.velocity,
         peakVelocity: repeatedVelocity,
         endVelocity: repeatedEndVelocity,
-        startAcceleration: repeatedClickSettings.startAcceleration,
-        endDeceleration: repeatedClickSettings.endDeceleration,
+        accelerationDistanceShare:
+          repeatedClickSettings.accelerationDistanceShare,
+        decelerationDistanceShare:
+          repeatedClickSettings.decelerationDistanceShare,
         targetDuration: duration,
       });
     } else if (
@@ -1035,8 +1044,10 @@ export function useCarouselMotion({
         currentVelocity: gestureReleaseMotionVelocity,
         peakVelocity: gesturePeakVelocity,
         endVelocity: 0,
-        startAcceleration: dragSpeedConfig.releaseAccelerationDistanceShare,
-        endDeceleration: dragSpeedConfig.releaseDecelerationDistanceShare,
+        accelerationDistanceShare:
+          dragSpeedConfig.releaseAccelerationDistanceShare,
+        decelerationDistanceShare:
+          dragSpeedConfig.releaseDecelerationDistanceShare,
         targetDuration: duration,
       });
     } else if (isRepeatedFollowUp) {
@@ -1048,8 +1059,9 @@ export function useCarouselMotion({
         currentVelocity: nowState.velocity,
         peakVelocity: normalVelocity,
         endVelocity: 0,
-        startAcceleration: 0,
-        endDeceleration: repeatedClickSettings.endDeceleration,
+        accelerationDistanceShare: 0,
+        decelerationDistanceShare:
+          repeatedClickSettings.decelerationDistanceShare,
       });
     } else if (
       reason === "click" &&
@@ -1064,8 +1076,8 @@ export function useCarouselMotion({
         currentVelocity: nowState.velocity,
         peakVelocity: normalVelocity,
         endVelocity: 0,
-        startAcceleration: 0,
-        endDeceleration: 1,
+        accelerationDistanceShare: 0,
+        decelerationDistanceShare: 1,
         targetDuration: duration,
       });
     } else {
@@ -1118,9 +1130,9 @@ export function useCarouselMotion({
     isMoving,
     readCurrentState,
     reason,
-    repeatedClickSettings.endDeceleration,
+    repeatedClickSettings.decelerationDistanceShare,
     repeatedClickSettings.speedMultiplier,
-    repeatedClickSettings.startAcceleration,
+    repeatedClickSettings.accelerationDistanceShare,
     size,
     startVirtualIndex,
     stepDuration,

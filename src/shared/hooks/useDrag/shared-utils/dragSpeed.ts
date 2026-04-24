@@ -1,6 +1,5 @@
 export interface DragSpeedConfig {
   inertiaBoostRampEndRatio: number;
-  minDurationRatio: number;
   minDuration: number;
   inertiaBoost: number;
   releaseAccelerationDistanceShare: number;
@@ -9,7 +8,6 @@ export interface DragSpeedConfig {
 
 export const DEFAULT_DRAG_SPEED_CONFIG: DragSpeedConfig = {
   inertiaBoostRampEndRatio: 1.35,
-  minDurationRatio: 0.3,
   minDuration: 240,
   inertiaBoost: 1,
   releaseAccelerationDistanceShare: 0.35,
@@ -117,10 +115,7 @@ export const mapReleaseVelocityToDuration = ({
 
   const minGestureDuration = Math.min(
     normalDuration,
-    Math.max(
-      resolvedDragSpeedConfig.minDuration,
-      normalDuration * resolvedDragSpeedConfig.minDurationRatio,
-    ),
+    Math.max(0, resolvedDragSpeedConfig.minDuration),
   );
   const velocityDuration = safeDistance / targetSpeed;
 

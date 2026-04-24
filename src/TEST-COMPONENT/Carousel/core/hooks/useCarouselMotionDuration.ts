@@ -62,7 +62,9 @@ export function useCarouselMotionDuration({
   );
 
   const repeatedClickAdvanceDuration = useMemo(
-    () => clickSegmentDuration / repeatedClickSettings.speedMultiplier,
+    () =>
+      clickSegmentDuration /
+      Math.max(1, repeatedClickSettings.speedMultiplier),
     [clickSegmentDuration, repeatedClickSettings.speedMultiplier],
   );
 

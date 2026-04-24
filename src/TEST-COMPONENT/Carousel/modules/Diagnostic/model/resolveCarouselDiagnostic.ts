@@ -5,15 +5,15 @@ import {
   CAROUSEL_DRAG_RELEASE_EPSILON,
   CAROUSEL_DRAG_SPEED_CONFIG,
   DEFAULT_SETTINGS,
+  DRAG_INERTIA_BOOST_RAMP_END_RATIO,
   HOVER_PAUSE_DELAY,
-  MIN_VISIBLE_SLIDES as RUNTIME_MIN_VISIBLE_SLIDES,
   MOTION_EPSILON,
   RENDER_WINDOW_BUFFER_MULTIPLIER,
+  REPEATED_CLICK_ACCELERATION_DISTANCE_SHARE,
+  REPEATED_CLICK_DECELERATION_DISTANCE_SHARE,
   REPEATED_CLICK_DESTINATION_POSITION,
-  REPEATED_CLICK_END_DECELERATION,
   REPEATED_CLICK_EPSILON,
   REPEATED_CLICK_SPEED_MULTIPLIER,
-  REPEATED_CLICK_START_ACCELERATION,
   SNAP_BACK_DURATION,
   VISIBILITY_THRESHOLD,
 } from "../../../core/model/config";
@@ -24,21 +24,17 @@ import type {
 } from "../../../core/model/diagnostic";
 import {
   HARD_DRAG_CONFIG,
-  HARD_DRAG_RELEASE_EPSILON,
   HARD_DRAG_SPEED_CONFIG,
   HARD_ERROR_ALT_PLACEHOLDER,
   HARD_INTERACTION_SETTINGS,
-  HARD_LAYOUT_SETTINGS,
   HARD_MOTION_SETTINGS,
   HARD_REPEATED_CLICK_SETTINGS,
-  MAX_DRAG_DURATION_RATIO,
   MAX_DRAG_EMA_ALPHA,
   MAX_REASONABLE_JUMP_DURATION,
   MAX_REPEATED_CLICK_DESTINATION_POSITION,
   MAX_REPEATED_CLICK_PROFILE_SHARE,
   MAX_VISIBILITY_THRESHOLD,
   MIN_AUTOPLAY_INTERVAL,
-  MIN_DRAG_DURATION_RATIO,
   MIN_DRAG_EMA_ALPHA,
   MIN_DRAG_INERTIA_BOOST,
   MIN_DRAG_INERTIA_BOOST_RAMP_END_RATIO,
@@ -54,18 +50,12 @@ import {
   isValueProvided,
   normalizeAutoplayInterval,
   normalizeAutoplayPaginationFactor,
-  normalizeDragDurationRatio,
-  normalizeDragEmaAlpha,
-  normalizeDragInertiaBoost,
-  normalizeDragInertiaBoostRampEndRatio,
   normalizeErrorAltPlaceholder,
   normalizeNonNegativeNumber,
   normalizePositiveDuration,
-  normalizePositiveInteger,
   normalizePositiveNumber,
   normalizeRepeatedClickDestination,
   normalizeRepeatedClickProfileShare,
-  normalizeRepeatedClickSpeedMultiplier,
   normalizeVisibilityThreshold,
   normalizeVisibleSlidesCount,
 } from "./helpers";
@@ -74,6 +64,29 @@ const isFiniteNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 
 const DURATION_UNIT = "ms";
+const OVERFLOW_PROFILE_DISTANCE_SHARES_NORMALIZED = {
+  accelerationDistanceShare: 0.5,
+  decelerationDistanceShare: 0.5,
+} as const;
+
+const getInternalConstantNoticeMessage = (reason: string) =>
+  `${reason}; Diagnostic reports this internal constant but does not normalize runtime behavior`;
+
+const isPositiveFiniteNumber = (value: unknown): value is number =>
+  isFiniteNumber(value) && value > 0;
+
+const isNonNegativeFiniteNumber = (value: unknown): value is number =>
+  isFiniteNumber(value) && value >= 0;
+
+const isFiniteNumberInRange = (
+  value: unknown,
+  minValue: number,
+  maxValue: number,
+) =>
+  isFiniteNumber(value) && value >= minValue && value <= maxValue;
+
+const isPositiveIntegerAtLeast = (value: unknown, minValue: number) =>
+  isFiniteNumber(value) && Number.isInteger(value) && value >= minValue;
 
 const joinReasons = (...reasons: Array<string | undefined>) => {
   const definedReasons = reasons.filter(Boolean);
@@ -362,46 +375,33 @@ const resolveRuntimePropSettings = (
 };
 
 const resolveLayoutSettings = () => {
-  const minVisibleSlides = normalizePositiveInteger(
-    RUNTIME_MIN_VISIBLE_SLIDES,
-    HARD_LAYOUT_SETTINGS.minVisibleSlides,
-    MIN_VISIBLE_SLIDES,
-  );
-  const renderWindowBufferMultiplier = normalizePositiveInteger(
-    RENDER_WINDOW_BUFFER_MULTIPLIER,
-    HARD_LAYOUT_SETTINGS.renderWindowBufferMultiplier,
-    MIN_RENDER_WINDOW_BUFFER_MULTIPLIER,
-  );
+  const renderWindowBufferMultiplier = RENDER_WINDOW_BUFFER_MULTIPLIER;
   const corrections: DevNoticeEntry[] = [];
 
-  if (minVisibleSlides !== RUNTIME_MIN_VISIBLE_SLIDES) {
-    corrections.push({
-      field: "MIN_VISIBLE_SLIDES",
-      provided: RUNTIME_MIN_VISIBLE_SLIDES,
-      normalized: minVisibleSlides,
-      reason: getPositiveIntegerReason(RUNTIME_MIN_VISIBLE_SLIDES),
-    });
-  }
-
-  if (renderWindowBufferMultiplier !== RENDER_WINDOW_BUFFER_MULTIPLIER) {
+  if (
+    !isPositiveIntegerAtLeast(
+      RENDER_WINDOW_BUFFER_MULTIPLIER,
+      MIN_RENDER_WINDOW_BUFFER_MULTIPLIER,
+    )
+  ) {
     corrections.push({
       field: "RENDER_WINDOW_BUFFER_MULTIPLIER",
       provided: RENDER_WINDOW_BUFFER_MULTIPLIER,
-      normalized: renderWindowBufferMultiplier,
-      reason: getPositiveIntegerReason(RENDER_WINDOW_BUFFER_MULTIPLIER),
+      message: getInternalConstantNoticeMessage(
+        `expected an integer greater than or equal to ${MIN_RENDER_WINDOW_BUFFER_MULTIPLIER}`,
+      ),
     });
   }
 
   return {
     settings: {
-      minVisibleSlides,
       renderWindowBufferMultiplier,
     },
     corrections,
   };
 };
 
-const resolveDefaultPropSettings = (minVisibleSlides: number) =>
+const resolveDefaultPropSettings = () =>
   resolveRuntimePropSettings(
     {
       visibleSlidesNr: DEFAULT_SETTINGS.visibleSlidesNr,
@@ -411,7 +411,7 @@ const resolveDefaultPropSettings = (minVisibleSlides: number) =>
       intervalAutoplay: DEFAULT_SETTINGS.intervalAutoplay,
       errAltPlaceholder: DEFAULT_SETTINGS.errAltPlaceholder,
     },
-    createFallbackDefaultSettings(minVisibleSlides),
+    createFallbackDefaultSettings(MIN_VISIBLE_SLIDES),
     {
       visibleSlidesNr: "DEFAULT_SETTINGS.visibleSlidesNr",
       durationAutoplay: "DEFAULT_SETTINGS.durationAutoplay",
@@ -420,7 +420,7 @@ const resolveDefaultPropSettings = (minVisibleSlides: number) =>
       intervalAutoplay: "DEFAULT_SETTINGS.intervalAutoplay",
       errAltPlaceholder: "DEFAULT_SETTINGS.errAltPlaceholder",
     },
-    minVisibleSlides,
+    MIN_VISIBLE_SLIDES,
   );
 
 const resolveRepeatedClickSettings = () => {
@@ -428,22 +428,16 @@ const resolveRepeatedClickSettings = () => {
     REPEATED_CLICK_DESTINATION_POSITION,
     HARD_REPEATED_CLICK_SETTINGS.destinationPosition,
   );
-  const speedMultiplier = normalizeRepeatedClickSpeedMultiplier(
-    REPEATED_CLICK_SPEED_MULTIPLIER,
-    HARD_REPEATED_CLICK_SETTINGS.speedMultiplier,
+  const speedMultiplier = REPEATED_CLICK_SPEED_MULTIPLIER;
+  const accelerationDistanceShare = normalizeRepeatedClickProfileShare(
+    REPEATED_CLICK_ACCELERATION_DISTANCE_SHARE,
+    HARD_REPEATED_CLICK_SETTINGS.accelerationDistanceShare,
   );
-  const startAcceleration = normalizeRepeatedClickProfileShare(
-    REPEATED_CLICK_START_ACCELERATION,
-    HARD_REPEATED_CLICK_SETTINGS.startAcceleration,
+  const decelerationDistanceShare = normalizeRepeatedClickProfileShare(
+    REPEATED_CLICK_DECELERATION_DISTANCE_SHARE,
+    HARD_REPEATED_CLICK_SETTINGS.decelerationDistanceShare,
   );
-  const endDeceleration = normalizeRepeatedClickProfileShare(
-    REPEATED_CLICK_END_DECELERATION,
-    HARD_REPEATED_CLICK_SETTINGS.endDeceleration,
-  );
-  const epsilon = normalizePositiveNumber(
-    REPEATED_CLICK_EPSILON,
-    HARD_REPEATED_CLICK_SETTINGS.epsilon,
-  );
+  const epsilon = REPEATED_CLICK_EPSILON;
   const corrections: DevNoticeEntry[] = [];
 
   if (destinationPosition !== REPEATED_CLICK_DESTINATION_POSITION) {
@@ -457,43 +451,65 @@ const resolveRepeatedClickSettings = () => {
     });
   }
 
-  if (speedMultiplier !== REPEATED_CLICK_SPEED_MULTIPLIER) {
+  if (
+    !isFiniteNumber(REPEATED_CLICK_SPEED_MULTIPLIER) ||
+    REPEATED_CLICK_SPEED_MULTIPLIER < MIN_REPEATED_CLICK_SPEED_MULTIPLIER
+  ) {
     corrections.push({
       field: "REPEATED_CLICK_SPEED_MULTIPLIER",
       provided: REPEATED_CLICK_SPEED_MULTIPLIER,
-      normalized: speedMultiplier,
-      reason: `expected a finite value greater than or equal to ${MIN_REPEATED_CLICK_SPEED_MULTIPLIER}`,
+      message: getInternalConstantNoticeMessage(
+        `expected a finite value greater than or equal to ${MIN_REPEATED_CLICK_SPEED_MULTIPLIER}`,
+      ),
     });
   }
 
-  if (startAcceleration !== REPEATED_CLICK_START_ACCELERATION) {
+  if (
+    accelerationDistanceShare !== REPEATED_CLICK_ACCELERATION_DISTANCE_SHARE
+  ) {
     corrections.push({
-      field: "REPEATED_CLICK_START_ACCELERATION",
-      provided: REPEATED_CLICK_START_ACCELERATION,
-      normalized: startAcceleration,
-      reason: isFiniteNumber(REPEATED_CLICK_START_ACCELERATION)
+      field: "REPEATED_CLICK_ACCELERATION_DISTANCE_SHARE",
+      provided: REPEATED_CLICK_ACCELERATION_DISTANCE_SHARE,
+      normalized: accelerationDistanceShare,
+      reason: isFiniteNumber(REPEATED_CLICK_ACCELERATION_DISTANCE_SHARE)
         ? `clamped to [${MIN_REPEATED_CLICK_PROFILE_SHARE}, ${MAX_REPEATED_CLICK_PROFILE_SHARE}]`
         : "expected a finite value between 0 and 1",
     });
   }
 
-  if (endDeceleration !== REPEATED_CLICK_END_DECELERATION) {
+  if (
+    decelerationDistanceShare !== REPEATED_CLICK_DECELERATION_DISTANCE_SHARE
+  ) {
     corrections.push({
-      field: "REPEATED_CLICK_END_DECELERATION",
-      provided: REPEATED_CLICK_END_DECELERATION,
-      normalized: endDeceleration,
-      reason: isFiniteNumber(REPEATED_CLICK_END_DECELERATION)
+      field: "REPEATED_CLICK_DECELERATION_DISTANCE_SHARE",
+      provided: REPEATED_CLICK_DECELERATION_DISTANCE_SHARE,
+      normalized: decelerationDistanceShare,
+      reason: isFiniteNumber(REPEATED_CLICK_DECELERATION_DISTANCE_SHARE)
         ? `clamped to [${MIN_REPEATED_CLICK_PROFILE_SHARE}, ${MAX_REPEATED_CLICK_PROFILE_SHARE}]`
         : "expected a finite value between 0 and 1",
     });
   }
 
-  if (epsilon !== REPEATED_CLICK_EPSILON) {
+  if (accelerationDistanceShare + decelerationDistanceShare > 1) {
+    corrections.push({
+      field: "REPEATED_CLICK_PROFILE_DISTANCE_SHARES",
+      provided: {
+        accelerationDistanceShare,
+        decelerationDistanceShare,
+      },
+      normalized: OVERFLOW_PROFILE_DISTANCE_SHARES_NORMALIZED,
+      reason:
+        "start + end distance shares exceed 1; runtime uses an even 50/50 acceleration/deceleration split with no cruise zone",
+    });
+  }
+
+  if (!isPositiveFiniteNumber(REPEATED_CLICK_EPSILON)) {
     corrections.push({
       field: "REPEATED_CLICK_EPSILON",
       provided: REPEATED_CLICK_EPSILON,
-      normalized: epsilon,
-      reason: "expected a finite positive value",
+      message: getInternalConstantNoticeMessage(
+        "expected a finite positive value",
+      ),
     });
   }
 
@@ -501,8 +517,8 @@ const resolveRepeatedClickSettings = () => {
     settings: {
       destinationPosition,
       speedMultiplier,
-      startAcceleration,
-      endDeceleration,
+      accelerationDistanceShare,
+      decelerationDistanceShare,
       epsilon,
     },
     corrections,
@@ -569,14 +585,8 @@ const resolveDragConfig = () => {
     CAROUSEL_DRAG_CONFIG.COOLDOWN_MS,
     HARD_DRAG_CONFIG.COOLDOWN_MS,
   );
-  const resistance = normalizeNonNegativeNumber(
-    CAROUSEL_DRAG_CONFIG.RESISTANCE,
-    HARD_DRAG_CONFIG.RESISTANCE,
-  );
-  const resistanceCurvature = normalizeNonNegativeNumber(
-    CAROUSEL_DRAG_CONFIG.RESISTANCE_CURVATURE,
-    HARD_DRAG_CONFIG.RESISTANCE_CURVATURE,
-  );
+  const resistance = CAROUSEL_DRAG_CONFIG.RESISTANCE;
+  const resistanceCurvature = CAROUSEL_DRAG_CONFIG.RESISTANCE_CURVATURE;
   const intentThreshold = normalizeNonNegativeNumber(
     CAROUSEL_DRAG_CONFIG.INTENT_THRESHOLD,
     HARD_DRAG_CONFIG.INTENT_THRESHOLD,
@@ -585,10 +595,7 @@ const resolveDragConfig = () => {
     CAROUSEL_DRAG_CONFIG.MAX_VELOCITY,
     HARD_DRAG_CONFIG.MAX_VELOCITY,
   );
-  const emaAlpha = normalizeDragEmaAlpha(
-    CAROUSEL_DRAG_CONFIG.EMA_ALPHA,
-    HARD_DRAG_CONFIG.EMA_ALPHA,
-  );
+  const emaAlpha = CAROUSEL_DRAG_CONFIG.EMA_ALPHA;
   const swipeVelocityLimit = normalizeNonNegativeNumber(
     CAROUSEL_DRAG_CONFIG.SWIPE_VELOCITY_LIMIT,
     HARD_DRAG_CONFIG.SWIPE_VELOCITY_LIMIT,
@@ -617,21 +624,23 @@ const resolveDragConfig = () => {
     });
   }
 
-  if (resistance !== CAROUSEL_DRAG_CONFIG.RESISTANCE) {
+  if (!isFiniteNumberInRange(CAROUSEL_DRAG_CONFIG.RESISTANCE, 0, 1)) {
     corrections.push({
       field: "CAROUSEL_DRAG_CONFIG.RESISTANCE",
       provided: CAROUSEL_DRAG_CONFIG.RESISTANCE,
-      normalized: resistance,
-      reason: "expected a finite non-negative value",
+      message: getInternalConstantNoticeMessage(
+        "expected a finite value between 0 and 1",
+      ),
     });
   }
 
-  if (resistanceCurvature !== CAROUSEL_DRAG_CONFIG.RESISTANCE_CURVATURE) {
+  if (!isNonNegativeFiniteNumber(CAROUSEL_DRAG_CONFIG.RESISTANCE_CURVATURE)) {
     corrections.push({
       field: "CAROUSEL_DRAG_CONFIG.RESISTANCE_CURVATURE",
       provided: CAROUSEL_DRAG_CONFIG.RESISTANCE_CURVATURE,
-      normalized: resistanceCurvature,
-      reason: "expected a finite non-negative value",
+      message: getInternalConstantNoticeMessage(
+        "expected a finite non-negative value",
+      ),
     });
   }
 
@@ -653,14 +662,19 @@ const resolveDragConfig = () => {
     });
   }
 
-  if (emaAlpha !== CAROUSEL_DRAG_CONFIG.EMA_ALPHA) {
+  if (
+    !isFiniteNumberInRange(
+      CAROUSEL_DRAG_CONFIG.EMA_ALPHA,
+      MIN_DRAG_EMA_ALPHA,
+      MAX_DRAG_EMA_ALPHA,
+    )
+  ) {
     corrections.push({
       field: "CAROUSEL_DRAG_CONFIG.EMA_ALPHA",
       provided: CAROUSEL_DRAG_CONFIG.EMA_ALPHA,
-      normalized: emaAlpha,
-      reason: isFiniteNumber(CAROUSEL_DRAG_CONFIG.EMA_ALPHA)
-        ? `clamped to [${MIN_DRAG_EMA_ALPHA}, ${MAX_DRAG_EMA_ALPHA}]`
-        : "expected a finite value between 0 and 1",
+      message: getInternalConstantNoticeMessage(
+        `expected a finite value between ${MIN_DRAG_EMA_ALPHA} and ${MAX_DRAG_EMA_ALPHA}`,
+      ),
     });
   }
 
@@ -718,22 +732,13 @@ const resolveDragConfig = () => {
 };
 
 const resolveDragSpeedConfig = () => {
-  const inertiaBoostRampEndRatio = normalizeDragInertiaBoostRampEndRatio(
-    CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoostRampEndRatio,
-    HARD_DRAG_SPEED_CONFIG.inertiaBoostRampEndRatio,
-  );
-  const minDurationRatio = normalizeDragDurationRatio(
-    CAROUSEL_DRAG_SPEED_CONFIG.minDurationRatio,
-    HARD_DRAG_SPEED_CONFIG.minDurationRatio,
-  );
+  const inertiaBoostRampEndRatio =
+    CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoostRampEndRatio;
   const minDuration = normalizePositiveDuration(
     CAROUSEL_DRAG_SPEED_CONFIG.minDuration,
     HARD_DRAG_SPEED_CONFIG.minDuration,
   );
-  const inertiaBoost = normalizeDragInertiaBoost(
-    CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost,
-    HARD_DRAG_SPEED_CONFIG.inertiaBoost,
-  );
+  const inertiaBoost = CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost;
   const releaseAccelerationDistanceShare = normalizeRepeatedClickProfileShare(
     CAROUSEL_DRAG_SPEED_CONFIG.releaseAccelerationDistanceShare,
     HARD_DRAG_SPEED_CONFIG.releaseAccelerationDistanceShare,
@@ -745,25 +750,16 @@ const resolveDragSpeedConfig = () => {
   const corrections: DevNoticeEntry[] = [];
 
   if (
-    inertiaBoostRampEndRatio !==
-    CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoostRampEndRatio
+    !isFiniteNumber(DRAG_INERTIA_BOOST_RAMP_END_RATIO) ||
+    DRAG_INERTIA_BOOST_RAMP_END_RATIO <
+      MIN_DRAG_INERTIA_BOOST_RAMP_END_RATIO
   ) {
     corrections.push({
-      field: "CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoostRampEndRatio",
-      provided: CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoostRampEndRatio,
-      normalized: inertiaBoostRampEndRatio,
-      reason: `expected a finite value greater than or equal to ${MIN_DRAG_INERTIA_BOOST_RAMP_END_RATIO}`,
-    });
-  }
-
-  if (minDurationRatio !== CAROUSEL_DRAG_SPEED_CONFIG.minDurationRatio) {
-    corrections.push({
-      field: "CAROUSEL_DRAG_SPEED_CONFIG.minDurationRatio",
-      provided: CAROUSEL_DRAG_SPEED_CONFIG.minDurationRatio,
-      normalized: minDurationRatio,
-      reason: isFiniteNumber(CAROUSEL_DRAG_SPEED_CONFIG.minDurationRatio)
-        ? `clamped to [${MIN_DRAG_DURATION_RATIO}, ${MAX_DRAG_DURATION_RATIO}]`
-        : "expected a finite value between 0 and 1",
+      field: "DRAG_INERTIA_BOOST_RAMP_END_RATIO",
+      provided: DRAG_INERTIA_BOOST_RAMP_END_RATIO,
+      message: getInternalConstantNoticeMessage(
+        `expected a finite value greater than or equal to ${MIN_DRAG_INERTIA_BOOST_RAMP_END_RATIO}`,
+      ),
     });
   }
 
@@ -777,12 +773,16 @@ const resolveDragSpeedConfig = () => {
     });
   }
 
-  if (inertiaBoost !== CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost) {
+  if (
+    !isFiniteNumber(CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost) ||
+    CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost < MIN_DRAG_INERTIA_BOOST
+  ) {
     corrections.push({
       field: "CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost",
       provided: CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost,
-      normalized: inertiaBoost,
-      reason: `expected a finite value greater than or equal to ${MIN_DRAG_INERTIA_BOOST}`,
+      message: getInternalConstantNoticeMessage(
+        `expected a finite value greater than or equal to ${MIN_DRAG_INERTIA_BOOST}`,
+      ),
     });
   }
 
@@ -818,10 +818,29 @@ const resolveDragSpeedConfig = () => {
     });
   }
 
+  if (
+    releaseAccelerationDistanceShare + releaseDecelerationDistanceShare > 1
+  ) {
+    corrections.push({
+      field: "CAROUSEL_DRAG_SPEED_CONFIG.releaseProfileDistanceShares",
+      provided: {
+        releaseAccelerationDistanceShare,
+        releaseDecelerationDistanceShare,
+      },
+      normalized: {
+        releaseAccelerationDistanceShare:
+          OVERFLOW_PROFILE_DISTANCE_SHARES_NORMALIZED.accelerationDistanceShare,
+        releaseDecelerationDistanceShare:
+          OVERFLOW_PROFILE_DISTANCE_SHARES_NORMALIZED.decelerationDistanceShare,
+      },
+      reason:
+        "start + end release distance shares exceed 1; runtime uses an even 50/50 acceleration/deceleration split with no cruise zone",
+    });
+  }
+
   return {
     settings: {
       inertiaBoostRampEndRatio,
-      minDurationRatio,
       minDuration,
       inertiaBoost,
       releaseAccelerationDistanceShare,
@@ -832,18 +851,16 @@ const resolveDragSpeedConfig = () => {
 };
 
 const resolveDragReleaseEpsilon = () => {
-  const dragReleaseEpsilon = normalizePositiveNumber(
-    CAROUSEL_DRAG_RELEASE_EPSILON,
-    HARD_DRAG_RELEASE_EPSILON,
-  );
+  const dragReleaseEpsilon = CAROUSEL_DRAG_RELEASE_EPSILON;
   const corrections: DevNoticeEntry[] = [];
 
-  if (dragReleaseEpsilon !== CAROUSEL_DRAG_RELEASE_EPSILON) {
+  if (!isPositiveFiniteNumber(CAROUSEL_DRAG_RELEASE_EPSILON)) {
     corrections.push({
       field: "CAROUSEL_DRAG_RELEASE_EPSILON",
       provided: CAROUSEL_DRAG_RELEASE_EPSILON,
-      normalized: dragReleaseEpsilon,
-      reason: "expected a finite positive value",
+      message: getInternalConstantNoticeMessage(
+        "expected a finite positive value",
+      ),
     });
   }
 
@@ -858,10 +875,7 @@ const resolveMotionSettings = () => {
     SNAP_BACK_DURATION,
     HARD_MOTION_SETTINGS.snapBackDuration,
   );
-  const epsilon = normalizePositiveNumber(
-    MOTION_EPSILON,
-    HARD_MOTION_SETTINGS.epsilon,
-  );
+  const epsilon = MOTION_EPSILON;
   const corrections: DevNoticeEntry[] = [];
 
   if (snapBackDuration !== SNAP_BACK_DURATION) {
@@ -874,12 +888,13 @@ const resolveMotionSettings = () => {
     });
   }
 
-  if (epsilon !== MOTION_EPSILON) {
+  if (!isPositiveFiniteNumber(MOTION_EPSILON)) {
     corrections.push({
       field: "MOTION_EPSILON",
       provided: MOTION_EPSILON,
-      normalized: epsilon,
-      reason: "expected a finite positive value",
+      message: getInternalConstantNoticeMessage(
+        "expected a finite positive value",
+      ),
     });
   }
 
@@ -896,9 +911,7 @@ export const resolveCarouselDiagnostic = (
   props: CarouselDiagnosticPropsInput,
 ): CarouselDiagnosticPayload => {
   const layoutResolution = resolveLayoutSettings();
-  const defaultPropResolution = resolveDefaultPropSettings(
-    layoutResolution.settings.minVisibleSlides,
-  );
+  const defaultPropResolution = resolveDefaultPropSettings();
   const repeatedClickResolution = resolveRepeatedClickSettings();
   const interactionResolution = resolveInteractionSettings();
   const dragConfigResolution = resolveDragConfig();
@@ -916,7 +929,7 @@ export const resolveCarouselDiagnostic = (
       intervalAutoplay: "intervalAutoplay",
       errAltPlaceholder: "errAltPlaceholder",
     },
-    layoutResolution.settings.minVisibleSlides,
+    MIN_VISIBLE_SLIDES,
   );
 
   return {

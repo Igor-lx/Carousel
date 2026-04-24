@@ -8,11 +8,11 @@ export const REPEATED_CLICK_SPEED_MULTIPLIER = 6;
 
 // Доля расстояния repeated-click пролета для разгона от текущей скорости к repeated-speed.
 // Это доля пути, а не времени: 0.2 означает первые 20% repeated-сегмента.
-export const REPEATED_CLICK_START_ACCELERATION = 0.1;
+export const REPEATED_CLICK_ACCELERATION_DISTANCE_SHARE = 0.1;
 
 // Доля расстояния repeated-click пролета для торможения к штатной скорости MOVE.
 // Это доля пути от конца repeated-сегмента: 0.5 означает последние 50% repeated-сегмента.
-export const REPEATED_CLICK_END_DECELERATION = 0.7;
+export const REPEATED_CLICK_DECELERATION_DISTANCE_SHARE = 0.7;
 
 // Duration snap-back движения после отпуска жеста, если target не переключается.
 export const SNAP_BACK_DURATION = 900;
