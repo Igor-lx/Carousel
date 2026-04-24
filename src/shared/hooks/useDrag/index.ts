@@ -7,7 +7,7 @@ export {
 export {
   DEFAULT_DRAG_SPEED_CONFIG,
   scaleVelocityToInertia,
-  mapVelocityToDuration,
+  mapReleaseVelocityToDuration,
 } from "./shared-utils/dragSpeed";
 
 export type { DragConfig } from "./model/types";

@@ -21,6 +21,9 @@ export const DEFAULT_DRAG_SPEED_CONFIG: DragSpeedConfig = {
 const smoothstep = (progress: number) =>
   progress * progress * (3 - 2 * progress);
 
+const clamp = (value: number, min: number, max: number) =>
+  Math.max(min, Math.min(max, value));
+
 const getVelocityModifierWeight = (
   velocity: number,
   dragSpeedConfig: DragSpeedConfig,
@@ -75,47 +78,44 @@ export const scaleVelocityToInertia = ({
   return Math.sign(velocity) * amplifiedVelocity;
 };
 
-export const mapVelocityToDuration = ({
-  velocity,
-  baseDuration,
+export const mapReleaseVelocityToDuration = ({
+  distance,
+  normalDuration,
+  releaseVelocity,
   dragSpeedConfig,
 }: {
-  velocity: number;
-  baseDuration: number;
+  distance: number;
+  normalDuration: number;
+  releaseVelocity: number;
   dragSpeedConfig?: Partial<DragSpeedConfig>;
 }) => {
   const resolvedDragSpeedConfig: DragSpeedConfig = {
     ...DEFAULT_DRAG_SPEED_CONFIG,
     ...dragSpeedConfig,
   };
-  const velocityMagnitude = Math.abs(velocity);
+  const safeDistance = Math.abs(distance);
 
-  if (!Number.isFinite(baseDuration) || baseDuration <= 0) {
-    return baseDuration;
+  if (!(safeDistance > 0) || !(normalDuration > 0)) {
+    return normalDuration;
   }
 
-  if (velocityMagnitude <= resolvedDragSpeedConfig.velocityThreshold) {
-    return baseDuration;
+  const normalSpeed = safeDistance / normalDuration;
+  const releaseSpeed =
+    Number.isFinite(releaseVelocity) ? Math.abs(releaseVelocity) : 0;
+  const targetSpeed = Math.max(normalSpeed, releaseSpeed);
+
+  if (!(targetSpeed > 0)) {
+    return normalDuration;
   }
 
   const minGestureDuration = Math.min(
-    baseDuration,
+    normalDuration,
     Math.max(
       resolvedDragSpeedConfig.minDuration,
-      baseDuration * resolvedDragSpeedConfig.minDurationRatio,
+      normalDuration * resolvedDragSpeedConfig.minDurationRatio,
     ),
   );
+  const velocityDuration = safeDistance / targetSpeed;
 
-  if (minGestureDuration >= baseDuration) {
-    return baseDuration;
-  }
-
-  const weight = getVelocityModifierWeight(
-    velocityMagnitude,
-    resolvedDragSpeedConfig,
-  );
-  const scaledDuration =
-    baseDuration - (baseDuration - minGestureDuration) * weight;
-
-  return Math.max(minGestureDuration, Math.min(scaledDuration, baseDuration));
+  return clamp(velocityDuration, minGestureDuration, normalDuration);
 };

@@ -27,7 +27,7 @@ export const HARD_LAYOUT_SETTINGS = {
 
 export const HARD_REPEATED_CLICK_SETTINGS = {
   destinationPosition: 0.65,
-  speedMultiplier: 7,
+  speedMultiplier: 3,
   startAcceleration: 0.5,
   endDeceleration: 0.5,
   epsilon: 0.0001,
@@ -57,7 +57,7 @@ export const HARD_DRAG_SPEED_CONFIG = {
   rampEnd: 1.35,
   minDurationRatio: 0.14,
   minDuration: 220,
-  inertiaBoost: 4.6,
+  inertiaBoost: 3,
   releaseAccelerationDistanceShare: 0.35,
   releaseDecelerationDistanceShare: 0.65,
 } as const;

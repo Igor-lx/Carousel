@@ -137,7 +137,7 @@ function App() {
             // isInstantMotion={true}
             isInteractive={isInteractive}
             durationAutoplay={9500}
-            durationStep={9000}
+            durationStep={3500}
             durationJump={400}
             intervalAutoplay={3000}
             isLayoutClamped={true}

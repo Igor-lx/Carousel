@@ -5,10 +5,9 @@ import type {
   CarouselRepeatedClickSettings,
 } from "../model/diagnostic";
 import type { DragSpeedConfig } from "../../../../shared";
-import { mapVelocityToDuration } from "../../../../shared/hooks/useDrag";
+import { mapReleaseVelocityToDuration } from "../../../../shared/hooks/useDrag";
 import {
   getDurationByVirtualSpan,
-  scaleVirtualVelocityToPageVelocity,
 } from "../utilities";
 
 interface MotionDurationProps {
@@ -103,6 +102,23 @@ export function useCarouselMotionDuration({
     targetVirtualIndex,
   ]);
 
+  const gestureReleaseDuration = useMemo(
+    () =>
+      mapReleaseVelocityToDuration({
+        distance: targetVirtualIndex - segmentStartVirtualIndex,
+        normalDuration: gestureSegmentDuration,
+        releaseVelocity: velocity,
+        dragSpeedConfig,
+      }),
+    [
+      dragSpeedConfig,
+      gestureSegmentDuration,
+      segmentStartVirtualIndex,
+      targetVirtualIndex,
+      velocity,
+    ],
+  );
+
   const baseDuration = useMemo(() => {
     if (animMode === "snap") return snapSegmentDuration;
 
@@ -117,7 +133,7 @@ export function useCarouselMotionDuration({
       case "autoplay":
         return autoplayDuration;
       case "gesture":
-        return gestureSegmentDuration;
+        return gestureReleaseDuration;
       default:
         return autoplayDuration;
     }
@@ -125,6 +141,7 @@ export function useCarouselMotionDuration({
     animMode,
     autoplayDuration,
     clickSegmentDuration,
+    gestureReleaseDuration,
     gestureSegmentDuration,
     isRepeatedClickAdvance,
     isInstant,
@@ -134,32 +151,17 @@ export function useCarouselMotionDuration({
     snapSegmentDuration,
   ]);
 
-  const velocityScaledDuration = useMemo(
-    () =>
-      mapVelocityToDuration({
-        velocity: scaleVirtualVelocityToPageVelocity(velocity, stepSize),
-        baseDuration,
-        dragSpeedConfig,
-      }),
-    [baseDuration, dragSpeedConfig, stepSize, velocity],
-  );
-
   return useMemo(() => {
     if (isDragging) return 0;
 
     if (animMode === "snap") return baseDuration;
 
     if (isInstant || animMode === "jump") return jumpDuration;
-    if (reason === "gesture") {
-      return Math.max(dragSpeedConfig.minDuration, velocityScaledDuration);
-    }
 
     return baseDuration;
   }, [
     animMode,
     baseDuration,
-    dragSpeedConfig.minDuration,
-    velocityScaledDuration,
     isDragging,
     isInstant,
     jumpDuration,

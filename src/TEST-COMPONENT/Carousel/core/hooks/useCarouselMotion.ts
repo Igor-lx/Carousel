@@ -435,7 +435,6 @@ const createVelocityProfile = ({
   startAcceleration,
   endDeceleration,
   targetDuration,
-  maxPeakSpeed,
 }: {
   distance: number;
   startSpeed: number;
@@ -444,7 +443,6 @@ const createVelocityProfile = ({
   startAcceleration: number;
   endDeceleration: number;
   targetDuration?: number;
-  maxPeakSpeed?: number;
 }): VelocityProfile => {
   const safeDistance = Math.abs(distance);
   const safeStartSpeed = Math.max(0, startSpeed);
@@ -468,20 +466,12 @@ const createVelocityProfile = ({
           decelerationShare,
         })
       : safePeakSpeed;
-  const uncappedPeakSpeed = Math.max(
+  const resolvedPeakSpeed = Math.max(
     safePeakSpeed,
     safeStartSpeed,
     safeEndSpeed,
     durationBoundPeakSpeed,
   );
-  const resolvedPeakSpeed =
-    typeof maxPeakSpeed === "number" && maxPeakSpeed > 0
-      ? Math.max(
-          safeStartSpeed,
-          safeEndSpeed,
-          Math.min(uncappedPeakSpeed, maxPeakSpeed),
-        )
-      : uncappedPeakSpeed;
   const zones: VelocityProfileZone[] = [];
   let distanceProgress = 0;
 
@@ -617,7 +607,6 @@ const createProfileSegment = ({
   startAcceleration,
   endDeceleration,
   targetDuration,
-  maxPeakVelocity,
 }: {
   strategy: ProfileMotionSegment["strategy"];
   from: number;
@@ -629,7 +618,6 @@ const createProfileSegment = ({
   startAcceleration: number;
   endDeceleration: number;
   targetDuration?: number;
-  maxPeakVelocity?: number;
 }): ProfileMotionSegment => {
   const distance = to - from;
   const startSpeed = getSameDirectionSpeed(currentVelocity, distance);
@@ -647,10 +635,6 @@ const createProfileSegment = ({
     startAcceleration,
     endDeceleration,
     targetDuration,
-    maxPeakSpeed:
-      typeof maxPeakVelocity === "number"
-        ? getSameDirectionSpeed(maxPeakVelocity, distance)
-        : undefined,
   });
 
   return {
@@ -921,7 +905,6 @@ export function useCarouselMotion({
       repeatedClickSettings.endDeceleration,
       dragSpeedConfig.releaseAccelerationDistanceShare,
       dragSpeedConfig.releaseDecelerationDistanceShare,
-      dragSpeedConfig.inertiaBoost,
       epsilon,
     ].join(":");
 
@@ -1016,10 +999,6 @@ export function useCarouselMotion({
       getSameDirectionSpeed(gestureReleaseMotionVelocity, distance),
     );
     const gesturePeakVelocity = getSignedVelocity(gesturePeakSpeed, distance);
-    const maxGestureVelocity = getSignedVelocity(
-      normalMoveSpeed * dragSpeedConfig.inertiaBoost,
-      distance,
-    );
     const repeatedEndVelocity = hasFollowUpStep ? normalVelocity : 0;
     const isRepeatedFollowUp =
       canReuseHandoffSnapshot && handoffSnapshot?.strategy === "repeated";
@@ -1035,6 +1014,7 @@ export function useCarouselMotion({
         endVelocity: repeatedEndVelocity,
         startAcceleration: repeatedClickSettings.startAcceleration,
         endDeceleration: repeatedClickSettings.endDeceleration,
+        targetDuration: duration,
       });
     } else if (
       reason === "gesture" &&
@@ -1051,7 +1031,6 @@ export function useCarouselMotion({
         startAcceleration: dragSpeedConfig.releaseAccelerationDistanceShare,
         endDeceleration: dragSpeedConfig.releaseDecelerationDistanceShare,
         targetDuration: duration,
-        maxPeakVelocity: maxGestureVelocity,
       });
     } else if (isRepeatedFollowUp) {
       activeSegmentRef.current = createProfileSegment({
@@ -1121,7 +1100,6 @@ export function useCarouselMotion({
     finalizeMotion,
     followUpDuration,
     followUpVirtualIndex,
-    dragSpeedConfig.inertiaBoost,
     dragSpeedConfig.releaseAccelerationDistanceShare,
     dragSpeedConfig.releaseDecelerationDistanceShare,
     gestureReleaseMotionVelocity,
