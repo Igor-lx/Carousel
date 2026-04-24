@@ -6,7 +6,6 @@ export interface DragSpeedConfig {
   inertiaBoost: number;
   releaseAccelerationDistanceShare: number;
   releaseDecelerationDistanceShare: number;
-  maxReleaseSpeedMultiplier: number;
 }
 
 export const DEFAULT_DRAG_SPEED_CONFIG: DragSpeedConfig = {
@@ -17,7 +16,6 @@ export const DEFAULT_DRAG_SPEED_CONFIG: DragSpeedConfig = {
   inertiaBoost: 1,
   releaseAccelerationDistanceShare: 0.35,
   releaseDecelerationDistanceShare: 0.65,
-  maxReleaseSpeedMultiplier: 4,
 };
 
 const smoothstep = (progress: number) =>
@@ -70,7 +68,7 @@ export const scaleVelocityToInertia = ({
     rampVelocity,
     resolvedDragSpeedConfig,
   );
-  const safeBoost = Math.max(0, resolvedDragSpeedConfig.inertiaBoost);
+  const safeBoost = Math.max(1, resolvedDragSpeedConfig.inertiaBoost);
   const amplifiedVelocity =
     safeVelocity * (1 + (safeBoost - 1) * weight);
 

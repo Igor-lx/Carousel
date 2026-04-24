@@ -15,7 +15,7 @@ import {
   MIN_AUTOPLAY_INTERVAL,
   MIN_DRAG_DURATION_RATIO,
   MIN_DRAG_EMA_ALPHA,
-  MIN_DRAG_RELEASE_SPEED_MULTIPLIER,
+  MIN_DRAG_INERTIA_BOOST,
   MIN_REPEATED_CLICK_DESTINATION_POSITION,
   MIN_REPEATED_CLICK_PROFILE_SHARE,
   MIN_REPEATED_CLICK_SPEED_MULTIPLIER,
@@ -133,12 +133,12 @@ export const normalizeDragDurationRatio = (
     MAX_DRAG_DURATION_RATIO,
   );
 
-export const normalizeDragReleaseSpeedMultiplier = (
+export const normalizeDragInertiaBoost = (
   value: unknown,
   safeValue: number,
 ) =>
   Math.max(
-    MIN_DRAG_RELEASE_SPEED_MULTIPLIER,
+    MIN_DRAG_INERTIA_BOOST,
     normalizePositiveNumber(value, safeValue),
   );
 

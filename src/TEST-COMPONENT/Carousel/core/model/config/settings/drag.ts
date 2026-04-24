@@ -38,7 +38,7 @@ const CAROUSEL_DRAG_CONFIG_OVERRIDE: Partial<DragConfig> = {
 const CAROUSEL_DRAG_SPEED_CONFIG_OVERRIDE: Partial<DragSpeedConfig> = {
   // Скорость начала fast-swipe ramp, >= 0.
   // Ниже порога жест использует базовую duration и базовую инерцию.
-  velocityThreshold: 0.4,
+  velocityThreshold: 0.2,
   // Скорость полного насыщения fast-swipe ramp, >= velocityThreshold.
   // После этой точки усиление больше не растет.
   rampEnd: 1.35,
@@ -50,13 +50,11 @@ const CAROUSEL_DRAG_SPEED_CONFIG_OVERRIDE: Partial<DragSpeedConfig> = {
   minDuration: 220,
   // Максимальное усиление release-инерции, >= 0.
   // 1 = без усиления, больше значение -> сильнее докат после быстрого жеста.
-  inertiaBoost: 5,
+  inertiaBoost: 51,
   // Доля оставшегося release-пути для плавного разгона к gesture-speed (0..1).
   releaseAccelerationDistanceShare: 0.35,
   // Доля оставшегося release-пути для плавного торможения к target (0..1).
   releaseDecelerationDistanceShare: 0.65,
-  // Локальный предел gesture release speed относительно normal move speed, >= 1.
-  maxReleaseSpeedMultiplier: 4,
 } as const;
 
 export const CAROUSEL_DRAG_CONFIG: Required<DragConfig> = {

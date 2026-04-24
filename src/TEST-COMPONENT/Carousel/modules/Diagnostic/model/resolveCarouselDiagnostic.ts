@@ -40,7 +40,7 @@ import {
   MIN_AUTOPLAY_INTERVAL,
   MIN_DRAG_DURATION_RATIO,
   MIN_DRAG_EMA_ALPHA,
-  MIN_DRAG_RELEASE_SPEED_MULTIPLIER,
+  MIN_DRAG_INERTIA_BOOST,
   MIN_RENDER_WINDOW_BUFFER_MULTIPLIER,
   MIN_REPEATED_CLICK_DESTINATION_POSITION,
   MIN_REPEATED_CLICK_PROFILE_SHARE,
@@ -55,7 +55,7 @@ import {
   normalizeAutoplayPaginationFactor,
   normalizeDragDurationRatio,
   normalizeDragEmaAlpha,
-  normalizeDragReleaseSpeedMultiplier,
+  normalizeDragInertiaBoost,
   normalizeErrorAltPlaceholder,
   normalizeNonNegativeNumber,
   normalizePositiveDuration,
@@ -733,7 +733,7 @@ const resolveDragSpeedConfig = () => {
     CAROUSEL_DRAG_SPEED_CONFIG.minDuration,
     HARD_DRAG_SPEED_CONFIG.minDuration,
   );
-  const inertiaBoost = normalizeNonNegativeNumber(
+  const inertiaBoost = normalizeDragInertiaBoost(
     CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost,
     HARD_DRAG_SPEED_CONFIG.inertiaBoost,
   );
@@ -744,10 +744,6 @@ const resolveDragSpeedConfig = () => {
   const releaseDecelerationDistanceShare = normalizeRepeatedClickProfileShare(
     CAROUSEL_DRAG_SPEED_CONFIG.releaseDecelerationDistanceShare,
     HARD_DRAG_SPEED_CONFIG.releaseDecelerationDistanceShare,
-  );
-  const maxReleaseSpeedMultiplier = normalizeDragReleaseSpeedMultiplier(
-    CAROUSEL_DRAG_SPEED_CONFIG.maxReleaseSpeedMultiplier,
-    HARD_DRAG_SPEED_CONFIG.maxReleaseSpeedMultiplier,
   );
   const corrections: DevNoticeEntry[] = [];
 
@@ -802,7 +798,7 @@ const resolveDragSpeedConfig = () => {
       field: "CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost",
       provided: CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost,
       normalized: inertiaBoost,
-      reason: "expected a finite non-negative value",
+      reason: `expected a finite value greater than or equal to ${MIN_DRAG_INERTIA_BOOST}`,
     });
   }
 
@@ -838,18 +834,6 @@ const resolveDragSpeedConfig = () => {
     });
   }
 
-  if (
-    maxReleaseSpeedMultiplier !==
-    CAROUSEL_DRAG_SPEED_CONFIG.maxReleaseSpeedMultiplier
-  ) {
-    corrections.push({
-      field: "CAROUSEL_DRAG_SPEED_CONFIG.maxReleaseSpeedMultiplier",
-      provided: CAROUSEL_DRAG_SPEED_CONFIG.maxReleaseSpeedMultiplier,
-      normalized: maxReleaseSpeedMultiplier,
-      reason: `expected a finite value greater than or equal to ${MIN_DRAG_RELEASE_SPEED_MULTIPLIER}`,
-    });
-  }
-
   return {
     settings: {
       velocityThreshold,
@@ -859,7 +843,6 @@ const resolveDragSpeedConfig = () => {
       inertiaBoost,
       releaseAccelerationDistanceShare,
       releaseDecelerationDistanceShare,
-      maxReleaseSpeedMultiplier,
     },
     corrections,
   };

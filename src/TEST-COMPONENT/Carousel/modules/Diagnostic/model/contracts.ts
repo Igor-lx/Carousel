@@ -16,7 +16,7 @@ export const MIN_DRAG_EMA_ALPHA = 0;
 export const MAX_DRAG_EMA_ALPHA = 1;
 export const MIN_DRAG_DURATION_RATIO = 0;
 export const MAX_DRAG_DURATION_RATIO = 1;
-export const MIN_DRAG_RELEASE_SPEED_MULTIPLIER = 1;
+export const MIN_DRAG_INERTIA_BOOST = 1;
 
 export const HARD_ERROR_ALT_PLACEHOLDER = "Downloading Error";
 
@@ -60,7 +60,6 @@ export const HARD_DRAG_SPEED_CONFIG = {
   inertiaBoost: 4.6,
   releaseAccelerationDistanceShare: 0.35,
   releaseDecelerationDistanceShare: 0.65,
-  maxReleaseSpeedMultiplier: 4,
 } as const;
 
 export const HARD_DRAG_RELEASE_EPSILON = 0.001;

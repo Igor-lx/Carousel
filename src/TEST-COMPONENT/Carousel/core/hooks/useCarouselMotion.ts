@@ -41,7 +41,12 @@ interface MotionProps {
   onComplete: () => void;
 }
 
-type MotionStrategyKind = "easing" | "gesture" | "repeated" | "handoff";
+type MotionStrategyKind =
+  | "easing"
+  | "gesture"
+  | "repeated"
+  | "repeated-follow-up"
+  | "handoff";
 
 type CubicBezier = {
   x1: number;
@@ -78,7 +83,7 @@ type EasingMotionSegment = MotionSegmentBase & {
 };
 
 type ProfileMotionSegment = MotionSegmentBase & {
-  strategy: "gesture" | "repeated" | "handoff";
+  strategy: "gesture" | "repeated" | "repeated-follow-up" | "handoff";
   profile: VelocityProfile;
 };
 
@@ -916,7 +921,7 @@ export function useCarouselMotion({
       repeatedClickSettings.endDeceleration,
       dragSpeedConfig.releaseAccelerationDistanceShare,
       dragSpeedConfig.releaseDecelerationDistanceShare,
-      dragSpeedConfig.maxReleaseSpeedMultiplier,
+      dragSpeedConfig.inertiaBoost,
       epsilon,
     ].join(":");
 
@@ -993,12 +998,6 @@ export function useCarouselMotion({
     }
 
     const startedAt = canReuseHandoffSnapshot ? handoffSnapshot.timestamp : now;
-    const followUpDistance =
-      followUpVirtualIndex === null
-        ? 0
-        : followUpVirtualIndex - currentVirtualIndex;
-    const followUpVelocity =
-      followUpDuration > epsilon ? followUpDistance / followUpDuration : 0;
     const normalMoveSpeed =
       getNormalMoveSpeed(size, stepDuration) ||
       getAverageSpeed(distance, duration);
@@ -1018,9 +1017,12 @@ export function useCarouselMotion({
     );
     const gesturePeakVelocity = getSignedVelocity(gesturePeakSpeed, distance);
     const maxGestureVelocity = getSignedVelocity(
-      normalMoveSpeed * dragSpeedConfig.maxReleaseSpeedMultiplier,
+      normalMoveSpeed * dragSpeedConfig.inertiaBoost,
       distance,
     );
+    const repeatedEndVelocity = hasFollowUpStep ? normalVelocity : 0;
+    const isRepeatedFollowUp =
+      canReuseHandoffSnapshot && handoffSnapshot?.strategy === "repeated";
 
     if (isRepeatedClickAdvance) {
       activeSegmentRef.current = createProfileSegment({
@@ -1030,7 +1032,7 @@ export function useCarouselMotion({
         startedAt,
         currentVelocity: nowState.velocity,
         peakVelocity: repeatedVelocity,
-        endVelocity: followUpVelocity,
+        endVelocity: repeatedEndVelocity,
         startAcceleration: repeatedClickSettings.startAcceleration,
         endDeceleration: repeatedClickSettings.endDeceleration,
       });
@@ -1050,6 +1052,18 @@ export function useCarouselMotion({
         endDeceleration: dragSpeedConfig.releaseDecelerationDistanceShare,
         targetDuration: duration,
         maxPeakVelocity: maxGestureVelocity,
+      });
+    } else if (isRepeatedFollowUp) {
+      activeSegmentRef.current = createProfileSegment({
+        strategy: "repeated-follow-up",
+        from: nowState.position,
+        to: currentVirtualIndex,
+        startedAt,
+        currentVelocity: nowState.velocity,
+        peakVelocity: normalVelocity,
+        endVelocity: 0,
+        startAcceleration: 0,
+        endDeceleration: repeatedClickSettings.endDeceleration,
       });
     } else if (
       reason === "click" &&
@@ -1107,7 +1121,7 @@ export function useCarouselMotion({
     finalizeMotion,
     followUpDuration,
     followUpVirtualIndex,
-    dragSpeedConfig.maxReleaseSpeedMultiplier,
+    dragSpeedConfig.inertiaBoost,
     dragSpeedConfig.releaseAccelerationDistanceShare,
     dragSpeedConfig.releaseDecelerationDistanceShare,
     gestureReleaseMotionVelocity,
