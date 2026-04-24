@@ -1,9 +1,5 @@
-// Допуск сравнения repeated-click позиций, > 0.
-// Меньше значение -> план repeated click чувствительнее к микросдвигам.
+// Repeated-click position comparison tolerance, > 0.
 export const REPEATED_CLICK_EPSILON = 0.0001;
-// Верхняя граница переносимой скорости между motion-сегментами, > 0.
-// Больше значение -> переходы мягче переносят инерцию, но выше риск перелета target.
-export const MOTION_MONOTONIC_SPEED_FACTOR = 3;
-// Допуск сравнения motion-позиций и скоростей, > 0.
-// Меньше значение -> анимация дольше держится за точность и позже считает сегмент завершенным.
+
+// Motion position/velocity comparison tolerance, > 0.
 export const MOTION_EPSILON = 0.0001;

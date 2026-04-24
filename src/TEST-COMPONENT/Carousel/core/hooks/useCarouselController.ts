@@ -89,15 +89,23 @@ export function useCarouselController({
     ],
   );
 
-  const resolveReleaseVirtualVelocity = useCallback(
-    (dragReleaseVelocity: number) => {
+  const resolveVirtualPointerVelocity = useCallback(
+    (pointerVelocity: number) => {
       const viewport = measureRef.current;
       if (!viewport) return 0;
 
       const slotSize = getTrackSlotSize(viewport, layout.clampedVisible);
       if (slotSize <= 0) return 0;
 
-      const releaseVirtualVelocity = -dragReleaseVelocity / slotSize;
+      return -pointerVelocity / slotSize;
+    },
+    [layout.clampedVisible, measureRef],
+  );
+
+  const resolveReleaseVirtualVelocity = useCallback(
+    (dragReleaseVelocity: number) => {
+      const releaseVirtualVelocity =
+        resolveVirtualPointerVelocity(dragReleaseVelocity);
       const responseVelocity = scaleVirtualVelocityToPageVelocity(
         releaseVirtualVelocity,
         layout.clampedVisible,
@@ -109,7 +117,7 @@ export function useCarouselController({
         dragSpeedConfig,
       });
     },
-    [dragSpeedConfig, layout.clampedVisible, measureRef],
+    [dragSpeedConfig, layout.clampedVisible, resolveVirtualPointerVelocity],
   );
 
   const move = useCallback(
@@ -209,6 +217,7 @@ export function useCarouselController({
           isSnap ||
           Math.abs(targetVirtualIndex - releasePosition) < dragReleaseEpsilon,
         releaseVelocity: resolveReleaseVirtualVelocity(payload.releaseVelocity),
+        releaseMotionVelocity: resolveVirtualPointerVelocity(payload.velocity),
       });
 
       dragOriginPositionRef.current = null;
@@ -221,6 +230,7 @@ export function useCarouselController({
       layout,
       resolveFromVirtualIndex,
       resolveReleaseVirtualVelocity,
+      resolveVirtualPointerVelocity,
     ],
   );
 

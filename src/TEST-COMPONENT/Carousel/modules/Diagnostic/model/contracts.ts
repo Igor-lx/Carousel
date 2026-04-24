@@ -7,6 +7,8 @@ export const MAX_REASONABLE_JUMP_DURATION = 3000;
 export const MIN_REPEATED_CLICK_DESTINATION_POSITION = 0;
 export const MAX_REPEATED_CLICK_DESTINATION_POSITION = 1;
 export const MIN_REPEATED_CLICK_SPEED_MULTIPLIER = 1;
+export const MIN_REPEATED_CLICK_PROFILE_SHARE = 0;
+export const MAX_REPEATED_CLICK_PROFILE_SHARE = 1;
 
 export const MIN_VISIBILITY_THRESHOLD = 0;
 export const MAX_VISIBILITY_THRESHOLD = 1;
@@ -14,6 +16,7 @@ export const MIN_DRAG_EMA_ALPHA = 0;
 export const MAX_DRAG_EMA_ALPHA = 1;
 export const MIN_DRAG_DURATION_RATIO = 0;
 export const MAX_DRAG_DURATION_RATIO = 1;
+export const MIN_DRAG_RELEASE_SPEED_MULTIPLIER = 1;
 
 export const HARD_ERROR_ALT_PLACEHOLDER = "Downloading Error";
 
@@ -24,7 +27,9 @@ export const HARD_LAYOUT_SETTINGS = {
 
 export const HARD_REPEATED_CLICK_SETTINGS = {
   destinationPosition: 0.65,
-  speedMultiplier: 9,
+  speedMultiplier: 7,
+  startAcceleration: 0.5,
+  endDeceleration: 0.5,
   epsilon: 0.0001,
 } as const;
 
@@ -53,12 +58,14 @@ export const HARD_DRAG_SPEED_CONFIG = {
   minDurationRatio: 0.14,
   minDuration: 220,
   inertiaBoost: 4.6,
+  releaseAccelerationDistanceShare: 0.35,
+  releaseDecelerationDistanceShare: 0.65,
+  maxReleaseSpeedMultiplier: 4,
 } as const;
 
 export const HARD_DRAG_RELEASE_EPSILON = 0.001;
 
 export const HARD_MOTION_SETTINGS = {
-  monotonicSpeedFactor: 3,
   snapBackDuration: 900,
   epsilon: 0.0001,
 } as const;

@@ -144,29 +144,6 @@ export function useCarouselMotionDuration({
     [baseDuration, dragSpeedConfig, stepSize, velocity],
   );
 
-  const velocityPreservingGestureDuration = useMemo(() => {
-    if (reason !== "gesture") {
-      return Infinity;
-    }
-
-    const distance = Math.abs(targetVirtualIndex - segmentStartVirtualIndex);
-    const velocityMagnitude = Math.abs(velocity);
-
-    if (!(distance > 0) || !(velocityMagnitude > 0)) {
-      return Infinity;
-    }
-
-    return (
-      (distance * motionSettings.monotonicSpeedFactor) / velocityMagnitude
-    );
-  }, [
-    motionSettings.monotonicSpeedFactor,
-    reason,
-    segmentStartVirtualIndex,
-    targetVirtualIndex,
-    velocity,
-  ]);
-
   return useMemo(() => {
     if (isDragging) return 0;
 
@@ -174,10 +151,7 @@ export function useCarouselMotionDuration({
 
     if (isInstant || animMode === "jump") return jumpDuration;
     if (reason === "gesture") {
-      return Math.max(
-        dragSpeedConfig.minDuration,
-        Math.min(velocityScaledDuration, velocityPreservingGestureDuration),
-      );
+      return Math.max(dragSpeedConfig.minDuration, velocityScaledDuration);
     }
 
     return baseDuration;
@@ -190,6 +164,5 @@ export function useCarouselMotionDuration({
     isInstant,
     jumpDuration,
     reason,
-    velocityPreservingGestureDuration,
   ]);
 }

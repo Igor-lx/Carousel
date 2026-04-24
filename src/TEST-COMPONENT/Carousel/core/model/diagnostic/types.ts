@@ -20,6 +20,8 @@ export interface CarouselLayoutSettings {
 export interface CarouselRepeatedClickSettings {
   destinationPosition: number;
   speedMultiplier: number;
+  startAcceleration: number;
+  endDeceleration: number;
   epsilon: number;
 }
 
@@ -32,7 +34,6 @@ export interface CarouselInteractionSettings {
 export type CarouselDragConfig = Required<DragConfig>;
 
 export interface CarouselMotionSettings {
-  monotonicSpeedFactor: number;
   snapBackDuration: number;
   epsilon: number;
 }

@@ -4,6 +4,9 @@ export interface DragSpeedConfig {
   minDurationRatio: number;
   minDuration: number;
   inertiaBoost: number;
+  releaseAccelerationDistanceShare: number;
+  releaseDecelerationDistanceShare: number;
+  maxReleaseSpeedMultiplier: number;
 }
 
 export const DEFAULT_DRAG_SPEED_CONFIG: DragSpeedConfig = {
@@ -12,6 +15,9 @@ export const DEFAULT_DRAG_SPEED_CONFIG: DragSpeedConfig = {
   minDurationRatio: 0.3,
   minDuration: 240,
   inertiaBoost: 1,
+  releaseAccelerationDistanceShare: 0.35,
+  releaseDecelerationDistanceShare: 0.65,
+  maxReleaseSpeedMultiplier: 4,
 };
 
 const smoothstep = (progress: number) =>

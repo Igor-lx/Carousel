@@ -71,6 +71,16 @@ const getInteractiveTarget = (
   return interactiveTarget;
 };
 
+const getFrameAdjustedEmaAlpha = (alpha: number, dt: number) => {
+  const safeAlpha = Math.max(0, Math.min(1, alpha));
+  const frameCount = Math.max(1, dt / (1000 / 60));
+
+  return 1 - Math.pow(1 - safeAlpha, frameCount);
+};
+
+const decayVelocity = (velocity: number, alpha: number, dt: number) =>
+  calculateEMA(velocity, 0, getFrameAdjustedEmaAlpha(alpha, dt));
+
 export function useDrag({
   onPressStart,
   onDragStart,
@@ -169,7 +179,7 @@ export function useDrag({
         calculateEMA(
           dragSampleRef.current.velocity,
           instantVelocity,
-          settingsSnapshot.EMA_ALPHA,
+          getFrameAdjustedEmaAlpha(settingsSnapshot.EMA_ALPHA, dt),
         ),
         settingsSnapshot.MAX_VELOCITY,
       );
@@ -192,7 +202,7 @@ export function useDrag({
   );
 
   const stopDragging = useCallback(
-    (isCancel = false) => {
+    (isCancel = false, currentX?: number) => {
       const target = measureRef.current;
       const now = performance.now();
       const currentPhase = phaseRef.current;
@@ -222,11 +232,25 @@ export function useDrag({
         return;
       }
 
-      const sample = {
-        ...dragSampleRef.current,
-        width: target?.offsetWidth ?? dragSampleRef.current.width,
-        timestamp: now,
-      };
+      const sample =
+        typeof currentX === "number"
+          ? createSample(currentX, now)
+          : {
+              ...dragSampleRef.current,
+              rawVelocity: decayVelocity(
+                dragSampleRef.current.rawVelocity,
+                settingsRef.current.EMA_ALPHA,
+                now - dragSampleRef.current.timestamp,
+              ),
+              velocity: decayVelocity(
+                dragSampleRef.current.velocity,
+                settingsRef.current.EMA_ALPHA,
+                now - dragSampleRef.current.timestamp,
+              ),
+              width: target?.offsetWidth ?? dragSampleRef.current.width,
+              timestamp: now,
+            };
+      dragSampleRef.current = sample;
       const wasDragging = currentPhase === "DRAGGING";
       const releaseResolution = resolveDragRelease(
         sample,
@@ -270,7 +294,7 @@ export function useDrag({
       currentGesture.hasPointerCapture = false;
       currentGesture.isDragActivated = false;
     },
-    [measureRef, onDragEnd, setPhase],
+    [createSample, measureRef, onDragEnd, setPhase],
   );
 
   const handlePointerDown = useCallback(
@@ -449,9 +473,9 @@ export function useDrag({
     return {
       onPointerDown: handlePointerDown,
       onPointerMove: handlePointerMove,
-      onPointerUp: () => stopDragging(),
-      onPointerCancel: () => stopDragging(true),
-      onLostPointerCapture: () => stopDragging(true),
+      onPointerUp: (e) => stopDragging(false, e.clientX),
+      onPointerCancel: (e) => stopDragging(true, e.clientX),
+      onLostPointerCapture: (e) => stopDragging(true, e.clientX),
       style: SHARED_DRAG_STYLES,
     };
   }, [enabled, handlePointerDown, handlePointerMove, stopDragging]);

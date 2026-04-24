@@ -237,6 +237,7 @@ const Carousel = memo((props: CarouselProps) => {
     animMode,
     moveReason,
     gestureReleaseVelocity,
+    gestureReleaseMotionVelocity,
   } = syncedState;
 
   const { canSlide, pageCount, clampedVisible } = nextLayout;
@@ -387,12 +388,16 @@ const Carousel = memo((props: CarouselProps) => {
     currentVirtualIndex: virtualIndex,
     windowStart,
     size: clampedVisible,
+    stepDuration,
     motionSettings,
+    repeatedClickSettings,
+    dragSpeedConfig,
     isMoving,
     animMode,
     reason: moveReason,
     duration: motionDuration,
     gestureReleaseVelocity,
+    gestureReleaseMotionVelocity,
     isRepeatedClickAdvance,
     followUpVirtualIndex,
     followUpDuration,

@@ -35,9 +35,9 @@ export interface DragEndPayload extends DragSample, DragReleaseResolution {
 export interface DragListeners {
   onPointerDown?: (e: ReactPointerEvent) => void;
   onPointerMove?: (e: ReactPointerEvent) => void;
-  onPointerUp?: () => void;
-  onPointerCancel?: () => void;
-  onLostPointerCapture?: () => void;
+  onPointerUp?: (e: ReactPointerEvent) => void;
+  onPointerCancel?: (e: ReactPointerEvent) => void;
+  onLostPointerCapture?: (e: ReactPointerEvent) => void;
   style?: CSSProperties;
 }
 

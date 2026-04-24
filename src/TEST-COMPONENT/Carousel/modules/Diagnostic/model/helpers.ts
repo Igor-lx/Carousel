@@ -10,11 +10,14 @@ import {
   MAX_DRAG_DURATION_RATIO,
   MAX_DRAG_EMA_ALPHA,
   MAX_REPEATED_CLICK_DESTINATION_POSITION,
+  MAX_REPEATED_CLICK_PROFILE_SHARE,
   MAX_VISIBILITY_THRESHOLD,
   MIN_AUTOPLAY_INTERVAL,
   MIN_DRAG_DURATION_RATIO,
   MIN_DRAG_EMA_ALPHA,
+  MIN_DRAG_RELEASE_SPEED_MULTIPLIER,
   MIN_REPEATED_CLICK_DESTINATION_POSITION,
+  MIN_REPEATED_CLICK_PROFILE_SHARE,
   MIN_REPEATED_CLICK_SPEED_MULTIPLIER,
   MIN_VISIBLE_SLIDES,
   MIN_VISIBILITY_THRESHOLD,
@@ -80,6 +83,17 @@ export const normalizeRepeatedClickSpeedMultiplier = (
     normalizePositiveNumber(value, safeValue),
   );
 
+export const normalizeRepeatedClickProfileShare = (
+  value: unknown,
+  safeValue: number,
+) =>
+  coerceClampedNumber(
+    value,
+    safeValue,
+    MIN_REPEATED_CLICK_PROFILE_SHARE,
+    MAX_REPEATED_CLICK_PROFILE_SHARE,
+  );
+
 export const normalizeVisibilityThreshold = (
   value: unknown,
   safeValue: number,
@@ -117,6 +131,15 @@ export const normalizeDragDurationRatio = (
     safeValue,
     MIN_DRAG_DURATION_RATIO,
     MAX_DRAG_DURATION_RATIO,
+  );
+
+export const normalizeDragReleaseSpeedMultiplier = (
+  value: unknown,
+  safeValue: number,
+) =>
+  Math.max(
+    MIN_DRAG_RELEASE_SPEED_MULTIPLIER,
+    normalizePositiveNumber(value, safeValue),
   );
 
 export const normalizeErrorAltPlaceholder = (

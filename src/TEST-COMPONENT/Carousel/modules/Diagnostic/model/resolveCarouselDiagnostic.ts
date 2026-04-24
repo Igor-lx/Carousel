@@ -8,11 +8,12 @@ import {
   HOVER_PAUSE_DELAY,
   MIN_VISIBLE_SLIDES as RUNTIME_MIN_VISIBLE_SLIDES,
   MOTION_EPSILON,
-  MOTION_MONOTONIC_SPEED_FACTOR,
   RENDER_WINDOW_BUFFER_MULTIPLIER,
   REPEATED_CLICK_DESTINATION_POSITION,
+  REPEATED_CLICK_END_DECELERATION,
   REPEATED_CLICK_EPSILON,
   REPEATED_CLICK_SPEED_MULTIPLIER,
+  REPEATED_CLICK_START_ACCELERATION,
   SNAP_BACK_DURATION,
   VISIBILITY_THRESHOLD,
 } from "../../../core/model/config";
@@ -34,12 +35,15 @@ import {
   MAX_DRAG_EMA_ALPHA,
   MAX_REASONABLE_JUMP_DURATION,
   MAX_REPEATED_CLICK_DESTINATION_POSITION,
+  MAX_REPEATED_CLICK_PROFILE_SHARE,
   MAX_VISIBILITY_THRESHOLD,
   MIN_AUTOPLAY_INTERVAL,
   MIN_DRAG_DURATION_RATIO,
   MIN_DRAG_EMA_ALPHA,
+  MIN_DRAG_RELEASE_SPEED_MULTIPLIER,
   MIN_RENDER_WINDOW_BUFFER_MULTIPLIER,
   MIN_REPEATED_CLICK_DESTINATION_POSITION,
+  MIN_REPEATED_CLICK_PROFILE_SHARE,
   MIN_REPEATED_CLICK_SPEED_MULTIPLIER,
   MIN_VISIBLE_SLIDES,
   MIN_VISIBILITY_THRESHOLD,
@@ -51,12 +55,14 @@ import {
   normalizeAutoplayPaginationFactor,
   normalizeDragDurationRatio,
   normalizeDragEmaAlpha,
+  normalizeDragReleaseSpeedMultiplier,
   normalizeErrorAltPlaceholder,
   normalizeNonNegativeNumber,
   normalizePositiveDuration,
   normalizePositiveInteger,
   normalizePositiveNumber,
   normalizeRepeatedClickDestination,
+  normalizeRepeatedClickProfileShare,
   normalizeRepeatedClickSpeedMultiplier,
   normalizeVisibilityThreshold,
   normalizeVisibleSlidesCount,
@@ -424,6 +430,14 @@ const resolveRepeatedClickSettings = () => {
     REPEATED_CLICK_SPEED_MULTIPLIER,
     HARD_REPEATED_CLICK_SETTINGS.speedMultiplier,
   );
+  const startAcceleration = normalizeRepeatedClickProfileShare(
+    REPEATED_CLICK_START_ACCELERATION,
+    HARD_REPEATED_CLICK_SETTINGS.startAcceleration,
+  );
+  const endDeceleration = normalizeRepeatedClickProfileShare(
+    REPEATED_CLICK_END_DECELERATION,
+    HARD_REPEATED_CLICK_SETTINGS.endDeceleration,
+  );
   const epsilon = normalizePositiveNumber(
     REPEATED_CLICK_EPSILON,
     HARD_REPEATED_CLICK_SETTINGS.epsilon,
@@ -450,6 +464,28 @@ const resolveRepeatedClickSettings = () => {
     });
   }
 
+  if (startAcceleration !== REPEATED_CLICK_START_ACCELERATION) {
+    corrections.push({
+      field: "REPEATED_CLICK_START_ACCELERATION",
+      provided: REPEATED_CLICK_START_ACCELERATION,
+      normalized: startAcceleration,
+      reason: isFiniteNumber(REPEATED_CLICK_START_ACCELERATION)
+        ? `clamped to [${MIN_REPEATED_CLICK_PROFILE_SHARE}, ${MAX_REPEATED_CLICK_PROFILE_SHARE}]`
+        : "expected a finite value between 0 and 1",
+    });
+  }
+
+  if (endDeceleration !== REPEATED_CLICK_END_DECELERATION) {
+    corrections.push({
+      field: "REPEATED_CLICK_END_DECELERATION",
+      provided: REPEATED_CLICK_END_DECELERATION,
+      normalized: endDeceleration,
+      reason: isFiniteNumber(REPEATED_CLICK_END_DECELERATION)
+        ? `clamped to [${MIN_REPEATED_CLICK_PROFILE_SHARE}, ${MAX_REPEATED_CLICK_PROFILE_SHARE}]`
+        : "expected a finite value between 0 and 1",
+    });
+  }
+
   if (epsilon !== REPEATED_CLICK_EPSILON) {
     corrections.push({
       field: "REPEATED_CLICK_EPSILON",
@@ -463,6 +499,8 @@ const resolveRepeatedClickSettings = () => {
     settings: {
       destinationPosition,
       speedMultiplier,
+      startAcceleration,
+      endDeceleration,
       epsilon,
     },
     corrections,
@@ -699,6 +737,18 @@ const resolveDragSpeedConfig = () => {
     CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost,
     HARD_DRAG_SPEED_CONFIG.inertiaBoost,
   );
+  const releaseAccelerationDistanceShare = normalizeRepeatedClickProfileShare(
+    CAROUSEL_DRAG_SPEED_CONFIG.releaseAccelerationDistanceShare,
+    HARD_DRAG_SPEED_CONFIG.releaseAccelerationDistanceShare,
+  );
+  const releaseDecelerationDistanceShare = normalizeRepeatedClickProfileShare(
+    CAROUSEL_DRAG_SPEED_CONFIG.releaseDecelerationDistanceShare,
+    HARD_DRAG_SPEED_CONFIG.releaseDecelerationDistanceShare,
+  );
+  const maxReleaseSpeedMultiplier = normalizeDragReleaseSpeedMultiplier(
+    CAROUSEL_DRAG_SPEED_CONFIG.maxReleaseSpeedMultiplier,
+    HARD_DRAG_SPEED_CONFIG.maxReleaseSpeedMultiplier,
+  );
   const corrections: DevNoticeEntry[] = [];
 
   if (velocityThreshold !== CAROUSEL_DRAG_SPEED_CONFIG.velocityThreshold) {
@@ -756,6 +806,50 @@ const resolveDragSpeedConfig = () => {
     });
   }
 
+  if (
+    releaseAccelerationDistanceShare !==
+    CAROUSEL_DRAG_SPEED_CONFIG.releaseAccelerationDistanceShare
+  ) {
+    corrections.push({
+      field: "CAROUSEL_DRAG_SPEED_CONFIG.releaseAccelerationDistanceShare",
+      provided: CAROUSEL_DRAG_SPEED_CONFIG.releaseAccelerationDistanceShare,
+      normalized: releaseAccelerationDistanceShare,
+      reason: isFiniteNumber(
+        CAROUSEL_DRAG_SPEED_CONFIG.releaseAccelerationDistanceShare,
+      )
+        ? `clamped to [${MIN_REPEATED_CLICK_PROFILE_SHARE}, ${MAX_REPEATED_CLICK_PROFILE_SHARE}]`
+        : "expected a finite value between 0 and 1",
+    });
+  }
+
+  if (
+    releaseDecelerationDistanceShare !==
+    CAROUSEL_DRAG_SPEED_CONFIG.releaseDecelerationDistanceShare
+  ) {
+    corrections.push({
+      field: "CAROUSEL_DRAG_SPEED_CONFIG.releaseDecelerationDistanceShare",
+      provided: CAROUSEL_DRAG_SPEED_CONFIG.releaseDecelerationDistanceShare,
+      normalized: releaseDecelerationDistanceShare,
+      reason: isFiniteNumber(
+        CAROUSEL_DRAG_SPEED_CONFIG.releaseDecelerationDistanceShare,
+      )
+        ? `clamped to [${MIN_REPEATED_CLICK_PROFILE_SHARE}, ${MAX_REPEATED_CLICK_PROFILE_SHARE}]`
+        : "expected a finite value between 0 and 1",
+    });
+  }
+
+  if (
+    maxReleaseSpeedMultiplier !==
+    CAROUSEL_DRAG_SPEED_CONFIG.maxReleaseSpeedMultiplier
+  ) {
+    corrections.push({
+      field: "CAROUSEL_DRAG_SPEED_CONFIG.maxReleaseSpeedMultiplier",
+      provided: CAROUSEL_DRAG_SPEED_CONFIG.maxReleaseSpeedMultiplier,
+      normalized: maxReleaseSpeedMultiplier,
+      reason: `expected a finite value greater than or equal to ${MIN_DRAG_RELEASE_SPEED_MULTIPLIER}`,
+    });
+  }
+
   return {
     settings: {
       velocityThreshold,
@@ -763,6 +857,9 @@ const resolveDragSpeedConfig = () => {
       minDurationRatio,
       minDuration,
       inertiaBoost,
+      releaseAccelerationDistanceShare,
+      releaseDecelerationDistanceShare,
+      maxReleaseSpeedMultiplier,
     },
     corrections,
   };
@@ -791,10 +888,6 @@ const resolveDragReleaseEpsilon = () => {
 };
 
 const resolveMotionSettings = () => {
-  const monotonicSpeedFactor = normalizePositiveNumber(
-    MOTION_MONOTONIC_SPEED_FACTOR,
-    HARD_MOTION_SETTINGS.monotonicSpeedFactor,
-  );
   const snapBackDuration = normalizePositiveDuration(
     SNAP_BACK_DURATION,
     HARD_MOTION_SETTINGS.snapBackDuration,
@@ -804,15 +897,6 @@ const resolveMotionSettings = () => {
     HARD_MOTION_SETTINGS.epsilon,
   );
   const corrections: DevNoticeEntry[] = [];
-
-  if (monotonicSpeedFactor !== MOTION_MONOTONIC_SPEED_FACTOR) {
-    corrections.push({
-      field: "MOTION_MONOTONIC_SPEED_FACTOR",
-      provided: MOTION_MONOTONIC_SPEED_FACTOR,
-      normalized: monotonicSpeedFactor,
-      reason: "expected a finite positive value",
-    });
-  }
 
   if (snapBackDuration !== SNAP_BACK_DURATION) {
     corrections.push({
@@ -835,7 +919,6 @@ const resolveMotionSettings = () => {
 
   return {
     settings: {
-      monotonicSpeedFactor,
       snapBackDuration,
       epsilon,
     },

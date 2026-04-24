@@ -5,10 +5,13 @@ import {
   MOVE_AUTO_BEZIER,
   MOVE_CLICK_BEZIER,
   MOVE_SWIPE_BEZIER,
-  REPEATED_CLICK_BEZIER,
   SNAP_BACK_BEZIER,
 } from "../model/config";
-import type { CarouselMotionSettings } from "../model/diagnostic";
+import type {
+  DragSpeedConfig,
+  CarouselMotionSettings,
+  CarouselRepeatedClickSettings,
+} from "../model/diagnostic";
 import type { AnimationMode, MoveReason } from "../model/reducer";
 import { applyTrackPositionStyle } from "../utilities";
 import { useIsomorphicLayoutEffect } from "../../../../shared";
@@ -22,32 +25,99 @@ interface MotionProps {
   currentVirtualIndex: number;
   windowStart: number;
   size: number;
+  stepDuration: number;
   motionSettings: CarouselMotionSettings;
+  repeatedClickSettings: CarouselRepeatedClickSettings;
+  dragSpeedConfig: DragSpeedConfig;
   isMoving: boolean;
   animMode: AnimationMode;
   reason: MoveReason;
   duration: number;
   gestureReleaseVelocity: number;
+  gestureReleaseMotionVelocity: number;
   isRepeatedClickAdvance: boolean;
   followUpVirtualIndex: number | null;
   followUpDuration: number;
   onComplete: () => void;
 }
 
-type MotionSegment = {
+type MotionStrategyKind = "easing" | "gesture" | "repeated" | "handoff";
+
+type CubicBezier = {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+};
+
+type VelocityProfile = {
+  duration: number;
+  zones: VelocityProfileZone[];
+};
+
+type VelocityProfileZone = {
+  startDistanceProgress: number;
+  endDistanceProgress: number;
+  startTime: number;
+  duration: number;
+  startSpeed: number;
+  endSpeed: number;
+};
+
+type MotionSegmentBase = {
+  strategy: MotionStrategyKind;
   from: number;
   to: number;
   duration: number;
   startedAt: number;
-  initialVelocity: number;
-  terminalVelocity: number;
+};
+
+type EasingMotionSegment = MotionSegmentBase & {
+  strategy: "easing";
+  easing: CubicBezier;
+};
+
+type ProfileMotionSegment = MotionSegmentBase & {
+  strategy: "gesture" | "repeated" | "handoff";
+  profile: VelocityProfile;
+};
+
+type MotionSegment = EasingMotionSegment | ProfileMotionSegment;
+
+type MotionSample = {
+  progress: number;
+  position: number;
+  velocity: number;
+  target: number;
+  strategy: MotionStrategyKind;
 };
 
 type HandoffSnapshot = {
   position: number;
   velocity: number;
   timestamp: number;
+  target: number;
+  strategy: MotionStrategyKind;
 };
+
+const LINEAR_BEZIER: CubicBezier = {
+  x1: 0,
+  y1: 0,
+  x2: 1,
+  y2: 1,
+};
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.max(min, Math.min(max, value));
+
+const smoothstep = (progress: number) =>
+  progress * progress * (3 - 2 * progress);
+
+const smoothstepIntegral = (progress: number) =>
+  progress * progress * progress - 0.5 * progress * progress * progress * progress;
+
+const lerp = (from: number, to: number, progress: number) =>
+  from + (to - from) * progress;
 
 const getBezier = (animMode: AnimationMode, reason: MoveReason) => {
   if (animMode === "jump") return JUMP_BEZIER;
@@ -64,328 +134,588 @@ const getBezier = (animMode: AnimationMode, reason: MoveReason) => {
   }
 };
 
-const getBezierStartSlope = (bezier: string) => {
+const parseBezier = (bezier: string): CubicBezier => {
   if (bezier.trim().toLowerCase() === "linear") {
-    return 1;
+    return LINEAR_BEZIER;
   }
 
   const match =
-    /cubic-bezier\(\s*([+-]?\d*\.?\d+)\s*,\s*([+-]?\d*\.?\d+)/i.exec(bezier);
+    /cubic-bezier\(\s*([+-]?\d*\.?\d+)\s*,\s*([+-]?\d*\.?\d+)\s*,\s*([+-]?\d*\.?\d+)\s*,\s*([+-]?\d*\.?\d+)/i.exec(
+      bezier,
+    );
 
-  if (!match) return 0;
+  if (!match) {
+    return LINEAR_BEZIER;
+  }
 
   const x1 = Number.parseFloat(match[1] ?? "");
   const y1 = Number.parseFloat(match[2] ?? "");
+  const x2 = Number.parseFloat(match[3] ?? "");
+  const y2 = Number.parseFloat(match[4] ?? "");
 
-  if (!(x1 > 0) || !Number.isFinite(y1)) {
-    return 0;
-  }
-
-  return y1 / x1;
-};
-
-const clampRetargetVelocity = (
-  velocity: number,
-  distance: number,
-  duration: number,
-  monotonicSpeedFactor: number,
-  epsilon: number,
-) => {
   if (
-    !Number.isFinite(velocity) ||
-    !Number.isFinite(distance) ||
-    duration <= 0
+    !Number.isFinite(x1) ||
+    !Number.isFinite(y1) ||
+    !Number.isFinite(x2) ||
+    !Number.isFinite(y2)
   ) {
-    return 0;
+    return LINEAR_BEZIER;
   }
 
-  if (Math.abs(distance) < epsilon) {
-    return 0;
-  }
-
-  const direction = Math.sign(distance);
-  if (direction === 0 || Math.sign(velocity) !== direction) {
-    return 0;
-  }
-
-  const maxVelocity = (Math.abs(distance) / duration) * monotonicSpeedFactor;
-
-  return direction * Math.min(Math.abs(velocity), maxVelocity);
+  return {
+    x1: clamp(x1, 0, 1),
+    y1,
+    x2: clamp(x2, 0, 1),
+    y2,
+  };
 };
 
-const getInitialVelocity = (
-  currentVelocity: number,
-  distance: number,
-  duration: number,
-  animMode: AnimationMode,
-  reason: MoveReason,
-  monotonicSpeedFactor: number,
-  epsilon: number,
-  remainingDuration: number | null = null,
-  bezier = getBezier(animMode, reason),
+const cubicBezierValue = (
+  t: number,
+  firstControlPoint: number,
+  secondControlPoint: number,
 ) => {
-  const carriedVelocity = clampRetargetVelocity(
-    currentVelocity,
-    distance,
-    duration,
-    monotonicSpeedFactor,
-    epsilon,
+  const inverse = 1 - t;
+
+  return (
+    3 * inverse * inverse * t * firstControlPoint +
+    3 * inverse * t * t * secondControlPoint +
+    t * t * t
+  );
+};
+
+const cubicBezierDerivative = (
+  t: number,
+  firstControlPoint: number,
+  secondControlPoint: number,
+) => {
+  const inverse = 1 - t;
+
+  return (
+    3 * inverse * inverse * firstControlPoint +
+    6 * inverse * t * (secondControlPoint - firstControlPoint) +
+    3 * t * t * (1 - secondControlPoint)
+  );
+};
+
+const solveBezierT = (bezier: CubicBezier, progress: number) => {
+  const target = clamp(progress, 0, 1);
+  let t = target;
+
+  for (let i = 0; i < 5; i += 1) {
+    const x = cubicBezierValue(t, bezier.x1, bezier.x2);
+    const derivative = cubicBezierDerivative(t, bezier.x1, bezier.x2);
+
+    if (Math.abs(x - target) < 0.000001 || Math.abs(derivative) < 0.000001) {
+      break;
+    }
+
+    t = clamp(t - (x - target) / derivative, 0, 1);
+  }
+
+  let lower = 0;
+  let upper = 1;
+
+  for (let i = 0; i < 8; i += 1) {
+    const x = cubicBezierValue(t, bezier.x1, bezier.x2);
+    if (Math.abs(x - target) < 0.000001) {
+      break;
+    }
+
+    if (x < target) {
+      lower = t;
+    } else {
+      upper = t;
+    }
+
+    t = (lower + upper) / 2;
+  }
+
+  return t;
+};
+
+const sampleBezier = (bezier: CubicBezier, progress: number) => {
+  const t = solveBezierT(bezier, progress);
+  const eased = clamp(cubicBezierValue(t, bezier.y1, bezier.y2), 0, 1);
+  const dx = cubicBezierDerivative(t, bezier.x1, bezier.x2);
+  const dy = cubicBezierDerivative(t, bezier.y1, bezier.y2);
+  const slope = Math.abs(dx) > 0.000001 ? dy / dx : 0;
+
+  return {
+    progress: eased,
+    slope: Number.isFinite(slope) ? slope : 0,
+  };
+};
+
+const normalizeProfileShare = (value: number) =>
+  Number.isFinite(value) ? clamp(value, 0, 1) : 0;
+
+const getProfileShares = (
+  startAcceleration: number,
+  endDeceleration: number,
+) => {
+  let accelerationShare = normalizeProfileShare(startAcceleration);
+  let decelerationShare = normalizeProfileShare(endDeceleration);
+  const shapingShare = accelerationShare + decelerationShare;
+
+  if (shapingShare > 1) {
+    accelerationShare /= shapingShare;
+    decelerationShare /= shapingShare;
+  }
+
+  return {
+    accelerationShare,
+    cruiseShare: Math.max(0, 1 - accelerationShare - decelerationShare),
+    decelerationShare,
+  };
+};
+
+const MIN_PROFILE_SPEED = 0.000001;
+
+const getZoneDuration = (
+  distance: number,
+  startSpeed: number,
+  endSpeed: number,
+) => {
+  if (!(distance > 0)) {
+    return 0;
+  }
+
+  const averageSpeed = Math.max(
+    MIN_PROFILE_SPEED,
+    (Math.max(0, startSpeed) + Math.max(0, endSpeed)) * 0.5,
   );
 
-  if (remainingDuration !== null && remainingDuration > epsilon) {
-    const timeCompressionVelocity = clampRetargetVelocity(
-      currentVelocity * (remainingDuration / duration),
-      distance,
-      duration,
-      monotonicSpeedFactor,
-      epsilon,
-    );
+  return distance / averageSpeed;
+};
 
-    if (Math.abs(timeCompressionVelocity) > epsilon) {
-      return timeCompressionVelocity;
+const getProfileDurationForPeakSpeed = ({
+  distance,
+  startSpeed,
+  peakSpeed,
+  endSpeed,
+  accelerationShare,
+  cruiseShare,
+  decelerationShare,
+}: {
+  distance: number;
+  startSpeed: number;
+  peakSpeed: number;
+  endSpeed: number;
+  accelerationShare: number;
+  cruiseShare: number;
+  decelerationShare: number;
+}) =>
+  getZoneDuration(distance * accelerationShare, startSpeed, peakSpeed) +
+  getZoneDuration(distance * cruiseShare, peakSpeed, peakSpeed) +
+  getZoneDuration(distance * decelerationShare, peakSpeed, endSpeed);
+
+const solvePeakSpeedForDuration = ({
+  distance,
+  targetDuration,
+  startSpeed,
+  peakSpeed,
+  endSpeed,
+  accelerationShare,
+  cruiseShare,
+  decelerationShare,
+}: {
+  distance: number;
+  targetDuration: number;
+  startSpeed: number;
+  peakSpeed: number;
+  endSpeed: number;
+  accelerationShare: number;
+  cruiseShare: number;
+  decelerationShare: number;
+}) => {
+  if (!(distance > 0) || !(targetDuration > 0)) {
+    return peakSpeed;
+  }
+
+  let lower = Math.max(MIN_PROFILE_SPEED, peakSpeed, startSpeed, endSpeed);
+  let upper = lower;
+  let upperDuration = getProfileDurationForPeakSpeed({
+    distance,
+    startSpeed,
+    peakSpeed: upper,
+    endSpeed,
+    accelerationShare,
+    cruiseShare,
+    decelerationShare,
+  });
+
+  for (let i = 0; upperDuration > targetDuration && i < 24; i += 1) {
+    upper *= 2;
+    upperDuration = getProfileDurationForPeakSpeed({
+      distance,
+      startSpeed,
+      peakSpeed: upper,
+      endSpeed,
+      accelerationShare,
+      cruiseShare,
+      decelerationShare,
+    });
+  }
+
+  if (upperDuration > targetDuration) {
+    return upper;
+  }
+
+  for (let i = 0; i < 24; i += 1) {
+    const middle = (lower + upper) / 2;
+    const middleDuration = getProfileDurationForPeakSpeed({
+      distance,
+      startSpeed,
+      peakSpeed: middle,
+      endSpeed,
+      accelerationShare,
+      cruiseShare,
+      decelerationShare,
+    });
+
+    if (middleDuration > targetDuration) {
+      lower = middle;
+    } else {
+      upper = middle;
     }
   }
 
-  const slope = getBezierStartSlope(bezier);
-  const desiredVelocity = clampRetargetVelocity(
-    (distance / duration) * slope,
-    distance,
-    duration,
-    monotonicSpeedFactor,
-    epsilon,
-  );
-
-  if (Math.abs(carriedVelocity) > epsilon) {
-    return carriedVelocity;
-  }
-
-  return desiredVelocity;
+  return upper;
 };
 
-const resolveInitialVelocity = ({
-  currentVelocity,
-  distance,
-  duration,
-  animMode,
-  reason,
-  isRepeatedClickAdvance,
-  monotonicSpeedFactor,
-  epsilon,
-  remainingDuration,
-}: {
-  currentVelocity: number;
-  distance: number;
-  duration: number;
-  animMode: AnimationMode;
-  reason: MoveReason;
-  isRepeatedClickAdvance: boolean;
-  monotonicSpeedFactor: number;
-  epsilon: number;
-  remainingDuration: number | null;
-}) => {
-  if (isRepeatedClickAdvance) {
-    return getDesiredVelocity(
-      distance,
-      duration,
-      animMode,
-      reason,
-      monotonicSpeedFactor,
-      epsilon,
-      REPEATED_CLICK_BEZIER,
-    );
-  }
-
-  return getInitialVelocity(
-    currentVelocity,
+const addProfileZone = (
+  zones: VelocityProfileZone[],
+  {
+    distanceProgress,
+    share,
+    startSpeed,
+    endSpeed,
     distance,
-    duration,
-    animMode,
-    reason,
-    monotonicSpeedFactor,
-    epsilon,
-    remainingDuration,
-  );
-};
-
-const getDesiredVelocity = (
-  distance: number,
-  duration: number,
-  animMode: AnimationMode,
-  reason: MoveReason,
-  monotonicSpeedFactor: number,
-  epsilon: number,
-  bezier = getBezier(animMode, reason),
+  }: {
+    distanceProgress: number;
+    share: number;
+    startSpeed: number;
+    endSpeed: number;
+    distance: number;
+  },
 ) => {
-  const slope = getBezierStartSlope(bezier);
+  if (share <= 0) {
+    return distanceProgress;
+  }
 
-  return clampRetargetVelocity(
-    (distance / duration) * slope,
-    distance,
+  const startTime =
+    zones.length > 0
+      ? zones[zones.length - 1]!.startTime + zones[zones.length - 1]!.duration
+      : 0;
+  const duration = getZoneDuration(distance * share, startSpeed, endSpeed);
+
+  zones.push({
+    startDistanceProgress: distanceProgress,
+    endDistanceProgress: distanceProgress + share,
+    startTime,
     duration,
-    monotonicSpeedFactor,
-    epsilon,
+    startSpeed,
+    endSpeed,
+  });
+
+  return distanceProgress + share;
+};
+
+const createVelocityProfile = ({
+  distance,
+  startSpeed,
+  peakSpeed,
+  endSpeed,
+  startAcceleration,
+  endDeceleration,
+  targetDuration,
+  maxPeakSpeed,
+}: {
+  distance: number;
+  startSpeed: number;
+  peakSpeed: number;
+  endSpeed: number;
+  startAcceleration: number;
+  endDeceleration: number;
+  targetDuration?: number;
+  maxPeakSpeed?: number;
+}): VelocityProfile => {
+  const safeDistance = Math.abs(distance);
+  const safeStartSpeed = Math.max(0, startSpeed);
+  const safePeakSpeed = Math.max(0.000001, peakSpeed);
+  const safeEndSpeed = Math.max(0, endSpeed);
+  const {
+    accelerationShare,
+    cruiseShare,
+    decelerationShare,
+  } = getProfileShares(startAcceleration, endDeceleration);
+  const durationBoundPeakSpeed =
+    typeof targetDuration === "number" && targetDuration > 0
+      ? solvePeakSpeedForDuration({
+          distance: safeDistance,
+          targetDuration,
+          startSpeed: safeStartSpeed,
+          peakSpeed: safePeakSpeed,
+          endSpeed: safeEndSpeed,
+          accelerationShare,
+          cruiseShare,
+          decelerationShare,
+        })
+      : safePeakSpeed;
+  const uncappedPeakSpeed = Math.max(
+    safePeakSpeed,
+    safeStartSpeed,
+    safeEndSpeed,
+    durationBoundPeakSpeed,
+  );
+  const resolvedPeakSpeed =
+    typeof maxPeakSpeed === "number" && maxPeakSpeed > 0
+      ? Math.max(
+          safeStartSpeed,
+          safeEndSpeed,
+          Math.min(uncappedPeakSpeed, maxPeakSpeed),
+        )
+      : uncappedPeakSpeed;
+  const zones: VelocityProfileZone[] = [];
+  let distanceProgress = 0;
+
+  distanceProgress = addProfileZone(zones, {
+    distanceProgress,
+    share: accelerationShare,
+    startSpeed: safeStartSpeed,
+    endSpeed: resolvedPeakSpeed,
+    distance: safeDistance,
+  });
+  distanceProgress = addProfileZone(zones, {
+    distanceProgress,
+    share: cruiseShare,
+    startSpeed: resolvedPeakSpeed,
+    endSpeed: resolvedPeakSpeed,
+    distance: safeDistance,
+  });
+  addProfileZone(zones, {
+    distanceProgress,
+    share: decelerationShare,
+    startSpeed: resolvedPeakSpeed,
+    endSpeed: safeEndSpeed,
+    distance: safeDistance,
+  });
+
+  const duration =
+    zones.length > 0
+      ? zones[zones.length - 1]!.startTime + zones[zones.length - 1]!.duration
+      : 0;
+
+  return {
+    duration,
+    zones,
+  };
+};
+
+const getProfileZoneDistanceProgress = (
+  zone: VelocityProfileZone,
+  localProgress: number,
+  distance: number,
+) => {
+  if (!(distance > 0) || !(zone.duration > 0)) {
+    return zone.endDistanceProgress;
+  }
+
+  const localDistance =
+    zone.duration *
+    (zone.startSpeed * localProgress +
+      (zone.endSpeed - zone.startSpeed) *
+        smoothstepIntegral(localProgress));
+
+  return clamp(
+    zone.startDistanceProgress + localDistance / distance,
+    zone.startDistanceProgress,
+    zone.endDistanceProgress,
   );
 };
 
-const getJoinVelocity = ({
-  distance,
-  duration,
-  initialVelocity,
-  followUpDistance,
-  followUpDuration,
-  followUpTerminalVelocity,
-  monotonicSpeedFactor,
-  epsilon,
-}: {
-  distance: number;
-  duration: number;
-  initialVelocity: number;
-  followUpDistance: number;
-  followUpDuration: number;
-  followUpTerminalVelocity: number;
-  monotonicSpeedFactor: number;
-  epsilon: number;
-}) => {
-  if (duration <= epsilon || followUpDuration <= epsilon) {
-    return 0;
+const sampleVelocityProfile = (
+  profile: VelocityProfile,
+  elapsed: number,
+  distance: number,
+) => {
+  if (profile.zones.length === 0 || !(profile.duration > 0)) {
+    return {
+      distanceProgress: 1,
+      speed: 0,
+    };
   }
 
+  const time = clamp(elapsed, 0, profile.duration);
+  const zone =
+    profile.zones.find(
+      (candidate) =>
+        time <= candidate.startTime + candidate.duration,
+    ) ?? profile.zones[profile.zones.length - 1]!;
+  const localProgress =
+    zone.duration > 0
+      ? clamp((time - zone.startTime) / zone.duration, 0, 1)
+      : 1;
+
+  return {
+    distanceProgress: getProfileZoneDistanceProgress(
+      zone,
+      localProgress,
+      distance,
+    ),
+    speed: lerp(zone.startSpeed, zone.endSpeed, smoothstep(localProgress)),
+  };
+};
+
+const getSameDirectionSpeed = (velocity: number, distance: number) => {
   const direction = Math.sign(distance);
 
   if (
     direction === 0 ||
-    Math.sign(followUpDistance) !== direction ||
-    Math.abs(distance) < epsilon ||
-    Math.abs(followUpDistance) < epsilon
+    !Number.isFinite(velocity) ||
+    Math.sign(velocity) !== direction
   ) {
     return 0;
   }
 
-  const safeInitialVelocity = clampRetargetVelocity(
-    initialVelocity,
-    distance,
-    duration,
-    monotonicSpeedFactor,
-    epsilon,
-  );
-  const safeFollowUpTerminalVelocity = clampRetargetVelocity(
-    followUpTerminalVelocity,
-    followUpDistance,
-    followUpDuration,
-    monotonicSpeedFactor,
-    epsilon,
-  );
-  const denominator = 4 * (1 / duration + 1 / followUpDuration);
+  return Math.abs(velocity);
+};
 
-  if (!Number.isFinite(denominator) || denominator <= epsilon) {
+const getAverageSpeed = (distance: number, duration: number) => {
+  if (!(duration > 0)) {
     return 0;
   }
 
-  const rawJoinVelocity =
-    ((6 * distance) / (duration * duration) -
-      (2 * safeInitialVelocity) / duration +
-      (6 * followUpDistance) / (followUpDuration * followUpDuration) -
-      (2 * safeFollowUpTerminalVelocity) / followUpDuration) /
-    denominator;
-
-  const clampedForCurrent = clampRetargetVelocity(
-    rawJoinVelocity,
-    distance,
-    duration,
-    monotonicSpeedFactor,
-    epsilon,
-  );
-
-  return clampRetargetVelocity(
-    clampedForCurrent,
-    followUpDistance,
-    followUpDuration,
-    monotonicSpeedFactor,
-    epsilon,
-  );
+  return Math.abs(distance) / duration;
 };
 
-const getTerminalVelocity = ({
-  distance,
-  duration,
-  initialVelocity,
-  followUpVirtualIndex,
-  followUpDuration,
-  currentVirtualIndex,
-  monotonicSpeedFactor,
-  epsilon,
+const getSignedVelocity = (speed: number, distance: number) =>
+  Math.sign(distance) * Math.max(0, speed);
+
+const getNormalMoveSpeed = (stepSize: number, stepDuration: number) => {
+  if (!(stepSize > 0) || !(stepDuration > 0)) {
+    return 0;
+  }
+
+  return stepSize / stepDuration;
+};
+
+const createProfileSegment = ({
+  strategy,
+  from,
+  to,
+  startedAt,
+  currentVelocity,
+  peakVelocity,
+  endVelocity,
+  startAcceleration,
+  endDeceleration,
+  targetDuration,
+  maxPeakVelocity,
 }: {
-  distance: number;
-  duration: number;
-  initialVelocity: number;
-  followUpVirtualIndex: number | null;
-  followUpDuration: number;
-  currentVirtualIndex: number;
-  monotonicSpeedFactor: number;
-  epsilon: number;
-}) => {
-  if (
-    followUpVirtualIndex === null ||
-    followUpDuration <= epsilon ||
-    duration <= epsilon
-  ) {
-    return 0;
-  }
-
-  const followUpDistance = followUpVirtualIndex - currentVirtualIndex;
-
-  return getJoinVelocity({
+  strategy: ProfileMotionSegment["strategy"];
+  from: number;
+  to: number;
+  startedAt: number;
+  currentVelocity: number;
+  peakVelocity: number;
+  endVelocity: number;
+  startAcceleration: number;
+  endDeceleration: number;
+  targetDuration?: number;
+  maxPeakVelocity?: number;
+}): ProfileMotionSegment => {
+  const distance = to - from;
+  const startSpeed = getSameDirectionSpeed(currentVelocity, distance);
+  const peakSpeed = Math.max(
+    getSameDirectionSpeed(peakVelocity, distance),
+    startSpeed,
+    getSameDirectionSpeed(endVelocity, distance),
+    MIN_PROFILE_SPEED,
+  );
+  const profile = createVelocityProfile({
     distance,
-    duration,
-    initialVelocity,
-    followUpDistance,
-    followUpDuration,
-    followUpTerminalVelocity: 0,
-    monotonicSpeedFactor,
-    epsilon,
+    startSpeed,
+    peakSpeed,
+    endSpeed: getSameDirectionSpeed(endVelocity, distance),
+    startAcceleration,
+    endDeceleration,
+    targetDuration,
+    maxPeakSpeed:
+      typeof maxPeakVelocity === "number"
+        ? getSameDirectionSpeed(maxPeakVelocity, distance)
+        : undefined,
   });
+
+  return {
+    strategy,
+    from,
+    to,
+    duration: profile.duration,
+    startedAt,
+    profile,
+  };
 };
 
-const sampleSegment = (segment: MotionSegment, now: number) => {
+const sampleSegment = (segment: MotionSegment, now: number): MotionSample => {
   const elapsed = Math.max(0, now - segment.startedAt);
   const progress =
     segment.duration > 0 ? Math.min(1, elapsed / segment.duration) : 1;
+  const distance = segment.to - segment.from;
 
   if (progress >= 1) {
+    if (segment.strategy === "easing") {
+      const { slope } = sampleBezier(segment.easing, 1);
+
+      return {
+        progress,
+        position: segment.to,
+        velocity: (distance / segment.duration) * slope,
+        target: segment.to,
+        strategy: segment.strategy,
+      };
+    }
+
+    const sampledProfile = sampleVelocityProfile(
+      segment.profile,
+      segment.profile.duration,
+      Math.abs(distance),
+    );
+
     return {
       progress,
       position: segment.to,
-      velocity: segment.terminalVelocity,
+      velocity: Math.sign(distance) * sampledProfile.speed,
+      target: segment.to,
+      strategy: segment.strategy,
     };
   }
 
-  const u = progress;
-  const invDuration = segment.duration > 0 ? 1 / segment.duration : 0;
-  const h00 = 2 * u * u * u - 3 * u * u + 1;
-  const h10 = u * u * u - 2 * u * u + u;
-  const h01 = -2 * u * u * u + 3 * u * u;
-  const h11 = u * u * u - u * u;
-  const h00Prime = (6 * u * u - 6 * u) * invDuration;
-  const h10Prime = 3 * u * u - 4 * u + 1;
-  const h01Prime = (-6 * u * u + 6 * u) * invDuration;
-  const h11Prime = 3 * u * u - 2 * u;
+  if (segment.strategy === "easing") {
+    const eased = sampleBezier(segment.easing, progress);
 
-  const position =
-    h00 * segment.from +
-    h10 * segment.duration * segment.initialVelocity +
-    h01 * segment.to +
-    h11 * segment.duration * segment.terminalVelocity;
+    return {
+      progress,
+      position: segment.from + distance * eased.progress,
+      velocity: (distance / segment.duration) * eased.slope,
+      target: segment.to,
+      strategy: segment.strategy,
+    };
+  }
 
-  const velocity =
-    h00Prime * segment.from +
-    h10Prime * segment.initialVelocity +
-    h01Prime * segment.to +
-    h11Prime * segment.terminalVelocity;
+  const sampledProfile = sampleVelocityProfile(
+    segment.profile,
+    elapsed,
+    Math.abs(distance),
+  );
 
   return {
     progress,
-    position,
-    velocity,
+    position: segment.from + distance * sampledProfile.distanceProgress,
+    velocity: Math.sign(distance) * sampledProfile.speed,
+    target: segment.to,
+    strategy: segment.strategy,
   };
 };
 
@@ -398,12 +728,16 @@ export function useCarouselMotion({
   currentVirtualIndex,
   windowStart,
   size,
+  stepDuration,
   motionSettings,
+  repeatedClickSettings,
+  dragSpeedConfig,
   isMoving,
   animMode,
   reason,
   duration,
   gestureReleaseVelocity,
+  gestureReleaseMotionVelocity,
   isRepeatedClickAdvance,
   followUpVirtualIndex,
   followUpDuration,
@@ -449,9 +783,11 @@ export function useCarouselMotion({
       const segment = activeSegmentRef.current;
       if (!segment) {
         return {
+          progress: 1,
           position: currentPositionRef.current,
           velocity: velocityRef.current,
-          progress: 1,
+          target: currentPositionRef.current,
+          strategy: "easing" as MotionStrategyKind,
         };
       }
 
@@ -478,11 +814,7 @@ export function useCarouselMotion({
       activeSegmentRef.current = null;
     }
 
-    return {
-      position: currentPositionRef.current,
-      velocity: velocityRef.current,
-      progress: sampled.progress,
-    };
+    return sampled;
   }, [currentPositionRef, sampleCurrentState]);
 
   positionReaderRef.current = readCurrentPosition;
@@ -496,13 +828,22 @@ export function useCarouselMotion({
       cancelCompletion();
 
       if (handoffToFollowUp) {
-        const nextSnapshot = handoffSnapshot ?? {
-          position: currentVirtualIndex,
-          velocity: segment ? segment.terminalVelocity : velocityRef.current,
-          timestamp: performance.now(),
-        };
-        handoffSnapshotRef.current = nextSnapshot;
-        velocityRef.current = nextSnapshot.velocity;
+        const sampled = handoffSnapshot ??
+          (segment
+            ? {
+                ...sampleSegment(segment, performance.now()),
+                timestamp: performance.now(),
+              }
+            : {
+                position: currentVirtualIndex,
+                velocity: velocityRef.current,
+                timestamp: performance.now(),
+                target: currentVirtualIndex,
+                strategy: "easing" as MotionStrategyKind,
+              });
+
+        handoffSnapshotRef.current = sampled;
+        velocityRef.current = sampled.velocity;
         onComplete();
         return;
       }
@@ -543,6 +884,8 @@ export function useCarouselMotion({
           position: sampled.position,
           velocity: sampled.velocity,
           timestamp,
+          target: sampled.target,
+          strategy: sampled.strategy,
         });
         return;
       }
@@ -554,7 +897,29 @@ export function useCarouselMotion({
   }, [applyPosition, cancelAnimation, finalizeMotion, hasFollowUpStep]);
 
   useIsomorphicLayoutEffect(() => {
-    const planKey = `${enabled}:${isMoving}:${animMode}:${reason}:${duration}:${gestureReleaseVelocity}:${startVirtualIndex}:${currentVirtualIndex}:${isRepeatedClickAdvance}:${followUpVirtualIndex}:${followUpDuration}:${motionSettings.monotonicSpeedFactor}:${epsilon}`;
+    const planKey = [
+      enabled,
+      isMoving,
+      animMode,
+      reason,
+      duration,
+      gestureReleaseVelocity,
+      gestureReleaseMotionVelocity,
+      startVirtualIndex,
+      currentVirtualIndex,
+      isRepeatedClickAdvance,
+      followUpVirtualIndex,
+      followUpDuration,
+      stepDuration,
+      repeatedClickSettings.speedMultiplier,
+      repeatedClickSettings.startAcceleration,
+      repeatedClickSettings.endDeceleration,
+      dragSpeedConfig.releaseAccelerationDistanceShare,
+      dragSpeedConfig.releaseDecelerationDistanceShare,
+      dragSpeedConfig.maxReleaseSpeedMultiplier,
+      epsilon,
+    ].join(":");
+
     if (lastPlanRef.current === planKey) {
       if (!isMoving) {
         applyPosition(currentPositionRef.current);
@@ -589,7 +954,6 @@ export function useCarouselMotion({
     }
 
     const previousSegment = activeSegmentRef.current;
-    const previousTarget = previousSegment?.to;
     const handoffSnapshot = handoffSnapshotRef.current;
     const canReuseHandoffSnapshot =
       previousSegment === null &&
@@ -600,70 +964,120 @@ export function useCarouselMotion({
       ? readCurrentState()
       : canReuseHandoffSnapshot
         ? {
+            progress: 0,
             position: handoffSnapshot.position,
             velocity: handoffSnapshot.velocity,
-            progress: 0,
+            target: handoffSnapshot.target,
+            strategy: handoffSnapshot.strategy,
           }
         : reason === "gesture"
           ? {
-              position: currentPositionRef.current,
-              velocity: gestureReleaseVelocity,
               progress: 0,
+              position: currentPositionRef.current,
+              velocity: gestureReleaseMotionVelocity,
+              target: currentVirtualIndex,
+              strategy: "gesture" as MotionStrategyKind,
             }
           : {
+              progress: 0,
               position: currentPositionRef.current,
               velocity: velocityRef.current,
-              progress: 0,
+              target: currentVirtualIndex,
+              strategy: "easing" as MotionStrategyKind,
             };
-    const previousRemainingDuration =
-      previousSegment && reason === "click"
-        ? Math.max(0, previousSegment.duration * (1 - nowState.progress))
-        : null;
     const distance = currentVirtualIndex - nowState.position;
-    const isSameTargetClickRetarget =
-      !isRepeatedClickAdvance &&
-      reason === "click" &&
-      previousTarget !== undefined &&
-      Math.abs(previousTarget - currentVirtualIndex) < epsilon;
 
     if (Math.abs(distance) < epsilon) {
       finalizeMotion(hasFollowUpStep);
       return;
     }
 
-    const initialVelocity = resolveInitialVelocity({
-      currentVelocity:
-        reason === "gesture" ? gestureReleaseVelocity : nowState.velocity,
+    const startedAt = canReuseHandoffSnapshot ? handoffSnapshot.timestamp : now;
+    const followUpDistance =
+      followUpVirtualIndex === null
+        ? 0
+        : followUpVirtualIndex - currentVirtualIndex;
+    const followUpVelocity =
+      followUpDuration > epsilon ? followUpDistance / followUpDuration : 0;
+    const normalMoveSpeed =
+      getNormalMoveSpeed(size, stepDuration) ||
+      getAverageSpeed(distance, duration);
+    const normalVelocity = getSignedVelocity(normalMoveSpeed, distance);
+    const repeatedVelocity = getSignedVelocity(
+      normalMoveSpeed * repeatedClickSettings.speedMultiplier,
       distance,
-      duration,
-      animMode,
-      reason,
-      isRepeatedClickAdvance,
-      monotonicSpeedFactor: motionSettings.monotonicSpeedFactor,
-      epsilon,
-      remainingDuration: isSameTargetClickRetarget
-        ? previousRemainingDuration
-        : null,
-    });
-    const terminalVelocity = getTerminalVelocity({
+    );
+    const gestureIntentSpeed = getSameDirectionSpeed(
+      gestureReleaseVelocity,
       distance,
-      duration,
-      initialVelocity,
-      followUpVirtualIndex,
-      followUpDuration,
-      currentVirtualIndex,
-      monotonicSpeedFactor: motionSettings.monotonicSpeedFactor,
-      epsilon,
-    });
+    );
+    const gesturePeakSpeed = Math.max(
+      normalMoveSpeed,
+      gestureIntentSpeed,
+      getSameDirectionSpeed(gestureReleaseMotionVelocity, distance),
+    );
+    const gesturePeakVelocity = getSignedVelocity(gesturePeakSpeed, distance);
+    const maxGestureVelocity = getSignedVelocity(
+      normalMoveSpeed * dragSpeedConfig.maxReleaseSpeedMultiplier,
+      distance,
+    );
 
-    activeSegmentRef.current = {
-      from: nowState.position,
-      to: currentVirtualIndex,
-      duration,
-      startedAt: canReuseHandoffSnapshot ? handoffSnapshot.timestamp : now,
-      initialVelocity,
-      terminalVelocity,
-    };
+    if (isRepeatedClickAdvance) {
+      activeSegmentRef.current = createProfileSegment({
+        strategy: "repeated",
+        from: nowState.position,
+        to: currentVirtualIndex,
+        startedAt,
+        currentVelocity: nowState.velocity,
+        peakVelocity: repeatedVelocity,
+        endVelocity: followUpVelocity,
+        startAcceleration: repeatedClickSettings.startAcceleration,
+        endDeceleration: repeatedClickSettings.endDeceleration,
+      });
+    } else if (
+      reason === "gesture" &&
+      animMode !== "snap"
+    ) {
+      activeSegmentRef.current = createProfileSegment({
+        strategy: "gesture",
+        from: nowState.position,
+        to: currentVirtualIndex,
+        startedAt,
+        currentVelocity: gestureReleaseMotionVelocity,
+        peakVelocity: gesturePeakVelocity,
+        endVelocity: 0,
+        startAcceleration: dragSpeedConfig.releaseAccelerationDistanceShare,
+        endDeceleration: dragSpeedConfig.releaseDecelerationDistanceShare,
+        targetDuration: duration,
+        maxPeakVelocity: maxGestureVelocity,
+      });
+    } else if (
+      reason === "click" &&
+      animMode !== "jump" &&
+      getSameDirectionSpeed(nowState.velocity, distance) > epsilon
+    ) {
+      activeSegmentRef.current = createProfileSegment({
+        strategy: "handoff",
+        from: nowState.position,
+        to: currentVirtualIndex,
+        startedAt,
+        currentVelocity: nowState.velocity,
+        peakVelocity: normalVelocity,
+        endVelocity: 0,
+        startAcceleration: 0,
+        endDeceleration: 1,
+        targetDuration: duration,
+      });
+    } else {
+      activeSegmentRef.current = {
+        strategy: "easing",
+        from: nowState.position,
+        to: currentVirtualIndex,
+        duration,
+        startedAt,
+        easing: parseBezier(getBezier(animMode, reason)),
+      };
+    }
 
     if (canReuseHandoffSnapshot) {
       handoffSnapshotRef.current = null;
@@ -693,13 +1107,22 @@ export function useCarouselMotion({
     finalizeMotion,
     followUpDuration,
     followUpVirtualIndex,
+    dragSpeedConfig.maxReleaseSpeedMultiplier,
+    dragSpeedConfig.releaseAccelerationDistanceShare,
+    dragSpeedConfig.releaseDecelerationDistanceShare,
+    gestureReleaseMotionVelocity,
     gestureReleaseVelocity,
+    hasFollowUpStep,
     isRepeatedClickAdvance,
     isMoving,
-    motionSettings.monotonicSpeedFactor,
     readCurrentState,
     reason,
+    repeatedClickSettings.endDeceleration,
+    repeatedClickSettings.speedMultiplier,
+    repeatedClickSettings.startAcceleration,
+    size,
     startVirtualIndex,
+    stepDuration,
   ]);
 
   useEffect(

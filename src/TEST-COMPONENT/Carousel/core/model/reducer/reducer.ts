@@ -31,6 +31,7 @@ export function reducer(state: State, action: ReducerAction): State {
         animMode: "none",
         moveReason: "gesture",
         gestureReleaseVelocity: 0,
+        gestureReleaseMotionVelocity: 0,
       };
 
     case "END_DRAG":
@@ -55,6 +56,7 @@ export function reducer(state: State, action: ReducerAction): State {
           animMode: "none",
           moveReason: "gesture",
           gestureReleaseVelocity: 0,
+          gestureReleaseMotionVelocity: 0,
         };
       }
 
@@ -72,6 +74,9 @@ export function reducer(state: State, action: ReducerAction): State {
             : "normal",
         moveReason: "gesture",
         gestureReleaseVelocity: action.isInstant ? 0 : action.releaseVelocity,
+        gestureReleaseMotionVelocity: action.isInstant
+          ? 0
+          : action.releaseMotionVelocity,
       };
 
     case "MOVE":
@@ -115,6 +120,7 @@ export function reducer(state: State, action: ReducerAction): State {
             animMode: "snap",
             moveReason: "gesture",
             gestureReleaseVelocity: 0,
+            gestureReleaseMotionVelocity: 0,
           };
         }
         return {
@@ -126,6 +132,7 @@ export function reducer(state: State, action: ReducerAction): State {
           animMode: action.isInstant ? "instant" : syncedState.animMode,
           moveReason: action.moveReason,
           gestureReleaseVelocity: 0,
+          gestureReleaseMotionVelocity: 0,
         };
       }
 
@@ -139,6 +146,7 @@ export function reducer(state: State, action: ReducerAction): State {
         animMode: mode,
         moveReason: action.moveReason,
         gestureReleaseVelocity: 0,
+        gestureReleaseMotionVelocity: 0,
       };
     }
 
@@ -155,6 +163,7 @@ export function reducer(state: State, action: ReducerAction): State {
           animMode: "normal",
           moveReason: "click",
           gestureReleaseVelocity: 0,
+          gestureReleaseMotionVelocity: 0,
         };
       }
 
@@ -166,6 +175,7 @@ export function reducer(state: State, action: ReducerAction): State {
         isRepeatedClickAdvance: false,
         animMode: "none",
         gestureReleaseVelocity: 0,
+        gestureReleaseMotionVelocity: 0,
       };
     }
 

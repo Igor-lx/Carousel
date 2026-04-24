@@ -7,11 +7,12 @@ import {
   HOVER_PAUSE_DELAY,
   MIN_VISIBLE_SLIDES,
   MOTION_EPSILON,
-  MOTION_MONOTONIC_SPEED_FACTOR,
   RENDER_WINDOW_BUFFER_MULTIPLIER,
   REPEATED_CLICK_DESTINATION_POSITION,
+  REPEATED_CLICK_END_DECELERATION,
   REPEATED_CLICK_EPSILON,
   REPEATED_CLICK_SPEED_MULTIPLIER,
+  REPEATED_CLICK_START_ACCELERATION,
   SNAP_BACK_DURATION,
   VISIBILITY_THRESHOLD,
 } from "../config";
@@ -56,6 +57,8 @@ export const resolveRawCarouselRuntimeSettings = ({
   repeatedClickSettings: {
     destinationPosition: REPEATED_CLICK_DESTINATION_POSITION,
     speedMultiplier: REPEATED_CLICK_SPEED_MULTIPLIER,
+    startAcceleration: REPEATED_CLICK_START_ACCELERATION,
+    endDeceleration: REPEATED_CLICK_END_DECELERATION,
     epsilon: REPEATED_CLICK_EPSILON,
   },
   interactionSettings: {
@@ -71,7 +74,6 @@ export const resolveRawCarouselRuntimeSettings = ({
   },
   dragReleaseEpsilon: CAROUSEL_DRAG_RELEASE_EPSILON,
   motionSettings: {
-    monotonicSpeedFactor: MOTION_MONOTONIC_SPEED_FACTOR,
     snapBackDuration: SNAP_BACK_DURATION,
     epsilon: MOTION_EPSILON,
   },
