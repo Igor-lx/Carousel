@@ -16,6 +16,7 @@ import {
   MIN_DRAG_DURATION_RATIO,
   MIN_DRAG_EMA_ALPHA,
   MIN_DRAG_INERTIA_BOOST,
+  MIN_DRAG_INERTIA_BOOST_RAMP_END_RATIO,
   MIN_REPEATED_CLICK_DESTINATION_POSITION,
   MIN_REPEATED_CLICK_PROFILE_SHARE,
   MIN_REPEATED_CLICK_SPEED_MULTIPLIER,
@@ -139,6 +140,15 @@ export const normalizeDragInertiaBoost = (
 ) =>
   Math.max(
     MIN_DRAG_INERTIA_BOOST,
+    normalizePositiveNumber(value, safeValue),
+  );
+
+export const normalizeDragInertiaBoostRampEndRatio = (
+  value: unknown,
+  safeValue: number,
+) =>
+  Math.max(
+    MIN_DRAG_INERTIA_BOOST_RAMP_END_RATIO,
     normalizePositiveNumber(value, safeValue),
   );
 

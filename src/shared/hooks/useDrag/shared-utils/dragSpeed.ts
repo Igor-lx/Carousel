@@ -1,6 +1,5 @@
 export interface DragSpeedConfig {
-  velocityThreshold: number;
-  rampEnd: number;
+  inertiaBoostRampEndRatio: number;
   minDurationRatio: number;
   minDuration: number;
   inertiaBoost: number;
@@ -9,8 +8,7 @@ export interface DragSpeedConfig {
 }
 
 export const DEFAULT_DRAG_SPEED_CONFIG: DragSpeedConfig = {
-  velocityThreshold: 0.65,
-  rampEnd: 2.1,
+  inertiaBoostRampEndRatio: 1.35,
   minDurationRatio: 0.3,
   minDuration: 240,
   inertiaBoost: 1,
@@ -24,58 +22,65 @@ const smoothstep = (progress: number) =>
 const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, value));
 
-const getVelocityModifierWeight = (
-  velocity: number,
+const getInertiaBoostWeight = (
+  releaseSpeed: number,
+  normalSpeed: number,
   dragSpeedConfig: DragSpeedConfig,
 ) => {
-  if (velocity <= dragSpeedConfig.velocityThreshold) return 0;
-  if (velocity >= dragSpeedConfig.rampEnd) return 1;
+  if (!(normalSpeed > 0) || releaseSpeed <= normalSpeed) return 0;
 
-  const range =
-    dragSpeedConfig.rampEnd - dragSpeedConfig.velocityThreshold;
-  if (range <= 0) return 1;
+  const rampEndRatio = Math.max(1, dragSpeedConfig.inertiaBoostRampEndRatio);
+  if (rampEndRatio <= 1) return 1;
 
-  const progress =
-    (velocity - dragSpeedConfig.velocityThreshold) / range;
+  const releaseRatio = releaseSpeed / normalSpeed;
+  if (releaseRatio >= rampEndRatio) return 1;
+
+  const progress = (releaseRatio - 1) / (rampEndRatio - 1);
 
   return smoothstep(progress);
 };
 
-export const scaleVelocityToInertia = ({
-  velocity,
-  responseVelocity,
+export const resolveGestureReleaseSpeed = ({
+  releaseSpeed,
+  normalSpeed,
   dragSpeedConfig,
 }: {
-  velocity: number;
-  responseVelocity?: number;
+  releaseSpeed: number;
+  normalSpeed: number;
   dragSpeedConfig?: Partial<DragSpeedConfig>;
 }) => {
   const resolvedDragSpeedConfig: DragSpeedConfig = {
     ...DEFAULT_DRAG_SPEED_CONFIG,
     ...dragSpeedConfig,
   };
-  const safeVelocity = Math.abs(velocity);
-  const safeResponseVelocity =
-    typeof responseVelocity === "number" && Number.isFinite(responseVelocity)
-      ? Math.abs(responseVelocity)
-      : null;
-  const rampVelocity = safeResponseVelocity !== null
-    ? safeResponseVelocity
-    : safeVelocity;
+  const safeReleaseSpeed =
+    Number.isFinite(releaseSpeed) ? Math.max(0, Math.abs(releaseSpeed)) : 0;
+  const safeNormalSpeed =
+    Number.isFinite(normalSpeed) ? Math.max(0, Math.abs(normalSpeed)) : 0;
 
-  if (!Number.isFinite(velocity) || safeVelocity <= 0) {
-    return 0;
+  if (!(safeReleaseSpeed > 0)) {
+    return safeNormalSpeed;
   }
 
-  const weight = getVelocityModifierWeight(
-    rampVelocity,
+  if (!(safeNormalSpeed > 0)) {
+    return safeReleaseSpeed * Math.max(1, resolvedDragSpeedConfig.inertiaBoost);
+  }
+
+  if (safeReleaseSpeed <= safeNormalSpeed) {
+    return safeNormalSpeed;
+  }
+
+  const weight = getInertiaBoostWeight(
+    safeReleaseSpeed,
+    safeNormalSpeed,
     resolvedDragSpeedConfig,
   );
   const safeBoost = Math.max(1, resolvedDragSpeedConfig.inertiaBoost);
-  const amplifiedVelocity =
-    safeVelocity * (1 + (safeBoost - 1) * weight);
+  const boostedExcessSpeed =
+    (safeReleaseSpeed - safeNormalSpeed) *
+    (1 + (safeBoost - 1) * weight);
 
-  return Math.sign(velocity) * amplifiedVelocity;
+  return safeNormalSpeed + boostedExcessSpeed;
 };
 
 export const mapReleaseVelocityToDuration = ({
@@ -100,9 +105,11 @@ export const mapReleaseVelocityToDuration = ({
   }
 
   const normalSpeed = safeDistance / normalDuration;
-  const releaseSpeed =
-    Number.isFinite(releaseVelocity) ? Math.abs(releaseVelocity) : 0;
-  const targetSpeed = Math.max(normalSpeed, releaseSpeed);
+  const targetSpeed = resolveGestureReleaseSpeed({
+    releaseSpeed: releaseVelocity,
+    normalSpeed,
+    dragSpeedConfig: resolvedDragSpeedConfig,
+  });
 
   if (!(targetSpeed > 0)) {
     return normalDuration;

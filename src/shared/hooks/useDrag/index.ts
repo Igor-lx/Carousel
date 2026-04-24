@@ -6,7 +6,7 @@ export {
 
 export {
   DEFAULT_DRAG_SPEED_CONFIG,
-  scaleVelocityToInertia,
+  resolveGestureReleaseSpeed,
   mapReleaseVelocityToDuration,
 } from "./shared-utils/dragSpeed";
 

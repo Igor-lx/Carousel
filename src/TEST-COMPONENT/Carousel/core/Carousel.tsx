@@ -314,7 +314,6 @@ const Carousel = memo((props: CarouselProps) => {
       layout: nextLayout,
       baseVirtualIndex: virtualIndex,
       dragReleaseEpsilon,
-      dragSpeedConfig,
       currentPositionRef: motionPositionRef,
       readCurrentPosition,
       applyDragPosition,

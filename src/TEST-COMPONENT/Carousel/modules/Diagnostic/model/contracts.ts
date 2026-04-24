@@ -17,6 +17,7 @@ export const MAX_DRAG_EMA_ALPHA = 1;
 export const MIN_DRAG_DURATION_RATIO = 0;
 export const MAX_DRAG_DURATION_RATIO = 1;
 export const MIN_DRAG_INERTIA_BOOST = 1;
+export const MIN_DRAG_INERTIA_BOOST_RAMP_END_RATIO = 1;
 
 export const HARD_ERROR_ALT_PLACEHOLDER = "Downloading Error";
 
@@ -53,8 +54,7 @@ export const HARD_DRAG_CONFIG = {
 } as const;
 
 export const HARD_DRAG_SPEED_CONFIG = {
-  velocityThreshold: 0.4,
-  rampEnd: 1.35,
+  inertiaBoostRampEndRatio: 1.35,
   minDurationRatio: 0.14,
   minDuration: 220,
   inertiaBoost: 3,

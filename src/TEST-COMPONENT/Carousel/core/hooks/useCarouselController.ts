@@ -1,19 +1,16 @@
 import { useCallback, useRef } from "react";
 import type { Action, MoveReason } from "../model/reducer";
-import type { DragSpeedConfig } from "../model/diagnostic";
 import {
   clamp,
   getAlignedVirtualIndex,
   getNearestPageIndex,
   getPageStart,
-  scaleVirtualVelocityToPageVelocity,
   getTrackSlotSize,
   normalizePageIndex,
   getVirtualIndexFromDragOffset,
   type CarouselLayout,
 } from "../utilities";
 import {
-  scaleVelocityToInertia,
   type DragEndPayload,
 } from "../../../../shared/hooks/useDrag";
 
@@ -24,7 +21,6 @@ interface ControllerProps {
   layout: CarouselLayout;
   baseVirtualIndex: number;
   dragReleaseEpsilon: number;
-  dragSpeedConfig: DragSpeedConfig;
   currentPositionRef: React.MutableRefObject<number>;
   readCurrentPosition: () => number;
   applyDragPosition: (position: number) => void;
@@ -49,7 +45,6 @@ export function useCarouselController({
   layout,
   baseVirtualIndex,
   dragReleaseEpsilon,
-  dragSpeedConfig,
   currentPositionRef,
   readCurrentPosition,
   applyDragPosition,
@@ -100,24 +95,6 @@ export function useCarouselController({
       return -pointerVelocity / slotSize;
     },
     [layout.clampedVisible, measureRef],
-  );
-
-  const resolveReleaseVirtualVelocity = useCallback(
-    (dragReleaseVelocity: number) => {
-      const releaseVirtualVelocity =
-        resolveVirtualPointerVelocity(dragReleaseVelocity);
-      const responseVelocity = scaleVirtualVelocityToPageVelocity(
-        releaseVirtualVelocity,
-        layout.clampedVisible,
-      );
-
-      return scaleVelocityToInertia({
-        velocity: releaseVirtualVelocity,
-        responseVelocity,
-        dragSpeedConfig,
-      });
-    },
-    [dragSpeedConfig, layout.clampedVisible, resolveVirtualPointerVelocity],
   );
 
   const move = useCallback(
@@ -216,7 +193,7 @@ export function useCarouselController({
         isSnap:
           isSnap ||
           Math.abs(targetVirtualIndex - releasePosition) < dragReleaseEpsilon,
-        releaseVelocity: resolveReleaseVirtualVelocity(payload.releaseVelocity),
+        releaseVelocity: resolveVirtualPointerVelocity(payload.releaseVelocity),
         releaseMotionVelocity: resolveVirtualPointerVelocity(payload.velocity),
       });
 
@@ -229,7 +206,6 @@ export function useCarouselController({
       enabled,
       layout,
       resolveFromVirtualIndex,
-      resolveReleaseVirtualVelocity,
       resolveVirtualPointerVelocity,
     ],
   );

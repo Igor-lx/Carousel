@@ -15,6 +15,7 @@ import type {
 import type { AnimationMode, MoveReason } from "../model/reducer";
 import { applyTrackPositionStyle } from "../utilities";
 import { useIsomorphicLayoutEffect } from "../../../../shared";
+import { resolveGestureReleaseSpeed } from "../../../../shared/hooks/useDrag";
 
 interface MotionProps {
   trackRef: React.RefObject<HTMLDivElement | null>;
@@ -905,6 +906,8 @@ export function useCarouselMotion({
       repeatedClickSettings.endDeceleration,
       dragSpeedConfig.releaseAccelerationDistanceShare,
       dragSpeedConfig.releaseDecelerationDistanceShare,
+      dragSpeedConfig.inertiaBoost,
+      dragSpeedConfig.inertiaBoostRampEndRatio,
       epsilon,
     ].join(":");
 
@@ -993,9 +996,13 @@ export function useCarouselMotion({
       gestureReleaseVelocity,
       distance,
     );
+    const boostedGestureIntentSpeed = resolveGestureReleaseSpeed({
+      releaseSpeed: gestureIntentSpeed,
+      normalSpeed: normalMoveSpeed,
+      dragSpeedConfig,
+    });
     const gesturePeakSpeed = Math.max(
-      normalMoveSpeed,
-      gestureIntentSpeed,
+      boostedGestureIntentSpeed,
       getSameDirectionSpeed(gestureReleaseMotionVelocity, distance),
     );
     const gesturePeakVelocity = getSignedVelocity(gesturePeakSpeed, distance);
@@ -1102,6 +1109,8 @@ export function useCarouselMotion({
     followUpVirtualIndex,
     dragSpeedConfig.releaseAccelerationDistanceShare,
     dragSpeedConfig.releaseDecelerationDistanceShare,
+    dragSpeedConfig.inertiaBoost,
+    dragSpeedConfig.inertiaBoostRampEndRatio,
     gestureReleaseMotionVelocity,
     gestureReleaseVelocity,
     hasFollowUpStep,

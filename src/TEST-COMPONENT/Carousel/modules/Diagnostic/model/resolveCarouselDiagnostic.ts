@@ -41,6 +41,7 @@ import {
   MIN_DRAG_DURATION_RATIO,
   MIN_DRAG_EMA_ALPHA,
   MIN_DRAG_INERTIA_BOOST,
+  MIN_DRAG_INERTIA_BOOST_RAMP_END_RATIO,
   MIN_RENDER_WINDOW_BUFFER_MULTIPLIER,
   MIN_REPEATED_CLICK_DESTINATION_POSITION,
   MIN_REPEATED_CLICK_PROFILE_SHARE,
@@ -56,6 +57,7 @@ import {
   normalizeDragDurationRatio,
   normalizeDragEmaAlpha,
   normalizeDragInertiaBoost,
+  normalizeDragInertiaBoostRampEndRatio,
   normalizeErrorAltPlaceholder,
   normalizeNonNegativeNumber,
   normalizePositiveDuration,
@@ -716,15 +718,10 @@ const resolveDragConfig = () => {
 };
 
 const resolveDragSpeedConfig = () => {
-  const velocityThreshold = normalizeNonNegativeNumber(
-    CAROUSEL_DRAG_SPEED_CONFIG.velocityThreshold,
-    HARD_DRAG_SPEED_CONFIG.velocityThreshold,
+  const inertiaBoostRampEndRatio = normalizeDragInertiaBoostRampEndRatio(
+    CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoostRampEndRatio,
+    HARD_DRAG_SPEED_CONFIG.inertiaBoostRampEndRatio,
   );
-  const normalizedRampEnd = normalizeNonNegativeNumber(
-    CAROUSEL_DRAG_SPEED_CONFIG.rampEnd,
-    HARD_DRAG_SPEED_CONFIG.rampEnd,
-  );
-  const rampEnd = Math.max(velocityThreshold, normalizedRampEnd);
   const minDurationRatio = normalizeDragDurationRatio(
     CAROUSEL_DRAG_SPEED_CONFIG.minDurationRatio,
     HARD_DRAG_SPEED_CONFIG.minDurationRatio,
@@ -747,28 +744,15 @@ const resolveDragSpeedConfig = () => {
   );
   const corrections: DevNoticeEntry[] = [];
 
-  if (velocityThreshold !== CAROUSEL_DRAG_SPEED_CONFIG.velocityThreshold) {
+  if (
+    inertiaBoostRampEndRatio !==
+    CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoostRampEndRatio
+  ) {
     corrections.push({
-      field: "CAROUSEL_DRAG_SPEED_CONFIG.velocityThreshold",
-      provided: CAROUSEL_DRAG_SPEED_CONFIG.velocityThreshold,
-      normalized: velocityThreshold,
-      reason: "expected a finite non-negative value",
-    });
-  }
-
-  if (rampEnd !== CAROUSEL_DRAG_SPEED_CONFIG.rampEnd) {
-    corrections.push({
-      field: "CAROUSEL_DRAG_SPEED_CONFIG.rampEnd",
-      provided: CAROUSEL_DRAG_SPEED_CONFIG.rampEnd,
-      normalized: rampEnd,
-      reason: joinReasons(
-        normalizedRampEnd !== CAROUSEL_DRAG_SPEED_CONFIG.rampEnd
-          ? "expected a finite non-negative value"
-          : undefined,
-        rampEnd !== normalizedRampEnd
-          ? "must be greater than or equal to velocityThreshold"
-          : undefined,
-      ),
+      field: "CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoostRampEndRatio",
+      provided: CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoostRampEndRatio,
+      normalized: inertiaBoostRampEndRatio,
+      reason: `expected a finite value greater than or equal to ${MIN_DRAG_INERTIA_BOOST_RAMP_END_RATIO}`,
     });
   }
 
@@ -836,8 +820,7 @@ const resolveDragSpeedConfig = () => {
 
   return {
     settings: {
-      velocityThreshold,
-      rampEnd,
+      inertiaBoostRampEndRatio,
       minDurationRatio,
       minDuration,
       inertiaBoost,

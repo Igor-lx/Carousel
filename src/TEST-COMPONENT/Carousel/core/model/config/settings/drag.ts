@@ -47,13 +47,9 @@ const CAROUSEL_DRAG_CONFIG_OVERRIDE: Partial<DragConfig> = {
 } as const;
 
 const CAROUSEL_DRAG_SPEED_CONFIG_OVERRIDE: Partial<DragSpeedConfig> = {
-  // Release-скорость в page/sec, ниже которой gesture доезжает не быстрее обычного MOVE.
-  // Больше значение -> слабые flick чаще остаются на штатной скорости.
-  velocityThreshold: 0.2,
-
-  // Release-скорость в page/sec, на которой inertiaBoost применяется полностью.
-  // Между velocityThreshold и rampEnd усиление набирается плавно.
-  rampEnd: 1.35,
+  // Во сколько раз release должен быть быстрее обычного MOVE, чтобы inertiaBoost применился полностью.
+  // 1 = полный boost сразу после превышения normal-speed; 1.35 = полный boost при скорости на 35% выше normal MOVE.
+  inertiaBoostRampEndRatio: 1.15,
 
   // Нижняя граница gesture-duration как доля от обычной duration этого же пути.
   // Меньше значение -> быстрый release может завершаться заметно резче.
@@ -61,10 +57,10 @@ const CAROUSEL_DRAG_SPEED_CONFIG_OVERRIDE: Partial<DragSpeedConfig> = {
 
   // Абсолютная нижняя граница gesture-duration в миллисекундах.
   // Не дает даже очень быстрому flick превратиться в визуальный телепорт.
-  minDuration: 220,
+  minDuration: 200,
 
-  // Множитель измеренной release-скорости после прохождения velocity ramp.
-  // 1 = без усиления; 2 примерно удваивает инерцию уверенного flick; 3 делает release заметно резче.
+  // Множитель "избыточной" release-скорости после прохождения boost-ramp.
+  // 1 = без усиления; 2-3 делают уверенный flick заметно инерционнее, но скорость ниже normal MOVE не ускоряют.
   inertiaBoost: 3,
 
   // Доля оставшегося release-пути для плавного разгона от текущей скорости ленты к gesture-speed.
