@@ -19,6 +19,7 @@ import {
   useCarouselMotion,
   useCarouselSlides,
   useCarouselMotionDuration,
+  useResponsiveRepeatedClickSettings,
 } from "./hooks";
 
 import {
@@ -170,6 +171,10 @@ const Carousel = memo((props: CarouselProps) => {
     dragReleaseEpsilon,
     motionSettings,
   } = runtimeSettings;
+  const responsiveRepeatedClickSettings = useResponsiveRepeatedClickSettings({
+    repeatedClickSettings,
+    isTouch,
+  });
   const { visible: isVisible } = useComponentVisibility({
     elementRef: containerRef,
     threshold: interactionSettings.visibilityThreshold,
@@ -281,7 +286,7 @@ const Carousel = memo((props: CarouselProps) => {
       isMoving,
       layout: nextLayout,
       dragReleaseEpsilon,
-      repeatedClickSettings,
+      repeatedClickSettings: responsiveRepeatedClickSettings,
     });
 
   const applyDragPosition = useCallback(
@@ -354,7 +359,7 @@ const Carousel = memo((props: CarouselProps) => {
     stepSize: clampedVisible,
     dragSpeedConfig,
     motionSettings,
-    repeatedClickSettings,
+    repeatedClickSettings: responsiveRepeatedClickSettings,
     autoplayDuration,
     stepDuration,
     jumpDuration,
@@ -384,7 +389,7 @@ const Carousel = memo((props: CarouselProps) => {
     size: clampedVisible,
     stepDuration,
     motionSettings,
-    repeatedClickSettings,
+    repeatedClickSettings: responsiveRepeatedClickSettings,
     dragSpeedConfig,
     isMoving,
     animMode,

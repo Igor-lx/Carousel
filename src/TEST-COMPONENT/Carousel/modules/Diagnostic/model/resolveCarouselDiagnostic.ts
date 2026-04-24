@@ -14,6 +14,7 @@ import {
   REPEATED_CLICK_DESTINATION_POSITION,
   REPEATED_CLICK_EPSILON,
   REPEATED_CLICK_SPEED_MULTIPLIER,
+  REPEATED_CLICK_TOUCH_DESTINATION_POSITION,
   SNAP_BACK_DURATION,
   VISIBILITY_THRESHOLD,
 } from "../../../core/model/config";
@@ -428,6 +429,10 @@ const resolveRepeatedClickSettings = () => {
     REPEATED_CLICK_DESTINATION_POSITION,
     HARD_REPEATED_CLICK_SETTINGS.destinationPosition,
   );
+  const touchDestinationPosition = normalizeRepeatedClickDestination(
+    REPEATED_CLICK_TOUCH_DESTINATION_POSITION,
+    HARD_REPEATED_CLICK_SETTINGS.touchDestinationPosition,
+  );
   const speedMultiplier = REPEATED_CLICK_SPEED_MULTIPLIER;
   const accelerationDistanceShare = normalizeRepeatedClickProfileShare(
     REPEATED_CLICK_ACCELERATION_DISTANCE_SHARE,
@@ -446,6 +451,19 @@ const resolveRepeatedClickSettings = () => {
       provided: REPEATED_CLICK_DESTINATION_POSITION,
       normalized: destinationPosition,
       reason: isFiniteNumber(REPEATED_CLICK_DESTINATION_POSITION)
+        ? `clamped to [${MIN_REPEATED_CLICK_DESTINATION_POSITION}, ${MAX_REPEATED_CLICK_DESTINATION_POSITION}]`
+        : "expected a finite value between 0 and 1",
+    });
+  }
+
+  if (
+    touchDestinationPosition !== REPEATED_CLICK_TOUCH_DESTINATION_POSITION
+  ) {
+    corrections.push({
+      field: "REPEATED_CLICK_TOUCH_DESTINATION_POSITION",
+      provided: REPEATED_CLICK_TOUCH_DESTINATION_POSITION,
+      normalized: touchDestinationPosition,
+      reason: isFiniteNumber(REPEATED_CLICK_TOUCH_DESTINATION_POSITION)
         ? `clamped to [${MIN_REPEATED_CLICK_DESTINATION_POSITION}, ${MAX_REPEATED_CLICK_DESTINATION_POSITION}]`
         : "expected a finite value between 0 and 1",
     });
@@ -516,6 +534,7 @@ const resolveRepeatedClickSettings = () => {
   return {
     settings: {
       destinationPosition,
+      touchDestinationPosition,
       speedMultiplier,
       accelerationDistanceShare,
       decelerationDistanceShare,

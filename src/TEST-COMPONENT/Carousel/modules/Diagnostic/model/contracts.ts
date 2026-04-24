@@ -21,6 +21,7 @@ export const HARD_ERROR_ALT_PLACEHOLDER = "Downloading Error";
 
 export const HARD_REPEATED_CLICK_SETTINGS = {
   destinationPosition: 0.65,
+  touchDestinationPosition: 0.99,
   speedMultiplier: 3,
   accelerationDistanceShare: 0.5,
   decelerationDistanceShare: 0.5,

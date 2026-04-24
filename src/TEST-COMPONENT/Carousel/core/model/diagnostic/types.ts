@@ -18,6 +18,7 @@ export interface CarouselLayoutSettings {
 
 export interface CarouselRepeatedClickSettings {
   destinationPosition: number;
+  touchDestinationPosition: number;
   speedMultiplier: number;
   accelerationDistanceShare: number;
   decelerationDistanceShare: number;

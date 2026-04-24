@@ -7,3 +7,4 @@ export * from "./useCarouselGesture";
 export * from "./useCarouselMotion";
 export * from "./useCarouselSlides";
 export * from "./useCarouselMotionDuration";
+export * from "./useResponsiveRepeatedClickSettings";

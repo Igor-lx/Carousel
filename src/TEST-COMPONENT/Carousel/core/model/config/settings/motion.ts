@@ -2,6 +2,9 @@
 // 0.7 означает: долететь до 70% следующего шага, затем перейти в follow-up до финального target.
 export const REPEATED_CLICK_DESTINATION_POSITION = 0.65;
 
+// Touch-версия repeated-click destination: на таче быстрый пролет почти доезжает до финального target.
+export const REPEATED_CLICK_TOUCH_DESTINATION_POSITION = 0.99;
+
 // Средняя скорость repeated-click пролета относительно обычного MOVE.
 // 2 примерно вдвое быстрее обычного MOVE, 3 примерно втрое, большие значения становятся очень резкими.
 export const REPEATED_CLICK_SPEED_MULTIPLIER = 6;
