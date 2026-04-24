@@ -54,7 +54,7 @@ const CAROUSEL_DRAG_SPEED_CONFIG_OVERRIDE: Partial<DragSpeedConfig> = {
 
   // Множитель "избыточной" release-скорости после прохождения boost-ramp.
   // 1 = без усиления; 2-3 делают уверенный flick заметно инерционнее, но скорость ниже normal MOVE не ускоряют.
-  inertiaBoost: 3,
+  inertiaBoost: 5,
 
   // Доля оставшегося release-пути для плавного разгона от текущей скорости ленты к gesture-speed.
   // Это доля расстояния, а не времени.
