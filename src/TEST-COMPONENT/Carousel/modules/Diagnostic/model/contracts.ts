@@ -50,6 +50,6 @@ export const HARD_DRAG_SPEED_CONFIG = {
   releaseDecelerationDistanceShare: 0.65,
 } as const;
 
-export const HARD_MOTION_SETTINGS = {
+export const HARD_DRAG_SNAP_SETTINGS = {
   snapBackDuration: 900,
 } as const;

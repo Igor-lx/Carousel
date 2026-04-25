@@ -24,10 +24,10 @@ import type {
 } from "../../../core/model/diagnostic";
 import {
   HARD_DRAG_CONFIG,
+  HARD_DRAG_SNAP_SETTINGS,
   HARD_DRAG_SPEED_CONFIG,
   HARD_ERROR_ALT_PLACEHOLDER,
   HARD_INTERACTION_SETTINGS,
-  HARD_MOTION_SETTINGS,
   HARD_REPEATED_CLICK_SETTINGS,
   MAX_DRAG_EMA_ALPHA,
   MAX_REASONABLE_JUMP_DURATION,
@@ -770,6 +770,19 @@ const resolveDragSpeedConfig = () => {
   }
 
   if (
+    isFiniteNumber(CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost) &&
+    CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost >= MIN_DRAG_INERTIA_BOOST &&
+    CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost < 1
+  ) {
+    corrections.push({
+      field: "CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost",
+      provided: CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost,
+      message:
+        "inertiaBoost below 1 is valid, but it intentionally weakens fast-release velocity; runtime still keeps slow releases at MOVE speed",
+    });
+  }
+
+  if (
     releaseDecelerationDistanceShare !==
     CAROUSEL_DRAG_SPEED_CONFIG.releaseDecelerationDistanceShare
   ) {
@@ -817,7 +830,7 @@ const resolveDragReleaseEpsilon = () => {
 const resolveMotionSettings = () => {
   const snapBackDuration = normalizePositiveDuration(
     SNAP_BACK_DURATION,
-    HARD_MOTION_SETTINGS.snapBackDuration,
+    HARD_DRAG_SNAP_SETTINGS.snapBackDuration,
   );
   const epsilon = MOTION_EPSILON;
   const corrections: DevNoticeEntry[] = [];
