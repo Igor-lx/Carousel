@@ -21,7 +21,7 @@ export const REPEATED_CLICK_DECELERATION_DISTANCE_SHARE = 0.7;
 export const SNAP_BACK_DURATION = 900;
 
 export const JUMP_BEZIER = "cubic-bezier(0.16, 1, 0.3, 1)";
-export const MOVE_CLICK_BEZIER = "linear";
+export const MOVE_CLICK_BEZIER = "cubic-bezier(0.14, 0.92, 0.24, 1)";
 export const MOVE_AUTO_BEZIER = "cubic-bezier(0.28, 0.72, 0.38, 1)";
 export const MOVE_SWIPE_BEZIER = "cubic-bezier(0.14, 0.92, 0.24, 1)";
 export const SNAP_BACK_BEZIER = "cubic-bezier(0.18, 0.82, 0.28, 1)";
