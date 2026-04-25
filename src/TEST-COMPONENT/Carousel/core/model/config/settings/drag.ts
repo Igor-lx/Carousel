@@ -54,15 +54,15 @@ const CAROUSEL_DRAG_SPEED_CONFIG_OVERRIDE: Partial<DragSpeedConfig> = {
 
   // Множитель "избыточной" release-скорости после прохождения boost-ramp.
   // 1 = без усиления; 2-3 делают уверенный flick заметно инерционнее, но скорость ниже normal MOVE не ускоряют.
-  inertiaBoost: 5,
+  inertiaBoost: 9,
 
   // Доля оставшегося release-пути для плавного разгона от текущей скорости ленты к gesture-speed.
   // Это доля расстояния, а не времени.
-  releaseAccelerationDistanceShare: 0.25,
+  releaseAccelerationDistanceShare: 0.2,
 
   // Доля оставшегося release-пути для плавного торможения к target.
   // Если сумма acceleration + deceleration меньше 1, середина пути становится cruise-зоной.
-  releaseDecelerationDistanceShare: 0.35,
+  releaseDecelerationDistanceShare: 0.3,
 } as const;
 
 export const CAROUSEL_DRAG_CONFIG: Required<DragConfig> = {
