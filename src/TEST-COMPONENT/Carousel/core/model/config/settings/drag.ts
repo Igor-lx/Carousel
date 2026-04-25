@@ -3,7 +3,6 @@ import {
   DEFAULT_DRAG_CONFIG,
   DEFAULT_DRAG_SPEED_CONFIG,
 } from "../../../../../../shared";
-import { DRAG_INERTIA_BOOST_RAMP_END_RATIO } from "../constants";
 
 const CAROUSEL_DRAG_CONFIG_OVERRIDE: Partial<DragConfig> = {
   // После отпускания свайпа новые drag/click-жесты игнорируются на это время.
@@ -16,7 +15,7 @@ const CAROUSEL_DRAG_CONFIG_OVERRIDE: Partial<DragConfig> = {
 
   // Насколько жестко лента сопротивляется перетягиванию за край.
   // Больше значение -> палец может уйти дальше, но лента заметнее упирается в границу.
-  RESISTANCE: 0.5,
+  RESISTANCE: 0.65,
 
   // Как быстро resistance усиливается по мере дальнейшего overdrag за край.
   // Больше значение -> "резина" быстрее становится жесткой на длинном протягивании.
@@ -44,26 +43,24 @@ const CAROUSEL_DRAG_CONFIG_OVERRIDE: Partial<DragConfig> = {
 
   // Доля ширины viewport, которую нужно протянуть для обычного swipe-решения.
   // Больше значение -> переключение без быстрого flick требует более длинного протягивания.
-  SWIPE_THRESHOLD_RATIO: 0.16,
+  SWIPE_THRESHOLD_RATIO: 0.2,
 } as const;
 
 const CAROUSEL_DRAG_SPEED_CONFIG_OVERRIDE: Partial<DragSpeedConfig> = {
-  // Абсолютная нижняя граница gesture-duration в миллисекундах.
-  // Не дает даже очень быстрому flick превратиться в визуальный телепорт.
-  minDuration: 200,
-
-  // Множитель "избыточной" release-скорости после прохождения boost-ramp.
-  // 1 = без усиления; 2-3 делают уверенный flick заметно инерционнее, но скорость ниже normal MOVE не ускоряют.
-  inertiaBoost: 9,
-
-  // Доля оставшегося release-пути для плавного разгона от текущей скорости ленты к gesture-speed.
-  // Это доля расстояния, а не времени.
-  releaseAccelerationDistanceShare: 0.2,
+  // Прямой множитель raw release-скорости пальца перед сравнением со штатной MOVE-speed.
+  // 1 = честная скорость пальца; 2 = вдвое сильнее; 0.5 = слабее, но движение все равно не будет медленнее MOVE.
+  inertiaBoost: 3,
 
   // Доля оставшегося release-пути для плавного торможения к target.
-  // Если сумма acceleration + deceleration меньше 1, середина пути становится cruise-зоной.
-  releaseDecelerationDistanceShare: 0.3,
+  // 0.3 = первые 70% пути летим с release-speed, последние 30% тормозим в точную остановку.
+  releaseDecelerationDistanceShare: 0.45,
 } as const;
+
+// Duration отката после отпускания жеста, если swipe не выбрал новый target.
+// Откат проходит фактически оставшуюся дистанцию за это время, без скрытого scaling от page-size.
+export const SNAP_BACK_DURATION = 1300;
+
+export const SNAP_BACK_BEZIER = "cubic-bezier(0.18, 0.82, 0.28, 1)";
 
 export const CAROUSEL_DRAG_CONFIG: Required<DragConfig> = {
   ...DEFAULT_DRAG_CONFIG,
@@ -72,6 +69,5 @@ export const CAROUSEL_DRAG_CONFIG: Required<DragConfig> = {
 
 export const CAROUSEL_DRAG_SPEED_CONFIG: DragSpeedConfig = {
   ...DEFAULT_DRAG_SPEED_CONFIG,
-  inertiaBoostRampEndRatio: DRAG_INERTIA_BOOST_RAMP_END_RATIO,
   ...CAROUSEL_DRAG_SPEED_CONFIG_OVERRIDE,
 };

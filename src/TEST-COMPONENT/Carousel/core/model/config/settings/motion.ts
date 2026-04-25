@@ -17,11 +17,6 @@ export const REPEATED_CLICK_ACCELERATION_DISTANCE_SHARE = 0.1;
 // Это доля пути от конца repeated-сегмента: 0.5 означает последние 50% repeated-сегмента.
 export const REPEATED_CLICK_DECELERATION_DISTANCE_SHARE = 0.7;
 
-// Duration snap-back движения после отпуска жеста, если target не переключается.
-export const SNAP_BACK_DURATION = 900;
-
 export const JUMP_BEZIER = "cubic-bezier(0.16, 1, 0.3, 1)";
-export const MOVE_CLICK_BEZIER = "cubic-bezier(0.14, 0.92, 0.24, 1)";
-export const MOVE_AUTO_BEZIER = "cubic-bezier(0.28, 0.72, 0.38, 1)";
-export const MOVE_SWIPE_BEZIER = "cubic-bezier(0.14, 0.92, 0.24, 1)";
-export const SNAP_BACK_BEZIER = "cubic-bezier(0.18, 0.82, 0.28, 1)";
+export const MOVE_BEZIER = "cubic-bezier(0.14, 0.92, 0.24, 1)";
+export const AUTO_BEZIER = "cubic-bezier(0.28, 0.72, 0.38, 1)";

@@ -5,7 +5,6 @@ import {
   CAROUSEL_DRAG_RELEASE_EPSILON,
   CAROUSEL_DRAG_SPEED_CONFIG,
   DEFAULT_SETTINGS,
-  DRAG_INERTIA_BOOST_RAMP_END_RATIO,
   HOVER_PAUSE_DELAY,
   MOTION_EPSILON,
   RENDER_WINDOW_BUFFER_MULTIPLIER,
@@ -38,7 +37,6 @@ import {
   MIN_AUTOPLAY_INTERVAL,
   MIN_DRAG_EMA_ALPHA,
   MIN_DRAG_INERTIA_BOOST,
-  MIN_DRAG_INERTIA_BOOST_RAMP_END_RATIO,
   MIN_RENDER_WINDOW_BUFFER_MULTIPLIER,
   MIN_REPEATED_CLICK_DESTINATION_POSITION,
   MIN_REPEATED_CLICK_PROFILE_SHARE,
@@ -751,46 +749,12 @@ const resolveDragConfig = () => {
 };
 
 const resolveDragSpeedConfig = () => {
-  const inertiaBoostRampEndRatio =
-    CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoostRampEndRatio;
-  const minDuration = normalizePositiveDuration(
-    CAROUSEL_DRAG_SPEED_CONFIG.minDuration,
-    HARD_DRAG_SPEED_CONFIG.minDuration,
-  );
   const inertiaBoost = CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost;
-  const releaseAccelerationDistanceShare = normalizeRepeatedClickProfileShare(
-    CAROUSEL_DRAG_SPEED_CONFIG.releaseAccelerationDistanceShare,
-    HARD_DRAG_SPEED_CONFIG.releaseAccelerationDistanceShare,
-  );
   const releaseDecelerationDistanceShare = normalizeRepeatedClickProfileShare(
     CAROUSEL_DRAG_SPEED_CONFIG.releaseDecelerationDistanceShare,
     HARD_DRAG_SPEED_CONFIG.releaseDecelerationDistanceShare,
   );
   const corrections: DevNoticeEntry[] = [];
-
-  if (
-    !isFiniteNumber(DRAG_INERTIA_BOOST_RAMP_END_RATIO) ||
-    DRAG_INERTIA_BOOST_RAMP_END_RATIO <
-      MIN_DRAG_INERTIA_BOOST_RAMP_END_RATIO
-  ) {
-    corrections.push({
-      field: "DRAG_INERTIA_BOOST_RAMP_END_RATIO",
-      provided: DRAG_INERTIA_BOOST_RAMP_END_RATIO,
-      message: getInternalConstantNoticeMessage(
-        `expected a finite value greater than or equal to ${MIN_DRAG_INERTIA_BOOST_RAMP_END_RATIO}`,
-      ),
-    });
-  }
-
-  if (minDuration !== CAROUSEL_DRAG_SPEED_CONFIG.minDuration) {
-    corrections.push({
-      field: "CAROUSEL_DRAG_SPEED_CONFIG.minDuration",
-      provided: CAROUSEL_DRAG_SPEED_CONFIG.minDuration,
-      normalized: minDuration,
-      unit: DURATION_UNIT,
-      reason: getPositiveDurationReason(CAROUSEL_DRAG_SPEED_CONFIG.minDuration),
-    });
-  }
 
   if (
     !isFiniteNumber(CAROUSEL_DRAG_SPEED_CONFIG.inertiaBoost) ||
@@ -802,22 +766,6 @@ const resolveDragSpeedConfig = () => {
       message: getInternalConstantNoticeMessage(
         `expected a finite value greater than or equal to ${MIN_DRAG_INERTIA_BOOST}`,
       ),
-    });
-  }
-
-  if (
-    releaseAccelerationDistanceShare !==
-    CAROUSEL_DRAG_SPEED_CONFIG.releaseAccelerationDistanceShare
-  ) {
-    corrections.push({
-      field: "CAROUSEL_DRAG_SPEED_CONFIG.releaseAccelerationDistanceShare",
-      provided: CAROUSEL_DRAG_SPEED_CONFIG.releaseAccelerationDistanceShare,
-      normalized: releaseAccelerationDistanceShare,
-      reason: isFiniteNumber(
-        CAROUSEL_DRAG_SPEED_CONFIG.releaseAccelerationDistanceShare,
-      )
-        ? `clamped to [${MIN_REPEATED_CLICK_PROFILE_SHARE}, ${MAX_REPEATED_CLICK_PROFILE_SHARE}]`
-        : "expected a finite value between 0 and 1",
     });
   }
 
@@ -837,32 +785,9 @@ const resolveDragSpeedConfig = () => {
     });
   }
 
-  if (
-    releaseAccelerationDistanceShare + releaseDecelerationDistanceShare > 1
-  ) {
-    corrections.push({
-      field: "CAROUSEL_DRAG_SPEED_CONFIG.releaseProfileDistanceShares",
-      provided: {
-        releaseAccelerationDistanceShare,
-        releaseDecelerationDistanceShare,
-      },
-      normalized: {
-        releaseAccelerationDistanceShare:
-          OVERFLOW_PROFILE_DISTANCE_SHARES_NORMALIZED.accelerationDistanceShare,
-        releaseDecelerationDistanceShare:
-          OVERFLOW_PROFILE_DISTANCE_SHARES_NORMALIZED.decelerationDistanceShare,
-      },
-      reason:
-        "start + end release distance shares exceed 1; runtime uses an even 50/50 acceleration/deceleration split with no cruise zone",
-    });
-  }
-
   return {
     settings: {
-      inertiaBoostRampEndRatio,
-      minDuration,
       inertiaBoost,
-      releaseAccelerationDistanceShare,
       releaseDecelerationDistanceShare,
     },
     corrections,

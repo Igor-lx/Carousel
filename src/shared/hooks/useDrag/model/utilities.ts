@@ -86,26 +86,6 @@ const getSwipeDirection = (
   return "NONE";
 };
 
-const resolveReleaseVelocity = ({
-  velocity,
-  rawVelocity,
-  isQuickFlick,
-  resistance,
-}: {
-  velocity: number;
-  rawVelocity: number;
-  isQuickFlick: boolean;
-  resistance: number;
-}) => {
-  if (!isQuickFlick) {
-    return velocity;
-  }
-
-  const safeResistance = getSafeResistance(resistance);
-
-  return velocity + (rawVelocity - velocity) * safeResistance;
-};
-
 export const resolveDragRelease = (
   sample: Pick<DragSample, "rawOffset" | "rawVelocity" | "velocity" | "width">,
   config: Required<DragConfig>,
@@ -122,12 +102,7 @@ export const resolveDragRelease = (
   return {
     result,
     isQuickFlick,
-    releaseVelocity: resolveReleaseVelocity({
-      velocity: sample.velocity,
-      rawVelocity: sample.rawVelocity,
-      isQuickFlick,
-      resistance: config.RESISTANCE,
-    }),
+    releaseVelocity: sample.rawVelocity,
   };
 };
 

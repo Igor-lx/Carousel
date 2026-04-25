@@ -84,25 +84,7 @@ export function useCarouselMotionDuration({
     ],
   );
 
-  const snapSegmentDuration = useMemo(() => {
-    const scaledDuration = getDurationByVirtualSpan({
-      from: segmentStartVirtualIndex,
-      to: targetVirtualIndex,
-      stepSize,
-      baseDuration: motionSettings.snapBackDuration,
-    });
-
-    return Math.max(
-      dragSpeedConfig.minDuration,
-      Math.min(motionSettings.snapBackDuration, scaledDuration),
-    );
-  }, [
-    dragSpeedConfig.minDuration,
-    motionSettings.snapBackDuration,
-    segmentStartVirtualIndex,
-    stepSize,
-    targetVirtualIndex,
-  ]);
+  const snapSegmentDuration = motionSettings.snapBackDuration;
 
   const gestureReleaseDuration = useMemo(
     () =>

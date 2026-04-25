@@ -232,24 +232,25 @@ export function useDrag({
         return;
       }
 
-      const sample =
-        typeof currentX === "number"
-          ? createSample(currentX, now)
-          : {
-              ...dragSampleRef.current,
-              rawVelocity: decayVelocity(
-                dragSampleRef.current.rawVelocity,
-                settingsRef.current.EMA_ALPHA,
-                now - dragSampleRef.current.timestamp,
-              ),
-              velocity: decayVelocity(
-                dragSampleRef.current.velocity,
-                settingsRef.current.EMA_ALPHA,
-                now - dragSampleRef.current.timestamp,
-              ),
-              width: target?.offsetWidth ?? dragSampleRef.current.width,
-              timestamp: now,
-            };
+      const hasReleaseMovement =
+        typeof currentX === "number" && currentX !== currentGesture.lastX;
+      const sample = hasReleaseMovement
+        ? createSample(currentX, now)
+        : {
+            ...dragSampleRef.current,
+            rawVelocity: decayVelocity(
+              dragSampleRef.current.rawVelocity,
+              settingsRef.current.EMA_ALPHA,
+              now - dragSampleRef.current.timestamp,
+            ),
+            velocity: decayVelocity(
+              dragSampleRef.current.velocity,
+              settingsRef.current.EMA_ALPHA,
+              now - dragSampleRef.current.timestamp,
+            ),
+            width: target?.offsetWidth ?? dragSampleRef.current.width,
+            timestamp: now,
+          };
       dragSampleRef.current = sample;
       const wasDragging = currentPhase === "DRAGGING";
       const releaseResolution = resolveDragRelease(

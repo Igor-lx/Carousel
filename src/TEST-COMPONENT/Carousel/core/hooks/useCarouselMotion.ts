@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef } from "react";
 
 import {
+  AUTO_BEZIER,
   JUMP_BEZIER,
-  MOVE_AUTO_BEZIER,
-  MOVE_CLICK_BEZIER,
-  MOVE_SWIPE_BEZIER,
+  MOVE_BEZIER,
   SNAP_BACK_BEZIER,
 } from "../model/config";
 import type {
@@ -15,7 +14,10 @@ import type {
 import type { AnimationMode, MoveReason } from "../model/reducer";
 import { applyTrackPositionStyle } from "../utilities";
 import { useIsomorphicLayoutEffect } from "../../../../shared";
-import { resolveGestureReleaseSpeed } from "../../../../shared/hooks/useDrag";
+import {
+  resolveGestureReleaseDecelerationShare,
+  resolveGestureReleaseSpeed,
+} from "../../../../shared/hooks/useDrag";
 
 interface MotionProps {
   trackRef: React.RefObject<HTMLDivElement | null>;
@@ -130,13 +132,12 @@ const getBezier = (animMode: AnimationMode, reason: MoveReason) => {
   if (animMode === "snap") return SNAP_BACK_BEZIER;
 
   switch (reason) {
-    case "gesture":
-      return MOVE_SWIPE_BEZIER;
     case "autoplay":
-      return MOVE_AUTO_BEZIER;
+      return AUTO_BEZIER;
+    case "gesture":
     case "click":
     default:
-      return MOVE_CLICK_BEZIER;
+      return MOVE_BEZIER;
   }
 };
 
@@ -907,10 +908,8 @@ export function useCarouselMotion({
       repeatedClickSettings.speedMultiplier,
       repeatedClickSettings.accelerationDistanceShare,
       repeatedClickSettings.decelerationDistanceShare,
-      dragSpeedConfig.releaseAccelerationDistanceShare,
       dragSpeedConfig.releaseDecelerationDistanceShare,
       dragSpeedConfig.inertiaBoost,
-      dragSpeedConfig.inertiaBoostRampEndRatio,
       epsilon,
     ].join(":");
 
@@ -1008,11 +1007,16 @@ export function useCarouselMotion({
       normalSpeed: normalMoveSpeed,
       dragSpeedConfig,
     });
-    const gesturePeakSpeed = Math.max(
+    const gestureDecelerationDistanceShare =
+      resolveGestureReleaseDecelerationShare({
+        releaseSpeed: gestureIntentSpeed,
+        normalSpeed: normalMoveSpeed,
+        dragSpeedConfig,
+      });
+    const gestureReleaseProfileVelocity = getSignedVelocity(
       boostedGestureIntentSpeed,
-      getSameDirectionSpeed(gestureReleaseMotionVelocity, distance),
+      distance,
     );
-    const gesturePeakVelocity = getSignedVelocity(gesturePeakSpeed, distance);
     const repeatedEndVelocity = hasFollowUpStep ? normalVelocity : 0;
     const isRepeatedFollowUp =
       canReuseHandoffSnapshot && handoffSnapshot?.strategy === "repeated";
@@ -1034,20 +1038,19 @@ export function useCarouselMotion({
       });
     } else if (
       reason === "gesture" &&
-      animMode !== "snap"
+      animMode !== "snap" &&
+      gestureIntentSpeed > normalMoveSpeed
     ) {
       activeSegmentRef.current = createProfileSegment({
         strategy: "gesture",
         from: nowState.position,
         to: currentVirtualIndex,
         startedAt,
-        currentVelocity: gestureReleaseMotionVelocity,
-        peakVelocity: gesturePeakVelocity,
+        currentVelocity: gestureReleaseProfileVelocity,
+        peakVelocity: gestureReleaseProfileVelocity,
         endVelocity: 0,
-        accelerationDistanceShare:
-          dragSpeedConfig.releaseAccelerationDistanceShare,
-        decelerationDistanceShare:
-          dragSpeedConfig.releaseDecelerationDistanceShare,
+        accelerationDistanceShare: 0,
+        decelerationDistanceShare: gestureDecelerationDistanceShare,
         targetDuration: duration,
       });
     } else if (isRepeatedFollowUp) {
@@ -1119,10 +1122,8 @@ export function useCarouselMotion({
     finalizeMotion,
     followUpDuration,
     followUpVirtualIndex,
-    dragSpeedConfig.releaseAccelerationDistanceShare,
     dragSpeedConfig.releaseDecelerationDistanceShare,
     dragSpeedConfig.inertiaBoost,
-    dragSpeedConfig.inertiaBoostRampEndRatio,
     gestureReleaseMotionVelocity,
     gestureReleaseVelocity,
     hasFollowUpStep,

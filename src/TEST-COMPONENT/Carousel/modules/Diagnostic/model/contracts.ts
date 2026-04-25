@@ -14,8 +14,7 @@ export const MIN_VISIBILITY_THRESHOLD = 0;
 export const MAX_VISIBILITY_THRESHOLD = 1;
 export const MIN_DRAG_EMA_ALPHA = 0;
 export const MAX_DRAG_EMA_ALPHA = 1;
-export const MIN_DRAG_INERTIA_BOOST = 1;
-export const MIN_DRAG_INERTIA_BOOST_RAMP_END_RATIO = 1;
+export const MIN_DRAG_INERTIA_BOOST = 0;
 
 export const HARD_ERROR_ALT_PLACEHOLDER = "Downloading Error";
 
@@ -47,9 +46,7 @@ export const HARD_DRAG_CONFIG = {
 } as const;
 
 export const HARD_DRAG_SPEED_CONFIG = {
-  minDuration: 220,
-  inertiaBoost: 3,
-  releaseAccelerationDistanceShare: 0.35,
+  inertiaBoost: 1,
   releaseDecelerationDistanceShare: 0.65,
 } as const;
 
