@@ -78,8 +78,15 @@ const getFrameAdjustedEmaAlpha = (alpha: number, dt: number) => {
   return 1 - Math.pow(1 - safeAlpha, frameCount);
 };
 
-const decayVelocity = (velocity: number, alpha: number, dt: number) =>
-  calculateEMA(velocity, 0, getFrameAdjustedEmaAlpha(alpha, dt));
+const getElapsedDecayEmaAlpha = (alpha: number, dt: number) => {
+  const safeAlpha = Math.max(0, Math.min(1, alpha));
+  const frameCount = Math.max(0, dt / (1000 / 60));
+
+  return 1 - Math.pow(1 - safeAlpha, frameCount);
+};
+
+const decayReleaseVelocity = (velocity: number, alpha: number, dt: number) =>
+  calculateEMA(velocity, 0, getElapsedDecayEmaAlpha(alpha, dt));
 
 export function useDrag({
   onPressStart,
@@ -238,12 +245,12 @@ export function useDrag({
         ? createSample(currentX, now)
         : {
             ...dragSampleRef.current,
-            rawVelocity: decayVelocity(
+            rawVelocity: decayReleaseVelocity(
               dragSampleRef.current.rawVelocity,
               settingsRef.current.EMA_ALPHA,
               now - dragSampleRef.current.timestamp,
             ),
-            velocity: decayVelocity(
+            velocity: decayReleaseVelocity(
               dragSampleRef.current.velocity,
               settingsRef.current.EMA_ALPHA,
               now - dragSampleRef.current.timestamp,
