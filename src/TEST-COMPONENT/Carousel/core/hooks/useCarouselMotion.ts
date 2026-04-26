@@ -7,7 +7,7 @@ import {
   SNAP_BACK_BEZIER,
 } from "../model/config";
 import type {
-  DragSpeedConfig,
+  DragReleaseSpeedConfig,
   CarouselMotionSettings,
   CarouselRepeatedClickSettings,
 } from "../model/diagnostic";
@@ -15,9 +15,12 @@ import type { AnimationMode, MoveReason } from "../model/reducer";
 import { applyTrackPositionStyle } from "../utilities";
 import { useIsomorphicLayoutEffect } from "../../../../shared";
 import {
-  resolveGestureReleaseDecelerationShare,
-  resolveGestureReleaseSpeed,
-} from "../../../../shared/hooks/useDrag";
+  getAverageSpeedForDistance,
+  getSameDirectionSpeed,
+  getSignedVelocity,
+  resolveDragReleaseDecelerationShare,
+  resolveDragReleaseSpeed,
+} from "../../../../shared/velocity";
 
 interface MotionProps {
   trackRef: React.RefObject<HTMLDivElement | null>;
@@ -31,7 +34,7 @@ interface MotionProps {
   stepDuration: number;
   motionSettings: CarouselMotionSettings;
   repeatedClickSettings: CarouselRepeatedClickSettings;
-  dragSpeedConfig: DragSpeedConfig;
+  dragReleaseSpeedConfig: DragReleaseSpeedConfig;
   isMoving: boolean;
   animMode: AnimationMode;
   reason: MoveReason;
@@ -568,37 +571,12 @@ const sampleVelocityProfile = (
   };
 };
 
-const getSameDirectionSpeed = (velocity: number, distance: number) => {
-  const direction = Math.sign(distance);
-
-  if (
-    direction === 0 ||
-    !Number.isFinite(velocity) ||
-    Math.sign(velocity) !== direction
-  ) {
-    return 0;
-  }
-
-  return Math.abs(velocity);
-};
-
-const getAverageSpeed = (distance: number, duration: number) => {
-  if (!(duration > 0)) {
-    return 0;
-  }
-
-  return Math.abs(distance) / duration;
-};
-
-const getSignedVelocity = (speed: number, distance: number) =>
-  Math.sign(distance) * Math.max(0, speed);
-
 const getNormalMoveSpeed = (stepSize: number, stepDuration: number) => {
   if (!(stepSize > 0) || !(stepDuration > 0)) {
     return 0;
   }
 
-  return stepSize / stepDuration;
+  return getAverageSpeedForDistance(stepSize, stepDuration);
 };
 
 const createProfileSegment = ({
@@ -725,7 +703,7 @@ export function useCarouselMotion({
   stepDuration,
   motionSettings,
   repeatedClickSettings,
-  dragSpeedConfig,
+  dragReleaseSpeedConfig,
   isMoving,
   animMode,
   reason,
@@ -908,8 +886,8 @@ export function useCarouselMotion({
       repeatedClickSettings.speedMultiplier,
       repeatedClickSettings.accelerationDistanceShare,
       repeatedClickSettings.decelerationDistanceShare,
-      dragSpeedConfig.releaseDecelerationDistanceShare,
-      dragSpeedConfig.inertiaBoost,
+      dragReleaseSpeedConfig.releaseDecelerationDistanceShare,
+      dragReleaseSpeedConfig.inertiaBoost,
       epsilon,
     ].join(":");
 
@@ -988,7 +966,7 @@ export function useCarouselMotion({
     const startedAt = canReuseHandoffSnapshot ? handoffSnapshot.timestamp : now;
     const normalMoveSpeed =
       getNormalMoveSpeed(size, stepDuration) ||
-      getAverageSpeed(distance, duration);
+      getAverageSpeedForDistance(distance, duration);
     const normalVelocity = getSignedVelocity(normalMoveSpeed, distance);
     const repeatedSpeedMultiplier = Math.max(
       1,
@@ -1002,16 +980,16 @@ export function useCarouselMotion({
       gestureReleaseVelocity,
       distance,
     );
-    const boostedGestureIntentSpeed = resolveGestureReleaseSpeed({
+    const boostedGestureIntentSpeed = resolveDragReleaseSpeed({
       releaseSpeed: gestureIntentSpeed,
       normalSpeed: normalMoveSpeed,
-      dragSpeedConfig,
+      dragReleaseSpeedConfig,
     });
     const gestureDecelerationDistanceShare =
-      resolveGestureReleaseDecelerationShare({
+      resolveDragReleaseDecelerationShare({
         releaseSpeed: gestureIntentSpeed,
         normalSpeed: normalMoveSpeed,
-        dragSpeedConfig,
+        dragReleaseSpeedConfig,
       });
     const gestureReleaseProfileVelocity = getSignedVelocity(
       boostedGestureIntentSpeed,
@@ -1122,8 +1100,8 @@ export function useCarouselMotion({
     finalizeMotion,
     followUpDuration,
     followUpVirtualIndex,
-    dragSpeedConfig.releaseDecelerationDistanceShare,
-    dragSpeedConfig.inertiaBoost,
+    dragReleaseSpeedConfig.releaseDecelerationDistanceShare,
+    dragReleaseSpeedConfig.inertiaBoost,
     gestureReleaseMotionVelocity,
     gestureReleaseVelocity,
     hasFollowUpStep,

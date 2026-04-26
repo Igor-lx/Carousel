@@ -6,89 +6,32 @@ import {
   useEffect,
   useState,
 } from "react";
-import { initialState, dragReducer } from "./model/reducer";
+import { initialState, dragEngineReducer } from "./model/reducer";
 import {
-  DEFAULT_DRAG_CONFIG,
-  SHARED_DRAG_STYLES,
-} from "./model/settings";
+  DEFAULT_DRAG_ENGINE_CONFIG,
+  DRAG_ENGINE_STYLES,
+} from "./model/config";
 import type {
-  DragListeners,
-  DragProps,
-  DragResult,
-  DragConfig,
-  DragEndPayload,
-  DragPhase,
-  DragSample,
+  DragEngineListeners,
+  DragEngineProps,
+  DragEngineResult,
+  DragEngineConfig,
+  DragEngineEndPayload,
+  DragEnginePhase,
+  DragEngineSample,
 } from "./model/types";
+import { getInteractiveTarget } from "./internal/pointerTargets";
+import { createIdleSample } from "./internal/samples";
+import { applyResistance } from "./internal/resistance";
 import {
   calculateEMA,
-  applyResistance,
   clampVelocityMagnitude,
-  resolveDragRelease,
-} from "./model/utilities";
+  decayReleaseVelocity,
+  getFrameAdjustedEmaAlpha,
+} from "./internal/velocitySampling";
+import { resolveDragRelease } from "./internal/releaseIntent";
 
-const createIdleSample = (width = 0, timestamp = 0): DragSample => ({
-  rawOffset: 0,
-  offset: 0,
-  rawVelocity: 0,
-  velocity: 0,
-  width,
-  timestamp,
-});
-
-const INTERACTIVE_TARGET_SELECTOR = [
-  "button",
-  "input",
-  "select",
-  "textarea",
-  "label",
-  "a[href]",
-  "summary",
-  "[contenteditable='true']",
-  "[role='button']",
-  "[role='link']",
-  "[role='checkbox']",
-  "[role='radio']",
-  "[role='switch']",
-  "[role='tab']",
-  "[data-drag-ignore='true']",
-].join(",");
-
-const getInteractiveTarget = (
-  target: EventTarget | null,
-  boundary: HTMLElement,
-) => {
-  if (!(target instanceof Element)) {
-    return null;
-  }
-
-  const interactiveTarget = target.closest(INTERACTIVE_TARGET_SELECTOR);
-
-  if (interactiveTarget === null || !boundary.contains(interactiveTarget)) {
-    return null;
-  }
-
-  return interactiveTarget;
-};
-
-const getFrameAdjustedEmaAlpha = (alpha: number, dt: number) => {
-  const safeAlpha = Math.max(0, Math.min(1, alpha));
-  const frameCount = Math.max(1, dt / (1000 / 60));
-
-  return 1 - Math.pow(1 - safeAlpha, frameCount);
-};
-
-const getElapsedDecayEmaAlpha = (alpha: number, dt: number) => {
-  const safeAlpha = Math.max(0, Math.min(1, alpha));
-  const frameCount = Math.max(0, dt / (1000 / 60));
-
-  return 1 - Math.pow(1 - safeAlpha, frameCount);
-};
-
-const decayReleaseVelocity = (velocity: number, alpha: number, dt: number) =>
-  calculateEMA(velocity, 0, getElapsedDecayEmaAlpha(alpha, dt));
-
-export function useDrag({
+export function useDragEngine({
   onPressStart,
   onDragStart,
   onDragMove,
@@ -96,16 +39,20 @@ export function useDrag({
   enabled = true,
   measureRef,
   config = {},
-}: DragProps): DragResult {
+}: DragEngineProps): DragEngineResult {
   const settings = useMemo(
-    () => ({ ...DEFAULT_DRAG_CONFIG, ...config }) as Required<DragConfig>,
+    () =>
+      ({
+        ...DEFAULT_DRAG_ENGINE_CONFIG,
+        ...config,
+      }) as Required<DragEngineConfig>,
     [config],
   );
 
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
 
-  const [state, dispatch] = useReducer(dragReducer, initialState);
+  const [state, dispatch] = useReducer(dragEngineReducer, initialState);
   const [releasedVelocity, setReleasedVelocity] = useState(0);
 
   const lockUntilRef = useRef<number>(0);
@@ -128,7 +75,7 @@ export function useDrag({
     isDragActivated: false,
   });
 
-  const setPhase = useCallback((phase: DragPhase) => {
+  const setPhase = useCallback((phase: DragEnginePhase) => {
     phaseRef.current = phase;
     dispatch({ type: "SET_PHASE", phase });
   }, []);
@@ -164,7 +111,7 @@ export function useDrag({
   );
 
   const createSample = useCallback(
-    (currentX: number, timestamp: number): DragSample => {
+    (currentX: number, timestamp: number): DragEngineSample => {
       const currentGesture = gesture.current;
       const settingsSnapshot = settingsRef.current;
       const rawOffset = currentX - currentGesture.startX;
@@ -190,7 +137,8 @@ export function useDrag({
         ),
         settingsSnapshot.MAX_VELOCITY,
       );
-      const width = measureRef.current?.offsetWidth ?? dragSampleRef.current.width;
+      const width =
+        measureRef.current?.offsetWidth ?? dragSampleRef.current.width;
 
       currentGesture.lastX = currentX;
       currentGesture.lastTime = timestamp;
@@ -215,7 +163,11 @@ export function useDrag({
       const currentPhase = phaseRef.current;
       const currentGesture = gesture.current;
 
-      if (currentGesture.hasPointerCapture && currentGesture.pointerId !== null && target) {
+      if (
+        currentGesture.hasPointerCapture &&
+        currentGesture.pointerId !== null &&
+        target
+      ) {
         try {
           target.releasePointerCapture(currentGesture.pointerId);
         } catch {}
@@ -265,7 +217,7 @@ export function useDrag({
         settingsRef.current,
         !isCancel && wasDragging,
       );
-      const payload: DragEndPayload = {
+      const payload: DragEngineEndPayload = {
         ...sample,
         ...releaseResolution,
         wasDragging,
@@ -475,7 +427,7 @@ export function useDrag({
     };
   }, [enabled, measureRef]);
 
-  const dragListeners: DragListeners = useMemo(() => {
+  const dragListeners: DragEngineListeners = useMemo(() => {
     if (!enabled) return {};
 
     return {
@@ -484,7 +436,7 @@ export function useDrag({
       onPointerUp: (e) => stopDragging(false, e.clientX),
       onPointerCancel: (e) => stopDragging(true, e.clientX),
       onLostPointerCapture: (e) => stopDragging(true, e.clientX),
-      style: SHARED_DRAG_STYLES,
+      style: DRAG_ENGINE_STYLES,
     };
   }, [enabled, handlePointerDown, handlePointerMove, stopDragging]);
 

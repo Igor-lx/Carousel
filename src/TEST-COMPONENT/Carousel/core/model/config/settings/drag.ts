@@ -1,10 +1,13 @@
-import type { DragConfig, DragSpeedConfig } from "../../../../../../shared";
+import type {
+  DragEngineConfig,
+  DragReleaseSpeedConfig,
+} from "../../../../../../shared";
 import {
-  DEFAULT_DRAG_CONFIG,
-  DEFAULT_DRAG_SPEED_CONFIG,
+  DEFAULT_DRAG_ENGINE_CONFIG,
+  DEFAULT_DRAG_RELEASE_SPEED_CONFIG,
 } from "../../../../../../shared";
 
-const CAROUSEL_DRAG_CONFIG_OVERRIDE: Partial<DragConfig> = {
+const CAROUSEL_DRAG_CONFIG_OVERRIDE: Partial<DragEngineConfig> = {
   // После отпускания свайпа новые drag/click-жесты игнорируются на это время.
   // Больше значение -> меньше случайных повторных действий сразу после release.
   COOLDOWN_MS: 150,
@@ -46,7 +49,7 @@ const CAROUSEL_DRAG_CONFIG_OVERRIDE: Partial<DragConfig> = {
   SWIPE_THRESHOLD_RATIO: 0.2,
 } as const;
 
-const CAROUSEL_DRAG_SPEED_CONFIG_OVERRIDE: Partial<DragSpeedConfig> = {
+const CAROUSEL_DRAG_RELEASE_SPEED_CONFIG_OVERRIDE: Partial<DragReleaseSpeedConfig> = {
   // Прямой множитель raw release-скорости пальца перед сравнением со штатной MOVE-speed.
   // 1 = честная скорость пальца; 2 = вдвое сильнее.
   // Значения ниже 1 ослабляют только fast-release: итоговое движение все равно не будет медленнее MOVE.
@@ -63,12 +66,12 @@ export const SNAP_BACK_DURATION = 1300;
 
 export const SNAP_BACK_BEZIER = "cubic-bezier(0.18, 0.82, 0.28, 1)";
 
-export const CAROUSEL_DRAG_CONFIG: Required<DragConfig> = {
-  ...DEFAULT_DRAG_CONFIG,
+export const CAROUSEL_DRAG_CONFIG: Required<DragEngineConfig> = {
+  ...DEFAULT_DRAG_ENGINE_CONFIG,
   ...CAROUSEL_DRAG_CONFIG_OVERRIDE,
 };
 
-export const CAROUSEL_DRAG_SPEED_CONFIG: DragSpeedConfig = {
-  ...DEFAULT_DRAG_SPEED_CONFIG,
-  ...CAROUSEL_DRAG_SPEED_CONFIG_OVERRIDE,
+export const CAROUSEL_DRAG_RELEASE_SPEED_CONFIG: DragReleaseSpeedConfig = {
+  ...DEFAULT_DRAG_RELEASE_SPEED_CONFIG,
+  ...CAROUSEL_DRAG_RELEASE_SPEED_CONFIG_OVERRIDE,
 };

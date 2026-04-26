@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
-import type { DragConfig } from "./types";
+import type { DragEngineConfig } from "./types";
 
-export const DEFAULT_DRAG_CONFIG: Required<DragConfig> = {
+export const DEFAULT_DRAG_ENGINE_CONFIG: Required<DragEngineConfig> = {
   COOLDOWN_MS: 150,
   INTENT_THRESHOLD: 8,
   RESISTANCE: 0.7,
@@ -14,7 +14,7 @@ export const DEFAULT_DRAG_CONFIG: Required<DragConfig> = {
   SWIPE_THRESHOLD_RATIO: 0.2,
 } as const;
 
-export const SHARED_DRAG_STYLES: CSSProperties = {
+export const DRAG_ENGINE_STYLES: CSSProperties = {
   touchAction: "pan-y",
   userSelect: "none",
   WebkitUserSelect: "none",

@@ -1,7 +1,13 @@
-import type { DragConfig, DragSpeedConfig } from "../../../../../shared";
+import type {
+  DragEngineConfig,
+  DragReleaseSpeedConfig,
+} from "../../../../../shared";
 import type { DevNoticeEntry } from "../../../../../shared";
 
-export type { DragConfig, DragSpeedConfig } from "../../../../../shared";
+export type {
+  DragEngineConfig,
+  DragReleaseSpeedConfig,
+} from "../../../../../shared";
 
 export interface CarouselRuntimePropSettings {
   visibleSlidesCount: number;
@@ -31,7 +37,7 @@ export interface CarouselInteractionSettings {
   autoplayPaginationFactor: number;
 }
 
-export type CarouselDragConfig = Required<DragConfig>;
+export type CarouselDragConfig = Required<DragEngineConfig>;
 
 export interface CarouselMotionSettings {
   snapBackDuration: number;
@@ -43,7 +49,7 @@ export interface CarouselRuntimeSettings extends CarouselRuntimePropSettings {
   repeatedClickSettings: CarouselRepeatedClickSettings;
   interactionSettings: CarouselInteractionSettings;
   dragConfig: CarouselDragConfig;
-  dragSpeedConfig: DragSpeedConfig;
+  dragReleaseSpeedConfig: DragReleaseSpeedConfig;
   dragReleaseEpsilon: number;
   motionSettings: CarouselMotionSettings;
 }

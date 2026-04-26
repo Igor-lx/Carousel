@@ -11,8 +11,9 @@ import {
   type CarouselLayout,
 } from "../utilities";
 import {
-  type DragEndPayload,
-} from "../../../../shared/hooks/useDrag";
+  type DragEngineEndPayload,
+} from "../../../../shared/drag-engine";
+import { scaleVelocityByUnitSize } from "../../../../shared/velocity";
 
 interface ControllerProps {
   dispatchAction: React.Dispatch<Action>;
@@ -35,7 +36,7 @@ interface ControllerResult {
   goTo: (index: number, moveReason?: MoveReason) => void;
   startDrag: () => void;
   updateDrag: (dragOffset: number) => void;
-  finishDrag: (payload: DragEndPayload) => void;
+  finishDrag: (payload: DragEngineEndPayload) => void;
 }
 
 export function useCarouselController({
@@ -91,7 +92,7 @@ export function useCarouselController({
 
       const slotSize = getTrackSlotSize(viewport, layout.clampedVisible);
 
-      return -pointerVelocity / slotSize;
+      return -scaleVelocityByUnitSize(pointerVelocity, slotSize);
     },
     [layout.clampedVisible, measureRef],
   );
@@ -155,7 +156,7 @@ export function useCarouselController({
   );
 
   const finishDrag = useCallback(
-    (payload: DragEndPayload) => {
+    (payload: DragEngineEndPayload) => {
       if (!enabled) return;
 
       const releasePosition = resolveFromVirtualIndex(payload.offset);

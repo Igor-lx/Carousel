@@ -1,18 +1,18 @@
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 
-export type DragPhase = "IDLE" | "PRESS" | "DRAGGING" | "COOLDOWN";
-export type SwipeDirection = "LEFT" | "RIGHT" | "NONE";
+export type DragEnginePhase = "IDLE" | "PRESS" | "DRAGGING" | "COOLDOWN";
+export type DragEngineSwipeDirection = "LEFT" | "RIGHT" | "NONE";
 
-export interface DragState {
-  phase: DragPhase;
+export interface DragEngineState {
+  phase: DragEnginePhase;
 }
 
-export type DragAction = {
+export type DragEngineAction = {
   type: "SET_PHASE";
-  phase: DragPhase;
+  phase: DragEnginePhase;
 };
 
-export interface DragSample {
+export interface DragEngineSample {
   rawOffset: number;
   offset: number;
   rawVelocity: number;
@@ -21,18 +21,20 @@ export interface DragSample {
   timestamp: number;
 }
 
-export interface DragReleaseResolution {
-  result: SwipeDirection;
+export interface DragEngineReleaseResolution {
+  result: DragEngineSwipeDirection;
   isQuickFlick: boolean;
   releaseVelocity: number;
 }
 
-export interface DragEndPayload extends DragSample, DragReleaseResolution {
+export interface DragEngineEndPayload
+  extends DragEngineSample,
+    DragEngineReleaseResolution {
   wasDragging: boolean;
   wasCancelled: boolean;
 }
 
-export interface DragListeners {
+export interface DragEngineListeners {
   onPointerDown?: (e: ReactPointerEvent) => void;
   onPointerMove?: (e: ReactPointerEvent) => void;
   onPointerUp?: (e: ReactPointerEvent) => void;
@@ -41,7 +43,7 @@ export interface DragListeners {
   style?: CSSProperties;
 }
 
-export interface DragConfig {
+export interface DragEngineConfig {
   COOLDOWN_MS?: number;
   INTENT_THRESHOLD?: number;
   RESISTANCE?: number;
@@ -54,19 +56,19 @@ export interface DragConfig {
   SWIPE_THRESHOLD_RATIO?: number;
 }
 
-export interface DragProps {
+export interface DragEngineProps {
   onPressStart?: () => void;
-  onDragStart?: (sample: DragSample) => void;
-  onDragMove?: (sample: DragSample) => void;
-  onDragEnd?: (payload: DragEndPayload) => void;
+  onDragStart?: (sample: DragEngineSample) => void;
+  onDragMove?: (sample: DragEngineSample) => void;
+  onDragEnd?: (payload: DragEngineEndPayload) => void;
   enabled?: boolean;
   measureRef: React.RefObject<HTMLElement | null>;
-  config?: DragConfig;
+  config?: DragEngineConfig;
 }
 
-export interface DragResult {
+export interface DragEngineResult {
   isDragging: boolean;
   isInteracting: boolean;
   velocity: number;
-  dragListeners: DragListeners;
+  dragListeners: DragEngineListeners;
 }

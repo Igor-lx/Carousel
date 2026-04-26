@@ -45,7 +45,7 @@ export const HARD_DRAG_CONFIG = {
   SWIPE_THRESHOLD_RATIO: 0.16,
 } as const;
 
-export const HARD_DRAG_SPEED_CONFIG = {
+export const HARD_DRAG_RELEASE_SPEED_CONFIG = {
   inertiaBoost: 1,
   releaseDecelerationDistanceShare: 0.65,
 } as const;

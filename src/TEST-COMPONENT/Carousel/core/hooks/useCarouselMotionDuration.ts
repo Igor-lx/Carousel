@@ -4,8 +4,8 @@ import type {
   CarouselMotionSettings,
   CarouselRepeatedClickSettings,
 } from "../model/diagnostic";
-import type { DragSpeedConfig } from "../../../../shared";
-import { mapReleaseVelocityToDuration } from "../../../../shared/hooks/useDrag";
+import type { DragReleaseSpeedConfig } from "../../../../shared";
+import { mapDragReleaseVelocityToDuration } from "../../../../shared/velocity";
 import {
   getDurationByVirtualSpan,
 } from "../utilities";
@@ -20,7 +20,7 @@ interface MotionDurationProps {
   segmentStartVirtualIndex: number;
   targetVirtualIndex: number;
   stepSize: number;
-  dragSpeedConfig: DragSpeedConfig;
+  dragReleaseSpeedConfig: DragReleaseSpeedConfig;
   motionSettings: CarouselMotionSettings;
   repeatedClickSettings: CarouselRepeatedClickSettings;
   autoplayDuration: number;
@@ -38,7 +38,7 @@ export function useCarouselMotionDuration({
   segmentStartVirtualIndex,
   targetVirtualIndex,
   stepSize,
-  dragSpeedConfig,
+  dragReleaseSpeedConfig,
   motionSettings,
   repeatedClickSettings,
   autoplayDuration,
@@ -88,14 +88,14 @@ export function useCarouselMotionDuration({
 
   const gestureReleaseDuration = useMemo(
     () =>
-      mapReleaseVelocityToDuration({
+      mapDragReleaseVelocityToDuration({
         distance: targetVirtualIndex - segmentStartVirtualIndex,
         normalDuration: gestureSegmentDuration,
         releaseVelocity: velocity,
-        dragSpeedConfig,
+        dragReleaseSpeedConfig,
       }),
     [
-      dragSpeedConfig,
+      dragReleaseSpeedConfig,
       gestureSegmentDuration,
       segmentStartVirtualIndex,
       targetVirtualIndex,
