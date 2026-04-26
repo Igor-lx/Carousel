@@ -54,7 +54,7 @@ const CAROUSEL_DRAG_SPEED_CONFIG_OVERRIDE: Partial<DragSpeedConfig> = {
 
   // Доля оставшегося release-пути для плавного торможения к target.
   // 0.3 = первые 70% пути летим с release-speed, последние 30% тормозим в точную остановку.
-  releaseDecelerationDistanceShare: 0.45,
+  releaseDecelerationDistanceShare: 0,
 } as const;
 
 // Duration отката после отпускания жеста, если swipe не выбрал новый target.
