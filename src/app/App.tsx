@@ -67,7 +67,7 @@ const CAROUSEL_DATA = [
 ];
 
 const VIS_CONFIG = {
-  DESKTOP: 1,
+  DESKTOP: 4,
   TABLET: 2,
   MOBILE: 1,
   DEFAULT: 3,
