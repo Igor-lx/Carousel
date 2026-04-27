@@ -140,7 +140,7 @@ function App() {
             durationStep={3700}
             durationJump={450}
             intervalAutoplay={3000}
-            isLayoutClamped={true}
+            isPagePaddingOn={true}
             isTouchDevice={isTouch}
             onSlideClick={handleSlideClick}
           >

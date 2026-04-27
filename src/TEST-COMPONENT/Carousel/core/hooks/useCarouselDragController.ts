@@ -1,20 +1,19 @@
 import { useCallback, useRef } from "react";
-import type { Action, MoveReason } from "../model/reducer";
+
+import type { Action } from "../model/reducer";
 import {
   clamp,
   getAlignedVirtualIndex,
   getNearestPageIndex,
   getPageStart,
   getTrackSlotSize,
-  normalizePageIndex,
   getVirtualIndexFromDragOffset,
+  normalizePageIndex,
   type CarouselLayout,
 } from "../utilities";
-import {
-  type DragEngineReleasePayload,
-} from "../../../../shared/touch-input";
+import { type DragEngineReleasePayload } from "../../../../shared/touch-input";
 
-interface ControllerProps {
+interface UseCarouselDragControllerProps {
   dispatchAction: React.Dispatch<Action>;
   enabled: boolean;
   measureRef: React.RefObject<HTMLDivElement | null>;
@@ -26,13 +25,7 @@ interface ControllerProps {
   applyDragPosition: (position: number) => void;
 }
 
-interface ControllerResult {
-  move: (
-    step: number,
-    moveReason?: MoveReason,
-    dragOffset?: number,
-  ) => void;
-  goTo: (index: number, moveReason?: MoveReason) => void;
+interface UseCarouselDragControllerResult {
   startDrag: () => void;
   updateDrag: (dragOffset: number) => void;
   finishDrag: (payload: DragEngineReleasePayload) => void;
@@ -49,7 +42,7 @@ const toVirtualPointerVelocity = (
   return -(pointerVelocity / slotSize);
 };
 
-export function useCarouselController({
+export function useCarouselDragController({
   dispatchAction,
   enabled,
   measureRef,
@@ -59,7 +52,7 @@ export function useCarouselController({
   currentPositionRef,
   readCurrentPosition,
   applyDragPosition,
-}: ControllerProps): ControllerResult {
+}: UseCarouselDragControllerProps): UseCarouselDragControllerResult {
   const dragOriginPageIndexRef = useRef(0);
   const dragOriginPositionRef = useRef<number | null>(null);
 
@@ -69,30 +62,21 @@ export function useCarouselController({
     return Number.isFinite(position) ? position : currentPositionRef.current;
   }, [currentPositionRef, readCurrentPosition]);
 
-  const resolveFromVirtualIndex = useCallback(
-    (dragOffset?: number) => {
+  const resolveDragPosition = useCallback(
+    (dragOffset: number) => {
       const dragOriginPosition = dragOriginPositionRef.current;
       const gestureBaseVirtualIndex =
         dragOriginPosition !== null ? dragOriginPosition : baseVirtualIndex;
 
-      if (typeof dragOffset === "number") {
-        return getVirtualIndexFromDragOffset({
-          baseVirtualIndex: gestureBaseVirtualIndex,
-          dragOffset,
-          viewport: measureRef.current,
-          visibleSlidesNr: layout.clampedVisible,
-          fallback: gestureBaseVirtualIndex,
-        });
-      }
-
-      return resolveCurrentPosition();
+      return getVirtualIndexFromDragOffset({
+        baseVirtualIndex: gestureBaseVirtualIndex,
+        dragOffset,
+        viewport: measureRef.current,
+        visibleSlidesNr: layout.clampedVisible,
+        fallback: gestureBaseVirtualIndex,
+      });
     },
-    [
-      baseVirtualIndex,
-      layout.clampedVisible,
-      measureRef,
-      resolveCurrentPosition,
-    ],
+    [baseVirtualIndex, layout.clampedVisible, measureRef],
   );
 
   const resolveVirtualPointerVelocity = useCallback(
@@ -105,43 +89,6 @@ export function useCarouselController({
       return toVirtualPointerVelocity(pointerVelocity, slotSize);
     },
     [layout.clampedVisible, measureRef],
-  );
-
-  const move = useCallback(
-    (
-      step: number,
-      moveReason: MoveReason = "unknown",
-      dragOffset?: number,
-    ) => {
-      if (!enabled) return;
-
-      const fromVirtualIndex = resolveFromVirtualIndex(dragOffset);
-
-      dispatchAction({
-        type: "MOVE",
-        step,
-        moveReason,
-        fromVirtualIndex,
-      });
-    },
-    [
-      dispatchAction,
-      enabled,
-      resolveFromVirtualIndex,
-    ],
-  );
-
-  const goTo = useCallback(
-    (index: number, moveReason: MoveReason = "unknown") => {
-      if (!enabled) return;
-      dispatchAction({
-        type: "GO_TO",
-        target: index,
-        moveReason,
-        fromVirtualIndex: resolveFromVirtualIndex(),
-      });
-    },
-    [dispatchAction, enabled, resolveFromVirtualIndex],
   );
 
   const startDrag = useCallback(() => {
@@ -159,17 +106,17 @@ export function useCarouselController({
 
   const updateDrag = useCallback(
     (dragOffset: number) => {
-      const position = resolveFromVirtualIndex(dragOffset);
+      const position = resolveDragPosition(dragOffset);
       applyDragPosition(position);
     },
-    [applyDragPosition, resolveFromVirtualIndex],
+    [applyDragPosition, resolveDragPosition],
   );
 
   const finishDrag = useCallback(
     (payload: DragEngineReleasePayload) => {
       if (!enabled) return;
 
-      const releasePosition = resolveFromVirtualIndex(payload.uiOffset);
+      const releasePosition = resolveDragPosition(payload.uiOffset);
       const snapTargetIndex = getNearestPageIndex(releasePosition, layout);
       const dragOriginIndex = dragOriginPageIndexRef.current;
       let targetIndex = snapTargetIndex;
@@ -217,14 +164,12 @@ export function useCarouselController({
       dragReleaseEpsilon,
       enabled,
       layout,
-      resolveFromVirtualIndex,
+      resolveDragPosition,
       resolveVirtualPointerVelocity,
     ],
   );
 
   return {
-    move,
-    goTo,
     startDrag,
     updateDrag,
     finishDrag,

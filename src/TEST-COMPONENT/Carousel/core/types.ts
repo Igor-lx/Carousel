@@ -56,7 +56,7 @@ const OnSlideClickSchema = z.function({
 export const CarouselPropsSchema = z.object({
   slidesData: z.array(SlideSchema),
   visibleSlidesNr: z.number().optional(),
-  isLayoutClamped: z.boolean().optional(),
+  isPagePaddingOn: z.boolean().optional(),
   durationAutoplay: z.number().optional(),
   intervalAutoplay: z.number().optional(),
   durationStep: z.number().optional(),

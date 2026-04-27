@@ -4,7 +4,7 @@ import type { PaginationProps } from "./types";
 
 import styles from "./Pagination.module.scss";
 import { mergeStyles } from "../../../../shared";
-import { useCarouselModuleApi } from "../../core/model/context";
+import { useCarouselModuleContext } from "../../core/model/context";
 import { usePaginationSync } from "./hooks/usePaginationSync";
 import { PaginationView } from "./components/PaginationView";
 
@@ -18,7 +18,7 @@ export const Pagination = memo(({ className }: PaginationProps) => {
     moveReason,
     pageCount,
     autoplayPaginationFactor,
-  } = useCarouselModuleApi();
+  } = useCarouselModuleContext();
 
   const classNames = useMemo(() => {
     if (!className) return styles;

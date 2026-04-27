@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 
-import type { CarouselModuleApi } from "../model/context";
+import type { CarouselModuleContextValue } from "../model/context";
 import type { MoveReason } from "../model/reducer";
 
-interface UseCarouselModuleApiValueProps {
+interface UseCarouselModuleContextValueProps {
   pageCount: number;
   activePageIndex: number;
   isMoving: boolean;
@@ -20,7 +20,7 @@ interface UseCarouselModuleApiValueProps {
   isReducedMotion: boolean;
 }
 
-export function useCarouselModuleApiValue({
+export function useCarouselModuleContextValue({
   pageCount,
   activePageIndex,
   isMoving,
@@ -35,7 +35,7 @@ export function useCarouselModuleApiValue({
   isAtEnd,
   isTouch,
   isReducedMotion,
-}: UseCarouselModuleApiValueProps): CarouselModuleApi {
+}: UseCarouselModuleContextValueProps): CarouselModuleContextValue {
   return useMemo(
     () => ({
       pageCount,

@@ -1,34 +1,35 @@
-import {
-  memo,
-  useCallback,
-  useMemo,
-  useReducer,
-  useRef,
-} from "react";
+import { memo, useMemo, useReducer, useRef } from "react";
 
 import styles from "./Carousel.module.scss";
 
 import {
   useCarouselAutoPlay,
   useCarouselClick,
-  useCarouselController,
-  useCarouselModuleApiValue,
+  useCarouselDragController,
+  useCarouselDiagnosticContextValue,
+  useCarouselModuleContextValue,
+  useCarouselModuleRenderPolicy,
+  useCarouselNavigationController,
   useCarouselEngine,
   useCarouselGesture,
   useCarouselMotion,
   useCarouselSlides,
-  useCarouselMotionDuration,
-  useCarouselRuntimeSetup,
+  useCarouselMotionPlan,
+  useCarouselResolvedSlideRecords,
+  useCarouselRuntimeSettings,
+  useCarouselSlots,
+  useCarouselTrackPositionBridge,
+  useResponsiveRepeatedClickSettings,
 } from "./hooks";
 
 import {
   manageFocusShift,
   mergeStyles,
+  useComponentVisibility,
   useIsomorphicLayoutEffect,
   useIsReducedMotion,
   useIsTouchDevice,
   usePickStyles,
-  velocityEngine,
 } from "../../../shared";
 
 import { SlideItem } from "./components";
@@ -38,28 +39,16 @@ import {
   reconcileStateToLayout,
   reducer,
 } from "./model/reducer";
-import {
-  DEFAULT_SETTINGS,
-} from "./model/config";
-import {
-  EMPTY_DIAGNOSTIC_CORRECTIONS,
-} from "./model/diagnostic";
+import { DEFAULT_SETTINGS } from "./model/config";
 import {
   CarouselDiagnosticContext,
-  CarouselModuleApiContext,
+  CarouselModuleContext,
 } from "./model/context";
-import {
-  useCarouselExternalControlSync,
-} from "./external-control";
+import { useCarouselExternalControlSync } from "./external-control";
 import { SLIDE_KEYS, type CarouselProps } from "./types";
 import {
-  applyTrackPositionStyle,
-  buildSlideRecords,
-  extendSlideRecordsToFullPages,
   getCarouselLayout,
-  getDurationByVirtualSpan,
   getSlideFlexStyle,
-  hasPartialPageLayout,
   type CarouselLayout,
 } from "./utilities";
 
@@ -73,7 +62,7 @@ const Carousel = memo((props: CarouselProps) => {
 
   const {
     slidesData = [],
-    isLayoutClamped: isLayoutClampingEnabled = DEFAULT_SETTINGS.isLayoutClamped,
+    isPagePaddingOn = DEFAULT_SETTINGS.isPagePaddingOn,
     isContentImg = DEFAULT_SETTINGS.isContentImg,
     isAuto = DEFAULT_SETTINGS.isAuto,
     isPaginationOn = DEFAULT_SETTINGS.isPaginationOn,
@@ -87,7 +76,6 @@ const Carousel = memo((props: CarouselProps) => {
     children,
   } = props;
 
-  const totalSlides = slidesData.length;
   const containerRef = useRef<HTMLDivElement>(null);
   const movingRef = useRef<HTMLDivElement>(null);
   const motionPositionRef = useRef(0);
@@ -97,18 +85,10 @@ const Carousel = memo((props: CarouselProps) => {
 
   const isReducedMotion = isInstantMotion ?? useIsReducedMotion();
   const isTouch = isTouchDevice ?? useIsTouchDevice();
-  
-  const {
-    externalControlRef,
-    slots,
-    diagnosticPayload,
-    runtimeSettings,
-    responsiveRepeatedClickSettings,
-    isVisible,
-  } = useCarouselRuntimeSetup({
-    children,
-    containerRef,
-    isTouch,
+  const { externalControlRef, slots } = useCarouselSlots(children);
+
+  const { diagnosticPayload, runtimeSettings } = useCarouselRuntimeSettings({
+    diagnosticSlot: slots.diagnostic,
     visibleSlidesNr: rawVisibleSlidesNr,
     durationAutoplay: rawDurationAutoplay,
     durationStep: rawDurationStep,
@@ -132,45 +112,26 @@ const Carousel = memo((props: CarouselProps) => {
     motionSettings,
   } = runtimeSettings;
 
-  const hasPartialPageLayoutMismatch = hasPartialPageLayout(
-    totalSlides,
-    visibleSlidesCount,
-  );
-  const didExtendPartialPageLayout =
-    isLayoutClampingEnabled && hasPartialPageLayoutMismatch;
+  const responsiveRepeatedClickSettings = useResponsiveRepeatedClickSettings({
+    repeatedClickSettings: runtimeSettings.repeatedClickSettings,
+    isTouch,
+  });
 
-  const baseSlideRecords = useMemo(
-    () => buildSlideRecords(slidesData),
-    [slidesData],
-  );
+  const { visible: isVisible } = useComponentVisibility({
+    elementRef: containerRef,
+    threshold: interactionSettings.visibilityThreshold,
+  });
 
-  const layoutSlideRecords = useMemo(
-    () =>
-      didExtendPartialPageLayout
-        ? extendSlideRecordsToFullPages(
-            baseSlideRecords,
-            visibleSlidesCount,
-          )
-        : baseSlideRecords,
-    [
-      didExtendPartialPageLayout,
-      baseSlideRecords,
+  const { resolvedSlideRecords, perfectPageLayoutInfo } =
+    useCarouselResolvedSlideRecords({
+      slidesData,
       visibleSlidesCount,
-    ],
-  );
+      isPagePaddingOn,
+    });
 
   const nextLayout = useMemo<CarouselLayout>(
-    () =>
-      getCarouselLayout(
-        layoutSlideRecords,
-        visibleSlidesCount,
-        isFinite,
-      ),
-    [
-      layoutSlideRecords,
-      visibleSlidesCount,
-      isFinite,
-    ],
+    () => getCarouselLayout(resolvedSlideRecords, visibleSlidesCount, isFinite),
+    [resolvedSlideRecords, visibleSlidesCount, isFinite],
   );
 
   const [state, baseDispatch] = useReducer(reducer, nextLayout, initialState);
@@ -194,23 +155,6 @@ const Carousel = memo((props: CarouselProps) => {
 
   const { canSlide, pageCount, clampedVisible } = nextLayout;
 
-  const perfectPageLayoutNoticeInput = useMemo(
-    () => ({
-      hasPerfectPageLayout: !hasPartialPageLayoutMismatch,
-      rawLength: totalSlides,
-      extendedLength: layoutSlideRecords.length,
-      visibleSlidesCount: clampedVisible,
-      didExtendLayout: didExtendPartialPageLayout,
-    }),
-    [
-      clampedVisible,
-      didExtendPartialPageLayout,
-      hasPartialPageLayoutMismatch,
-      layoutSlideRecords.length,
-      totalSlides,
-    ],
-  );
-
   const { isMoving, isJumping, isInstant, isIdle } = useMemo(
     () => getAnimStatus(animMode),
     [animMode],
@@ -228,7 +172,7 @@ const Carousel = memo((props: CarouselProps) => {
     targetIndex,
     renderWindowBufferMultiplier: layoutSettings.renderWindowBufferMultiplier,
     layout: nextLayout,
-    slidesData: layoutSlideRecords,
+    slidesData: resolvedSlideRecords,
   });
 
   const { dispatchAction, finalizeStep: finalizeEngineStep } =
@@ -241,25 +185,24 @@ const Carousel = memo((props: CarouselProps) => {
       repeatedClickSettings: responsiveRepeatedClickSettings,
     });
 
-  const applyDragPosition = useCallback(
-    (position: number) => {
-      motionPositionRef.current = position;
+  const { applyDragPosition, readCurrentPosition } =
+    useCarouselTrackPositionBridge({
+      trackRef: movingRef,
+      currentPositionRef: motionPositionRef,
+      positionReaderRef: motionPositionReaderRef,
+      windowStart,
+      visibleSlidesCount: clampedVisible,
+    });
 
-      const track = movingRef.current;
-      if (!track) return;
+  const { move, goTo } = useCarouselNavigationController({
+    dispatchAction,
+    enabled: canSlide,
+    currentPositionRef: motionPositionRef,
+    readCurrentPosition,
+  });
 
-      applyTrackPositionStyle(track, position, windowStart, clampedVisible);
-    },
-    [clampedVisible, windowStart],
-  );
-
-  const readCurrentPosition = useCallback(
-    () => motionPositionReaderRef.current(),
-    [],
-  );
-
-  const { move, goTo, startDrag, updateDrag, finishDrag } =
-    useCarouselController({
+  const { startDrag, updateDrag, finishDrag } =
+    useCarouselDragController({
       dispatchAction,
       enabled: canSlide,
       measureRef: containerRef,
@@ -306,31 +249,8 @@ const Carousel = memo((props: CarouselProps) => {
     onMove: move,
   });
 
-  const gestureReleaseMotion = useMemo(
-    () =>
-      velocityEngine.resolveReleaseMotion({
-        gestureReleaseVelocity: gesturePointerReleaseVelocity,
-        distanceToTarget: virtualIndex - fromVirtualIndex,
-        baseDuration: getDurationByVirtualSpan({
-          from: fromVirtualIndex,
-          to: virtualIndex,
-          stepSize: clampedVisible,
-          baseDuration: stepDuration,
-        }),
-        config: releaseMotionConfig,
-      }),
-    [
-      clampedVisible,
-      fromVirtualIndex,
-      gesturePointerReleaseVelocity,
-      releaseMotionConfig,
-      stepDuration,
-      virtualIndex,
-    ],
-  );
-
-  const motionDuration = useCarouselMotionDuration({
-    gestureReleaseDuration: gestureReleaseMotion.duration,
+  const { releaseMotion, motionDuration } = useCarouselMotionPlan({
+    gesturePointerReleaseVelocity,
     reason: moveReason,
     animMode,
     isDragging,
@@ -344,6 +264,7 @@ const Carousel = memo((props: CarouselProps) => {
     autoplayDuration,
     stepDuration,
     jumpDuration,
+    releaseMotionConfig,
   });
 
   useCarouselMotion({
@@ -363,7 +284,7 @@ const Carousel = memo((props: CarouselProps) => {
     animMode,
     reason: moveReason,
     duration: motionDuration,
-    gestureReleaseMotion,
+    releaseMotion,
     gestureUiReleaseVelocity,
     isRepeatedClickAdvance,
     followUpVirtualIndex,
@@ -391,7 +312,27 @@ const Carousel = memo((props: CarouselProps) => {
     }
   }, [isIdle, targetIndex]);
 
-  const moduleApi = useCarouselModuleApiValue({
+  const classNames = useMemo(
+    () => (className ? mergeStyles(styles, className) : styles),
+    [className],
+  );
+
+  const slideClassNames = usePickStyles(classNames, SLIDE_KEYS);
+
+  const {
+    hasControlsSlot,
+    hasPaginationSlot,
+    shouldRenderControls,
+    shouldRenderPagination,
+  } = useCarouselModuleRenderPolicy({
+    controlsSlot: slots.controls,
+    paginationSlot: slots.pagination,
+    isControlsOn,
+    isPaginationOn,
+    canSlide,
+  });
+
+  const moduleContextValue = useCarouselModuleContextValue({
     pageCount,
     activePageIndex: targetIndex,
     isMoving,
@@ -408,46 +349,18 @@ const Carousel = memo((props: CarouselProps) => {
     isReducedMotion,
   });
 
-  const classNames = useMemo(
-    () =>
-      className
-        ? mergeStyles(styles, className)
-        : styles,
-    [className],
-  );
-
-  const slideClassNames = usePickStyles(classNames, SLIDE_KEYS);
-  const hasControlsSlot = Boolean(slots.controls);
-  const hasPaginationSlot = Boolean(slots.pagination);
-  const slotAttachmentNoticeInput = useMemo(
-    () => ({
-      isControlsOn,
-      hasControlsSlot,
-      isPaginationOn,
-      hasPaginationSlot,
-    }),
-    [hasControlsSlot, hasPaginationSlot, isControlsOn, isPaginationOn],
-  );
-  const diagnosticContextValue = useMemo(
-    () => ({
-      correctionEntries:
-        diagnosticPayload?.correctionEntries ?? EMPTY_DIAGNOSTIC_CORRECTIONS,
-      perfectPageLayoutNoticeInput,
-      slotAttachmentNoticeInput,
-    }),
-    [
-      diagnosticPayload?.correctionEntries,
-      perfectPageLayoutNoticeInput,
-      slotAttachmentNoticeInput,
-    ],
-  );
-
-  const shouldRenderControls = isControlsOn && canSlide && hasControlsSlot;
-
-  const shouldRenderPagination = isPaginationOn && hasPaginationSlot;
+  const diagnosticContextValue = useCarouselDiagnosticContextValue({
+    diagnosticPayload,
+    perfectPageLayoutInfo,
+    visibleSlidesCount: clampedVisible,
+    isControlsOn,
+    hasControlsSlot,
+    isPaginationOn,
+    hasPaginationSlot,
+  });
 
   return (
-    <CarouselModuleApiContext.Provider value={moduleApi}>
+    <CarouselModuleContext.Provider value={moduleContextValue}>
       <CarouselDiagnosticContext.Provider value={diagnosticContextValue}>
         <div
           className={classNames.outerContainer}
@@ -495,7 +408,7 @@ const Carousel = memo((props: CarouselProps) => {
           {slots.diagnostic}
         </div>
       </CarouselDiagnosticContext.Provider>
-    </CarouselModuleApiContext.Provider>
+    </CarouselModuleContext.Provider>
   );
 });
 

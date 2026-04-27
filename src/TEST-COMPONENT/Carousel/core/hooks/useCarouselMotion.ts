@@ -45,7 +45,7 @@ interface MotionProps {
   animMode: AnimationMode;
   reason: MoveReason;
   duration: number;
-  gestureReleaseMotion: ReleaseMotionResult;
+  releaseMotion: ReleaseMotionResult;
   gestureUiReleaseVelocity: number;
   isRepeatedClickAdvance: boolean;
   followUpVirtualIndex: number | null;
@@ -335,7 +335,7 @@ export function useCarouselMotion({
   animMode,
   reason,
   duration,
-  gestureReleaseMotion,
+  releaseMotion,
   gestureUiReleaseVelocity,
   isRepeatedClickAdvance,
   followUpVirtualIndex,
@@ -501,8 +501,8 @@ export function useCarouselMotion({
       animMode,
       reason,
       duration,
-      gestureReleaseMotion.effectiveReleaseSpeed,
-      gestureReleaseMotion.isInertialRelease,
+      releaseMotion.effectiveReleaseSpeed,
+      releaseMotion.isInertialRelease,
       gestureUiReleaseVelocity,
       startVirtualIndex,
       currentVirtualIndex,
@@ -598,7 +598,7 @@ export function useCarouselMotion({
       distance,
     );
     const gestureReleaseProfileVelocity = getSignedVelocity(
-      gestureReleaseMotion.effectiveReleaseSpeed,
+      releaseMotion.effectiveReleaseSpeed,
       distance,
     );
     const repeatedEndVelocity = hasFollowUpStep ? normalVelocity : 0;
@@ -623,7 +623,7 @@ export function useCarouselMotion({
     } else if (
       reason === "gesture" &&
       animMode !== "snap" &&
-      gestureReleaseMotion.isInertialRelease
+      releaseMotion.isInertialRelease
     ) {
       activeSegmentRef.current = createProfileSegment({
         strategy: "gesture",
@@ -715,8 +715,8 @@ export function useCarouselMotion({
     epsilon,
     finalizeMotion,
     followUpVirtualIndex,
-    gestureReleaseMotion.effectiveReleaseSpeed,
-    gestureReleaseMotion.isInertialRelease,
+    releaseMotion.effectiveReleaseSpeed,
+    releaseMotion.isInertialRelease,
     gestureUiReleaseVelocity,
     hasFollowUpStep,
     isRepeatedClickAdvance,

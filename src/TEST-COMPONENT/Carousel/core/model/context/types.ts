@@ -5,7 +5,7 @@ import type {
   CarouselSlotAttachmentNoticeInput,
 } from "../diagnostic";
 
-export interface CarouselModuleApi {
+export interface CarouselModuleContextValue {
   pageCount: number;
   activePageIndex: number;
   isMoving: boolean;

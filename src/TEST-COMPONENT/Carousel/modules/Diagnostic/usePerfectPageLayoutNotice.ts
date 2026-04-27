@@ -33,7 +33,7 @@ export function usePerfectPageLayoutNotice({
         {
           field: "suggestion",
           message:
-            "Enable isLayoutClamped to extend the layout to full pages and keep pagination deterministic.",
+            "Enable isPagePaddingOn to extend the layout to full pages and keep pagination deterministic.",
         },
       ];
     }

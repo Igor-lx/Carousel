@@ -1,13 +1,13 @@
 import { memo, useMemo } from "react";
 import { ControlsView } from "./components/ControlsView";
-import { useCarouselModuleApi } from "../../core/model/context";
+import { useCarouselModuleContext } from "../../core/model/context";
 import type { ControlsProps } from "./types";
 import styles from "./Controls.module.scss";
 import { mergeStyles } from "../../../../shared";
 
 export const Controls = memo(({ className }: ControlsProps) => {
   const { canMovePrev, canMoveNext, handlePrev, handleNext } =
-    useCarouselModuleApi();
+    useCarouselModuleContext();
 
   const classNames = useMemo(() => {
     if (!className) return styles;
