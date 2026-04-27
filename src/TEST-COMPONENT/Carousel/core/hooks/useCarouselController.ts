@@ -12,7 +12,6 @@ import {
 } from "../utilities";
 import {
   type DragEngineReleasePayload,
-  velocityEngine,
 } from "../../../../shared/touch-input";
 
 interface ControllerProps {
@@ -38,6 +37,17 @@ interface ControllerResult {
   updateDrag: (dragOffset: number) => void;
   finishDrag: (payload: DragEngineReleasePayload) => void;
 }
+
+const toVirtualPointerVelocity = (
+  pointerVelocity: number,
+  slotSize: number,
+) => {
+  if (!Number.isFinite(pointerVelocity) || !(slotSize > 0)) {
+    return 0;
+  }
+
+  return -(pointerVelocity / slotSize);
+};
 
 export function useCarouselController({
   dispatchAction,
@@ -92,10 +102,7 @@ export function useCarouselController({
 
       const slotSize = getTrackSlotSize(viewport, layout.clampedVisible);
 
-      return -velocityEngine.units.toComponentUnitVelocity(
-        pointerVelocity,
-        slotSize,
-      );
+      return toVirtualPointerVelocity(pointerVelocity, slotSize);
     },
     [layout.clampedVisible, measureRef],
   );

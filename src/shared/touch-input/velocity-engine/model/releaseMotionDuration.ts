@@ -3,21 +3,21 @@ import type { ReleaseMotionConfig } from "./releaseMotionTypes";
 
 export const resolveReleaseDuration = ({
   distance,
-  fallbackDuration,
+  baseDuration,
   releaseVelocity,
   minimumSpeed = 0,
   releaseMotionConfig,
 }: {
   distance: number;
-  fallbackDuration: number;
+  baseDuration: number;
   releaseVelocity: number;
   minimumSpeed?: number;
   releaseMotionConfig?: Partial<ReleaseMotionConfig>;
 }) => {
   const safeDistance = Math.abs(distance);
 
-  if (!(safeDistance > 0) || !(fallbackDuration > 0)) {
-    return fallbackDuration;
+  if (!(safeDistance > 0) || !(baseDuration > 0)) {
+    return baseDuration;
   }
 
   const plan = resolveReleasePlan({
@@ -28,7 +28,7 @@ export const resolveReleaseDuration = ({
   const targetSpeed = plan.effectiveReleaseSpeed;
 
   if (!(targetSpeed > 0)) {
-    return fallbackDuration;
+    return baseDuration;
   }
 
   const velocityDuration =

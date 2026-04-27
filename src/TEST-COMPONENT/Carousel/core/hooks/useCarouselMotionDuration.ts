@@ -5,10 +5,6 @@ import type {
   CarouselRepeatedClickSettings,
 } from "../model/diagnostic";
 import {
-  type ReleaseMotionConfig,
-  velocityEngine,
-} from "../../../../shared";
-import {
   getDurationByVirtualSpan,
 } from "../utilities";
 
@@ -17,12 +13,11 @@ interface MotionDurationProps {
   animMode: AnimationMode;
   isDragging: boolean;
   isInstant: boolean;
-  pointerReleaseVelocity: number;
+  gestureReleaseDuration: number;
   isRepeatedClickAdvance: boolean;
   segmentStartVirtualIndex: number;
   targetVirtualIndex: number;
   stepSize: number;
-  releaseMotionConfig: ReleaseMotionConfig;
   motionSettings: CarouselMotionSettings;
   repeatedClickSettings: CarouselRepeatedClickSettings;
   autoplayDuration: number;
@@ -35,12 +30,11 @@ export function useCarouselMotionDuration({
   animMode,
   isDragging,
   isInstant,
-  pointerReleaseVelocity,
+  gestureReleaseDuration,
   isRepeatedClickAdvance,
   segmentStartVirtualIndex,
   targetVirtualIndex,
   stepSize,
-  releaseMotionConfig,
   motionSettings,
   repeatedClickSettings,
   autoplayDuration,
@@ -70,48 +64,7 @@ export function useCarouselMotionDuration({
     [clickSegmentDuration, repeatedClickSettings.speedMultiplier],
   );
 
-  const gestureSegmentDuration = useMemo(
-    () =>
-      getDurationByVirtualSpan({
-        from: segmentStartVirtualIndex,
-        to: targetVirtualIndex,
-        stepSize,
-        baseDuration: stepDuration,
-      }),
-    [
-      segmentStartVirtualIndex,
-      stepSize,
-      stepDuration,
-      targetVirtualIndex,
-    ],
-  );
-
   const snapSegmentDuration = motionSettings.snapBackDuration;
-
-  const gestureReleaseDuration = useMemo(
-    () => {
-      const gestureDistance = targetVirtualIndex - segmentStartVirtualIndex;
-      const minimumSpeed = velocityEngine.speed.getAverageSpeedForDistance(
-        gestureDistance,
-        gestureSegmentDuration,
-      );
-
-      return velocityEngine.release.resolveDuration({
-        distance: gestureDistance,
-        fallbackDuration: gestureSegmentDuration,
-        releaseVelocity: pointerReleaseVelocity,
-        minimumSpeed,
-        releaseMotionConfig,
-      });
-    },
-    [
-      releaseMotionConfig,
-      gestureSegmentDuration,
-      segmentStartVirtualIndex,
-      targetVirtualIndex,
-      pointerReleaseVelocity,
-    ],
-  );
 
   const baseDuration = useMemo(() => {
     if (animMode === "snap") return snapSegmentDuration;
@@ -136,7 +89,6 @@ export function useCarouselMotionDuration({
     autoplayDuration,
     clickSegmentDuration,
     gestureReleaseDuration,
-    gestureSegmentDuration,
     isRepeatedClickAdvance,
     isInstant,
     jumpDuration,
@@ -159,6 +111,5 @@ export function useCarouselMotionDuration({
     isDragging,
     isInstant,
     jumpDuration,
-    reason,
   ]);
 }

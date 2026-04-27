@@ -5,5 +5,5 @@ export {
 } from "./model/releaseMotionConfig";
 export type {
   ReleaseMotionConfig,
-  ReleaseMotionPlan,
+  ReleaseMotionResult,
 } from "./model/releaseMotionTypes";

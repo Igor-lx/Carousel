@@ -32,6 +32,7 @@ import {
   useIsReducedMotion,
   useIsTouchDevice,
   usePickStyles,
+  velocityEngine,
 } from "../../../shared";
 
 import { SlideItem } from "./components";
@@ -347,8 +348,31 @@ const Carousel = memo((props: CarouselProps) => {
     onMove: move,
   });
 
+  const gestureReleaseMotion = useMemo(
+    () =>
+      velocityEngine.resolveReleaseMotion({
+        gestureReleaseVelocity: gesturePointerReleaseVelocity,
+        distanceToTarget: virtualIndex - fromVirtualIndex,
+        baseDuration: getDurationByVirtualSpan({
+          from: fromVirtualIndex,
+          to: virtualIndex,
+          stepSize: clampedVisible,
+          baseDuration: stepDuration,
+        }),
+        config: releaseMotionConfig,
+      }),
+    [
+      clampedVisible,
+      fromVirtualIndex,
+      gesturePointerReleaseVelocity,
+      releaseMotionConfig,
+      stepDuration,
+      virtualIndex,
+    ],
+  );
+
   const motionDuration = useCarouselMotionDuration({
-    pointerReleaseVelocity: gesturePointerReleaseVelocity,
+    gestureReleaseDuration: gestureReleaseMotion.duration,
     reason: moveReason,
     animMode,
     isDragging,
@@ -357,7 +381,6 @@ const Carousel = memo((props: CarouselProps) => {
     segmentStartVirtualIndex: fromVirtualIndex,
     targetVirtualIndex: virtualIndex,
     stepSize: clampedVisible,
-    releaseMotionConfig,
     motionSettings,
     repeatedClickSettings: responsiveRepeatedClickSettings,
     autoplayDuration,
@@ -395,7 +418,7 @@ const Carousel = memo((props: CarouselProps) => {
     animMode,
     reason: moveReason,
     duration: motionDuration,
-    gesturePointerReleaseVelocity,
+    gestureReleaseMotion,
     gestureUiReleaseVelocity,
     isRepeatedClickAdvance,
     followUpVirtualIndex,

@@ -11,3 +11,9 @@ export interface ReleaseMotionPlan {
   isFasterThanMinimumSpeed: boolean;
   decelerationDistanceShare: number;
 }
+
+export interface ReleaseMotionResult {
+  effectiveReleaseSpeed: number;
+  duration: number;
+  isInertialRelease: boolean;
+}
