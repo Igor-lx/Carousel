@@ -12,8 +12,8 @@ import {
 } from "../utilities";
 import {
   type DragEngineEndPayload,
-} from "../../../../shared/drag-engine";
-import { scaleVelocityByUnitSize } from "../../../../shared/velocity";
+  velocityEngine,
+} from "../../../../shared/touch-input";
 
 interface ControllerProps {
   dispatchAction: React.Dispatch<Action>;
@@ -92,7 +92,7 @@ export function useCarouselController({
 
       const slotSize = getTrackSlotSize(viewport, layout.clampedVisible);
 
-      return -scaleVelocityByUnitSize(pointerVelocity, slotSize);
+      return -velocityEngine.toComponentUnitVelocity(pointerVelocity, slotSize);
     },
     [layout.clampedVisible, measureRef],
   );

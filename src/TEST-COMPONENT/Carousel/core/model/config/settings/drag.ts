@@ -53,7 +53,7 @@ const CAROUSEL_DRAG_RELEASE_SPEED_CONFIG_OVERRIDE: Partial<DragReleaseSpeedConfi
   // Прямой множитель raw release-скорости пальца перед сравнением со штатной MOVE-speed.
   // 1 = честная скорость пальца; 2 = вдвое сильнее.
   // Значения ниже 1 ослабляют только fast-release: итоговое движение все равно не будет медленнее MOVE.
-  inertiaBoost: 1.5,
+  inertiaBoost: 1.7,
 
   // Доля оставшегося release-пути для плавного торможения к target.
   // 0.3 = первые 70% пути летим с release-speed, последние 30% тормозим в точную остановку.

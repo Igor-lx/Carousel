@@ -18,5 +18,5 @@ export const REPEATED_CLICK_ACCELERATION_DISTANCE_SHARE = 0.1;
 export const REPEATED_CLICK_DECELERATION_DISTANCE_SHARE = 0.7;
 
 export const JUMP_BEZIER = "cubic-bezier(0.16, 1, 0.3, 1)";
-export const MOVE_BEZIER = "cubic-bezier(0.14, 0.92, 0.24, 1)";
+export const MOVE_BEZIER = "cubic-bezier(0.24, 0.68, 0.42, 1)";
 export const AUTO_BEZIER = "cubic-bezier(0.28, 0.72, 0.38, 1)";

@@ -4,8 +4,10 @@ import type {
   CarouselMotionSettings,
   CarouselRepeatedClickSettings,
 } from "../model/diagnostic";
-import type { DragReleaseSpeedConfig } from "../../../../shared";
-import { mapDragReleaseVelocityToDuration } from "../../../../shared/velocity";
+import {
+  type DragReleaseSpeedConfig,
+  velocityEngine,
+} from "../../../../shared";
 import {
   getDurationByVirtualSpan,
 } from "../utilities";
@@ -87,13 +89,21 @@ export function useCarouselMotionDuration({
   const snapSegmentDuration = motionSettings.snapBackDuration;
 
   const gestureReleaseDuration = useMemo(
-    () =>
-      mapDragReleaseVelocityToDuration({
-        distance: targetVirtualIndex - segmentStartVirtualIndex,
-        normalDuration: gestureSegmentDuration,
+    () => {
+      const gestureDistance = targetVirtualIndex - segmentStartVirtualIndex;
+      const minimumSpeed = velocityEngine.getAverageSpeedForDistance(
+        gestureDistance,
+        gestureSegmentDuration,
+      );
+
+      return velocityEngine.mapDragReleaseVelocityToDuration({
+        distance: gestureDistance,
+        fallbackDuration: gestureSegmentDuration,
         releaseVelocity: velocity,
+        minimumSpeed,
         dragReleaseSpeedConfig,
-      }),
+      });
+    },
     [
       dragReleaseSpeedConfig,
       gestureSegmentDuration,

@@ -136,9 +136,9 @@ function App() {
             isPaginationOn={true}
             // isInstantMotion={true}
             isInteractive={isInteractive}
-            durationAutoplay={6000}
-            durationStep={2500}
-            durationJump={400}
+            durationAutoplay={5000}
+            durationStep={1700}
+            durationJump={450}
             intervalAutoplay={3000}
             isLayoutClamped={true}
             isTouchDevice={isTouch}

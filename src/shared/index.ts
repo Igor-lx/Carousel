@@ -1,6 +1,6 @@
 export * from "./features/ChevronIcon/ChevronIcon";
 export * from "./features/PaginationWidget/PaginationWidget";
-export * from "./drag-engine";
+export * from "./touch-input";
 export * from "./hooks/useComponentVisibility";
 export * from "./hooks/useIsReducedMotion";
 export * from "./hooks/useIsTouchDevice";
@@ -9,7 +9,6 @@ export * from "./hooks/useIsomorphicLayoutEffect";
 export * from "./hooks/usePickStyles";
 export * from "./hooks/useTimer";
 export * from "./hooks/useExternalRefBridge";
-export * from "./velocity";
 export * from "./value-resolution";
 export * from "./utils/focus-shift";
 export * from "./utils/merge-styles";

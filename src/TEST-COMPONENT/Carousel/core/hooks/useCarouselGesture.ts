@@ -4,7 +4,7 @@ import {
   type DragEngineEndPayload,
   type DragEngineListeners,
   useDragEngine,
-} from "../../../../shared/drag-engine";
+} from "../../../../shared/touch-input";
 
 interface GestureProps {
   onPressStart: () => void;

@@ -13,14 +13,10 @@ import type {
 } from "../model/diagnostic";
 import type { AnimationMode, MoveReason } from "../model/reducer";
 import { applyTrackPositionStyle } from "../utilities";
-import { useIsomorphicLayoutEffect } from "../../../../shared";
 import {
-  getAverageSpeedForDistance,
-  getSameDirectionSpeed,
-  getSignedVelocity,
-  resolveDragReleaseDecelerationShare,
-  resolveDragReleaseSpeed,
-} from "../../../../shared/velocity";
+  useIsomorphicLayoutEffect,
+  velocityEngine,
+} from "../../../../shared";
 
 interface MotionProps {
   trackRef: React.RefObject<HTMLDivElement | null>;
@@ -49,6 +45,7 @@ interface MotionProps {
 
 type MotionStrategyKind =
   | "easing"
+  | "gesture-easing"
   | "gesture"
   | "repeated"
   | "repeated-follow-up"
@@ -84,7 +81,7 @@ type MotionSegmentBase = {
 };
 
 type EasingMotionSegment = MotionSegmentBase & {
-  strategy: "easing";
+  strategy: "easing" | "gesture-easing";
   easing: CubicBezier;
 };
 
@@ -120,6 +117,15 @@ const LINEAR_BEZIER: CubicBezier = {
 
 const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, value));
+
+const isEasingStrategy = (
+  strategy: MotionStrategyKind,
+): strategy is EasingMotionSegment["strategy"] =>
+  strategy === "easing" || strategy === "gesture-easing";
+
+const isEasingSegment = (
+  segment: MotionSegment,
+): segment is EasingMotionSegment => isEasingStrategy(segment.strategy);
 
 const smoothstep = (progress: number) =>
   progress * progress * (3 - 2 * progress);
@@ -576,7 +582,7 @@ const getNormalMoveSpeed = (stepSize: number, stepDuration: number) => {
     return 0;
   }
 
-  return getAverageSpeedForDistance(stepSize, stepDuration);
+  return velocityEngine.getAverageSpeedForDistance(stepSize, stepDuration);
 };
 
 const createProfileSegment = ({
@@ -603,18 +609,21 @@ const createProfileSegment = ({
   targetDuration?: number;
 }): ProfileMotionSegment => {
   const distance = to - from;
-  const startSpeed = getSameDirectionSpeed(currentVelocity, distance);
+  const startSpeed = velocityEngine.getSameDirectionSpeed(
+    currentVelocity,
+    distance,
+  );
   const peakSpeed = Math.max(
-    getSameDirectionSpeed(peakVelocity, distance),
+    velocityEngine.getSameDirectionSpeed(peakVelocity, distance),
     startSpeed,
-    getSameDirectionSpeed(endVelocity, distance),
+    velocityEngine.getSameDirectionSpeed(endVelocity, distance),
     MIN_PROFILE_SPEED,
   );
   const profile = createVelocityProfile({
     distance,
     startSpeed,
     peakSpeed,
-    endSpeed: getSameDirectionSpeed(endVelocity, distance),
+    endSpeed: velocityEngine.getSameDirectionSpeed(endVelocity, distance),
     accelerationDistanceShare,
     decelerationDistanceShare,
     targetDuration,
@@ -637,7 +646,7 @@ const sampleSegment = (segment: MotionSegment, now: number): MotionSample => {
   const distance = segment.to - segment.from;
 
   if (progress >= 1) {
-    if (segment.strategy === "easing") {
+    if (isEasingSegment(segment)) {
       const { slope } = sampleBezier(segment.easing, 1);
 
       return {
@@ -664,7 +673,7 @@ const sampleSegment = (segment: MotionSegment, now: number): MotionSample => {
     };
   }
 
-  if (segment.strategy === "easing") {
+  if (isEasingSegment(segment)) {
     const eased = sampleBezier(segment.easing, progress);
 
     return {
@@ -966,33 +975,30 @@ export function useCarouselMotion({
     const startedAt = canReuseHandoffSnapshot ? handoffSnapshot.timestamp : now;
     const normalMoveSpeed =
       getNormalMoveSpeed(size, stepDuration) ||
-      getAverageSpeedForDistance(distance, duration);
-    const normalVelocity = getSignedVelocity(normalMoveSpeed, distance);
+      velocityEngine.getAverageSpeedForDistance(distance, duration);
+    const normalVelocity = velocityEngine.getSignedVelocity(
+      normalMoveSpeed,
+      distance,
+    );
     const repeatedSpeedMultiplier = Math.max(
       1,
       repeatedClickSettings.speedMultiplier,
     );
-    const repeatedVelocity = getSignedVelocity(
+    const repeatedVelocity = velocityEngine.getSignedVelocity(
       normalMoveSpeed * repeatedSpeedMultiplier,
       distance,
     );
-    const gestureIntentSpeed = getSameDirectionSpeed(
+    const gestureIntentSpeed = velocityEngine.getSameDirectionSpeed(
       gestureReleaseVelocity,
       distance,
     );
-    const boostedGestureIntentSpeed = resolveDragReleaseSpeed({
+    const dragReleaseVelocityPlan = velocityEngine.resolveDragReleaseVelocityPlan({
       releaseSpeed: gestureIntentSpeed,
-      normalSpeed: normalMoveSpeed,
+      minimumSpeed: normalMoveSpeed,
       dragReleaseSpeedConfig,
     });
-    const gestureDecelerationDistanceShare =
-      resolveDragReleaseDecelerationShare({
-        releaseSpeed: gestureIntentSpeed,
-        normalSpeed: normalMoveSpeed,
-        dragReleaseSpeedConfig,
-      });
-    const gestureReleaseProfileVelocity = getSignedVelocity(
-      boostedGestureIntentSpeed,
+    const gestureReleaseProfileVelocity = velocityEngine.getSignedVelocity(
+      dragReleaseVelocityPlan.effectiveReleaseSpeed,
       distance,
     );
     const repeatedEndVelocity = hasFollowUpStep ? normalVelocity : 0;
@@ -1017,7 +1023,7 @@ export function useCarouselMotion({
     } else if (
       reason === "gesture" &&
       animMode !== "snap" &&
-      gestureIntentSpeed > normalMoveSpeed
+      dragReleaseVelocityPlan.isFasterThanMinimumSpeed
     ) {
       activeSegmentRef.current = createProfileSegment({
         strategy: "gesture",
@@ -1028,9 +1034,19 @@ export function useCarouselMotion({
         peakVelocity: gestureReleaseProfileVelocity,
         endVelocity: 0,
         accelerationDistanceShare: 0,
-        decelerationDistanceShare: gestureDecelerationDistanceShare,
+        decelerationDistanceShare:
+          dragReleaseVelocityPlan.decelerationDistanceShare,
         targetDuration: duration,
       });
+    } else if (reason === "gesture" && animMode !== "snap") {
+      activeSegmentRef.current = {
+        strategy: "gesture-easing",
+        from: nowState.position,
+        to: currentVirtualIndex,
+        duration,
+        startedAt,
+        easing: parseBezier(MOVE_BEZIER),
+      };
     } else if (isRepeatedFollowUp) {
       activeSegmentRef.current = createProfileSegment({
         strategy: "repeated-follow-up",
@@ -1047,7 +1063,7 @@ export function useCarouselMotion({
     } else if (
       reason === "click" &&
       animMode !== "jump" &&
-      getSameDirectionSpeed(nowState.velocity, distance) > epsilon
+      velocityEngine.getSameDirectionSpeed(nowState.velocity, distance) > epsilon
     ) {
       activeSegmentRef.current = createProfileSegment({
         strategy: "handoff",
