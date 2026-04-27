@@ -3,7 +3,7 @@ import {
   AUTOPLAY_PAGINATION_FACTOR,
   CAROUSEL_DRAG_CONFIG,
   CAROUSEL_DRAG_RELEASE_EPSILON,
-  CAROUSEL_DRAG_RELEASE_SPEED_CONFIG,
+  CAROUSEL_RELEASE_MOTION_CONFIG,
   DEFAULT_SETTINGS,
   HOVER_PAUSE_DELAY,
   MOTION_EPSILON,
@@ -25,7 +25,7 @@ import type {
 import {
   HARD_DRAG_CONFIG,
   HARD_DRAG_SNAP_SETTINGS,
-  HARD_DRAG_RELEASE_SPEED_CONFIG,
+  HARD_RELEASE_MOTION_CONFIG,
   HARD_ERROR_ALT_PLACEHOLDER,
   HARD_INTERACTION_SETTINGS,
   HARD_REPEATED_CLICK_SETTINGS,
@@ -748,21 +748,21 @@ const resolveDragConfig = () => {
   };
 };
 
-const resolveDragReleaseSpeedConfig = () => {
-  const inertiaBoost = CAROUSEL_DRAG_RELEASE_SPEED_CONFIG.inertiaBoost;
+const resolveReleaseMotionConfig = () => {
+  const inertiaBoost = CAROUSEL_RELEASE_MOTION_CONFIG.inertiaBoost;
   const releaseDecelerationDistanceShare = normalizeRepeatedClickProfileShare(
-    CAROUSEL_DRAG_RELEASE_SPEED_CONFIG.releaseDecelerationDistanceShare,
-    HARD_DRAG_RELEASE_SPEED_CONFIG.releaseDecelerationDistanceShare,
+    CAROUSEL_RELEASE_MOTION_CONFIG.releaseDecelerationDistanceShare,
+    HARD_RELEASE_MOTION_CONFIG.releaseDecelerationDistanceShare,
   );
   const corrections: DevNoticeEntry[] = [];
 
   if (
-    !isFiniteNumber(CAROUSEL_DRAG_RELEASE_SPEED_CONFIG.inertiaBoost) ||
-    CAROUSEL_DRAG_RELEASE_SPEED_CONFIG.inertiaBoost < MIN_DRAG_INERTIA_BOOST
+    !isFiniteNumber(CAROUSEL_RELEASE_MOTION_CONFIG.inertiaBoost) ||
+    CAROUSEL_RELEASE_MOTION_CONFIG.inertiaBoost < MIN_DRAG_INERTIA_BOOST
   ) {
     corrections.push({
-      field: "CAROUSEL_DRAG_RELEASE_SPEED_CONFIG.inertiaBoost",
-      provided: CAROUSEL_DRAG_RELEASE_SPEED_CONFIG.inertiaBoost,
+      field: "CAROUSEL_RELEASE_MOTION_CONFIG.inertiaBoost",
+      provided: CAROUSEL_RELEASE_MOTION_CONFIG.inertiaBoost,
       message: getInternalConstantNoticeMessage(
         `expected a finite value greater than or equal to ${MIN_DRAG_INERTIA_BOOST}`,
       ),
@@ -770,13 +770,13 @@ const resolveDragReleaseSpeedConfig = () => {
   }
 
   if (
-    isFiniteNumber(CAROUSEL_DRAG_RELEASE_SPEED_CONFIG.inertiaBoost) &&
-    CAROUSEL_DRAG_RELEASE_SPEED_CONFIG.inertiaBoost >= MIN_DRAG_INERTIA_BOOST &&
-    CAROUSEL_DRAG_RELEASE_SPEED_CONFIG.inertiaBoost < 1
+    isFiniteNumber(CAROUSEL_RELEASE_MOTION_CONFIG.inertiaBoost) &&
+    CAROUSEL_RELEASE_MOTION_CONFIG.inertiaBoost >= MIN_DRAG_INERTIA_BOOST &&
+    CAROUSEL_RELEASE_MOTION_CONFIG.inertiaBoost < 1
   ) {
     corrections.push({
-      field: "CAROUSEL_DRAG_RELEASE_SPEED_CONFIG.inertiaBoost",
-      provided: CAROUSEL_DRAG_RELEASE_SPEED_CONFIG.inertiaBoost,
+      field: "CAROUSEL_RELEASE_MOTION_CONFIG.inertiaBoost",
+      provided: CAROUSEL_RELEASE_MOTION_CONFIG.inertiaBoost,
       message:
         "inertiaBoost below 1 is valid, but it intentionally weakens fast-release velocity; runtime still keeps slow releases at MOVE speed",
     });
@@ -784,14 +784,14 @@ const resolveDragReleaseSpeedConfig = () => {
 
   if (
     releaseDecelerationDistanceShare !==
-    CAROUSEL_DRAG_RELEASE_SPEED_CONFIG.releaseDecelerationDistanceShare
+    CAROUSEL_RELEASE_MOTION_CONFIG.releaseDecelerationDistanceShare
   ) {
     corrections.push({
-      field: "CAROUSEL_DRAG_RELEASE_SPEED_CONFIG.releaseDecelerationDistanceShare",
-      provided: CAROUSEL_DRAG_RELEASE_SPEED_CONFIG.releaseDecelerationDistanceShare,
+      field: "CAROUSEL_RELEASE_MOTION_CONFIG.releaseDecelerationDistanceShare",
+      provided: CAROUSEL_RELEASE_MOTION_CONFIG.releaseDecelerationDistanceShare,
       normalized: releaseDecelerationDistanceShare,
       reason: isFiniteNumber(
-        CAROUSEL_DRAG_RELEASE_SPEED_CONFIG.releaseDecelerationDistanceShare,
+        CAROUSEL_RELEASE_MOTION_CONFIG.releaseDecelerationDistanceShare,
       )
         ? `clamped to [${MIN_REPEATED_CLICK_PROFILE_SHARE}, ${MAX_REPEATED_CLICK_PROFILE_SHARE}]`
         : "expected a finite value between 0 and 1",
@@ -872,7 +872,7 @@ export const resolveCarouselDiagnostic = (
   const repeatedClickResolution = resolveRepeatedClickSettings();
   const interactionResolution = resolveInteractionSettings();
   const dragConfigResolution = resolveDragConfig();
-  const dragReleaseSpeedConfigResolution = resolveDragReleaseSpeedConfig();
+  const releaseMotionConfigResolution = resolveReleaseMotionConfig();
   const dragReleaseEpsilonResolution = resolveDragReleaseEpsilon();
   const motionResolution = resolveMotionSettings();
   const propResolution = resolveRuntimePropSettings(
@@ -896,7 +896,7 @@ export const resolveCarouselDiagnostic = (
       repeatedClickSettings: repeatedClickResolution.settings,
       interactionSettings: interactionResolution.settings,
       dragConfig: dragConfigResolution.settings,
-      dragReleaseSpeedConfig: dragReleaseSpeedConfigResolution.settings,
+      releaseMotionConfig: releaseMotionConfigResolution.settings,
       dragReleaseEpsilon: dragReleaseEpsilonResolution.setting,
       motionSettings: motionResolution.settings,
     },
@@ -906,7 +906,7 @@ export const resolveCarouselDiagnostic = (
       ...repeatedClickResolution.corrections,
       ...interactionResolution.corrections,
       ...dragConfigResolution.corrections,
-      ...dragReleaseSpeedConfigResolution.corrections,
+      ...releaseMotionConfigResolution.corrections,
       ...dragReleaseEpsilonResolution.corrections,
       ...motionResolution.corrections,
       ...propResolution.corrections,

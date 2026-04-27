@@ -1,13 +1,13 @@
-import type { DragEngineSample } from "../model/types";
+import type { DragEngineInternalSample } from "./types";
 
 export const createIdleSample = (
   width = 0,
   timestamp = 0,
-): DragEngineSample => ({
-  rawOffset: 0,
-  offset: 0,
-  rawVelocity: 0,
-  velocity: 0,
+): DragEngineInternalSample => ({
+  rawPointerOffset: 0,
+  uiOffset: 0,
+  rawPointerVelocity: 0,
+  uiVelocity: 0,
   width,
   timestamp,
 });

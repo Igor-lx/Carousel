@@ -20,8 +20,8 @@ export const initialState = (currentLayout: CarouselLayout): State => ({
   isRepeatedClickAdvance: false,
   animMode: "none",
   moveReason: "unknown",
-  gestureReleaseVelocity: 0,
-  gestureReleaseMotionVelocity: 0,
+  gesturePointerReleaseVelocity: 0,
+  gestureUiReleaseVelocity: 0,
 });
 
 export const getAnimStatus = (mode: AnimationMode) => ({
@@ -93,8 +93,8 @@ export const reconcileStateToLayout = (
     followUpVirtualIndex: null,
     isRepeatedClickAdvance: false,
     animMode: "instant",
-    gestureReleaseVelocity: 0,
-    gestureReleaseMotionVelocity: 0,
+    gesturePointerReleaseVelocity: 0,
+    gestureUiReleaseVelocity: 0,
   };
 };
 

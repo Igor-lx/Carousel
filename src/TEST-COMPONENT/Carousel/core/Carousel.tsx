@@ -167,7 +167,7 @@ const Carousel = memo((props: CarouselProps) => {
     repeatedClickSettings,
     interactionSettings,
     dragConfig,
-    dragReleaseSpeedConfig,
+    releaseMotionConfig,
     dragReleaseEpsilon,
     motionSettings,
   } = runtimeSettings;
@@ -236,8 +236,8 @@ const Carousel = memo((props: CarouselProps) => {
     isRepeatedClickAdvance,
     animMode,
     moveReason,
-    gestureReleaseVelocity,
-    gestureReleaseMotionVelocity,
+    gesturePointerReleaseVelocity,
+    gestureUiReleaseVelocity,
   } = syncedState;
 
   const { canSlide, pageCount, clampedVisible } = nextLayout;
@@ -322,7 +322,7 @@ const Carousel = memo((props: CarouselProps) => {
   const { isDragging, isInteracting, dragListeners } = useCarouselGesture({
     onPressStart: startDrag,
     onDragMove: updateDrag,
-    onDragEnd: finishDrag,
+    onRelease: finishDrag,
     enabled: canSlide,
     dragConfig,
     measureRef: containerRef,
@@ -348,7 +348,7 @@ const Carousel = memo((props: CarouselProps) => {
   });
 
   const motionDuration = useCarouselMotionDuration({
-    velocity: gestureReleaseVelocity,
+    pointerReleaseVelocity: gesturePointerReleaseVelocity,
     reason: moveReason,
     animMode,
     isDragging,
@@ -357,7 +357,7 @@ const Carousel = memo((props: CarouselProps) => {
     segmentStartVirtualIndex: fromVirtualIndex,
     targetVirtualIndex: virtualIndex,
     stepSize: clampedVisible,
-    dragReleaseSpeedConfig,
+    releaseMotionConfig,
     motionSettings,
     repeatedClickSettings: responsiveRepeatedClickSettings,
     autoplayDuration,
@@ -390,13 +390,13 @@ const Carousel = memo((props: CarouselProps) => {
     stepDuration,
     motionSettings,
     repeatedClickSettings: responsiveRepeatedClickSettings,
-    dragReleaseSpeedConfig,
+    releaseMotionConfig,
     isMoving,
     animMode,
     reason: moveReason,
     duration: motionDuration,
-    gestureReleaseVelocity,
-    gestureReleaseMotionVelocity,
+    gesturePointerReleaseVelocity,
+    gestureUiReleaseVelocity,
     isRepeatedClickAdvance,
     followUpVirtualIndex,
     followUpDuration,

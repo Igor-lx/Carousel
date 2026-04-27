@@ -30,8 +30,8 @@ export function reducer(state: State, action: ReducerAction): State {
         isRepeatedClickAdvance: false,
         animMode: "none",
         moveReason: "gesture",
-        gestureReleaseVelocity: 0,
-        gestureReleaseMotionVelocity: 0,
+        gesturePointerReleaseVelocity: 0,
+        gestureUiReleaseVelocity: 0,
       };
 
     case "END_DRAG":
@@ -55,8 +55,8 @@ export function reducer(state: State, action: ReducerAction): State {
           isRepeatedClickAdvance: false,
           animMode: "none",
           moveReason: "gesture",
-          gestureReleaseVelocity: 0,
-          gestureReleaseMotionVelocity: 0,
+          gesturePointerReleaseVelocity: 0,
+          gestureUiReleaseVelocity: 0,
         };
       }
 
@@ -73,10 +73,12 @@ export function reducer(state: State, action: ReducerAction): State {
             ? "snap"
             : "normal",
         moveReason: "gesture",
-        gestureReleaseVelocity: action.isInstant ? 0 : action.releaseVelocity,
-        gestureReleaseMotionVelocity: action.isInstant
+        gesturePointerReleaseVelocity: action.isInstant
           ? 0
-          : action.releaseMotionVelocity,
+          : action.pointerReleaseVelocity,
+        gestureUiReleaseVelocity: action.isInstant
+          ? 0
+          : action.uiReleaseVelocity,
       };
 
     case "MOVE":
@@ -119,8 +121,8 @@ export function reducer(state: State, action: ReducerAction): State {
             isRepeatedClickAdvance: false,
             animMode: "snap",
             moveReason: "gesture",
-            gestureReleaseVelocity: 0,
-            gestureReleaseMotionVelocity: 0,
+            gesturePointerReleaseVelocity: 0,
+            gestureUiReleaseVelocity: 0,
           };
         }
         return {
@@ -131,8 +133,8 @@ export function reducer(state: State, action: ReducerAction): State {
           isRepeatedClickAdvance: false,
           animMode: action.isInstant ? "instant" : syncedState.animMode,
           moveReason: action.moveReason,
-          gestureReleaseVelocity: 0,
-          gestureReleaseMotionVelocity: 0,
+          gesturePointerReleaseVelocity: 0,
+          gestureUiReleaseVelocity: 0,
         };
       }
 
@@ -145,8 +147,8 @@ export function reducer(state: State, action: ReducerAction): State {
         isRepeatedClickAdvance: repeatedClickPlan !== null,
         animMode: mode,
         moveReason: action.moveReason,
-        gestureReleaseVelocity: 0,
-        gestureReleaseMotionVelocity: 0,
+        gesturePointerReleaseVelocity: 0,
+        gestureUiReleaseVelocity: 0,
       };
     }
 
@@ -162,8 +164,8 @@ export function reducer(state: State, action: ReducerAction): State {
           isRepeatedClickAdvance: false,
           animMode: "normal",
           moveReason: "click",
-          gestureReleaseVelocity: 0,
-          gestureReleaseMotionVelocity: 0,
+          gesturePointerReleaseVelocity: 0,
+          gestureUiReleaseVelocity: 0,
         };
       }
 
@@ -174,8 +176,8 @@ export function reducer(state: State, action: ReducerAction): State {
         followUpVirtualIndex: null,
         isRepeatedClickAdvance: false,
         animMode: "none",
-        gestureReleaseVelocity: 0,
-        gestureReleaseMotionVelocity: 0,
+        gesturePointerReleaseVelocity: 0,
+        gestureUiReleaseVelocity: 0,
       };
     }
 

@@ -2,7 +2,7 @@ import {
   AUTOPLAY_PAGINATION_FACTOR,
   CAROUSEL_DRAG_CONFIG,
   CAROUSEL_DRAG_RELEASE_EPSILON,
-  CAROUSEL_DRAG_RELEASE_SPEED_CONFIG,
+  CAROUSEL_RELEASE_MOTION_CONFIG,
   DEFAULT_SETTINGS,
   HOVER_PAUSE_DELAY,
   MOTION_EPSILON,
@@ -69,8 +69,8 @@ export const resolveRawCarouselRuntimeSettings = ({
   dragConfig: {
     ...CAROUSEL_DRAG_CONFIG,
   },
-  dragReleaseSpeedConfig: {
-    ...CAROUSEL_DRAG_RELEASE_SPEED_CONFIG,
+  releaseMotionConfig: {
+    ...CAROUSEL_RELEASE_MOTION_CONFIG,
   },
   dragReleaseEpsilon: CAROUSEL_DRAG_RELEASE_EPSILON,
   motionSettings: {

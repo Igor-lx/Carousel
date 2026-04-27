@@ -1,9 +1,9 @@
 export { velocityEngine } from "./velocityEngine";
 
 export {
-  DEFAULT_DRAG_RELEASE_SPEED_CONFIG,
-} from "./model/dragReleaseConfig";
+  DEFAULT_RELEASE_MOTION_CONFIG,
+} from "./model/releaseMotionConfig";
 export type {
-  DragReleaseSpeedConfig,
-  DragReleaseVelocityPlan,
-} from "./model/dragReleaseTypes";
+  ReleaseMotionConfig,
+  ReleaseMotionPlan,
+} from "./model/releaseMotionTypes";

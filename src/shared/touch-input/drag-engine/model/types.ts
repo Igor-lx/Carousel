@@ -12,26 +12,14 @@ export type DragEngineAction = {
   phase: DragEnginePhase;
 };
 
-export interface DragEngineSample {
-  rawOffset: number;
-  offset: number;
-  rawVelocity: number;
-  velocity: number;
-  width: number;
-  timestamp: number;
+export interface DragEngineMovePayload {
+  uiOffset: number;
 }
 
-export interface DragEngineReleaseResolution {
+export interface DragEngineReleasePayload extends DragEngineMovePayload {
   result: DragEngineSwipeDirection;
-  isQuickFlick: boolean;
-  releaseVelocity: number;
-}
-
-export interface DragEngineEndPayload
-  extends DragEngineSample,
-    DragEngineReleaseResolution {
-  wasDragging: boolean;
-  wasCancelled: boolean;
+  pointerReleaseVelocity: number;
+  uiReleaseVelocity: number;
 }
 
 export interface DragEngineListeners {
@@ -58,9 +46,9 @@ export interface DragEngineConfig {
 
 export interface DragEngineProps {
   onPressStart?: () => void;
-  onDragStart?: (sample: DragEngineSample) => void;
-  onDragMove?: (sample: DragEngineSample) => void;
-  onDragEnd?: (payload: DragEngineEndPayload) => void;
+  onDragStart?: (payload: DragEngineMovePayload) => void;
+  onDragMove?: (payload: DragEngineMovePayload) => void;
+  onRelease?: (payload: DragEngineReleasePayload) => void;
   enabled?: boolean;
   measureRef: React.RefObject<HTMLElement | null>;
   config?: DragEngineConfig;
@@ -69,6 +57,5 @@ export interface DragEngineProps {
 export interface DragEngineResult {
   isDragging: boolean;
   isInteracting: boolean;
-  velocity: number;
   dragListeners: DragEngineListeners;
 }

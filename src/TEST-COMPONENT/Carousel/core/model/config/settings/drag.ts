@@ -1,10 +1,10 @@
 import type {
   DragEngineConfig,
-  DragReleaseSpeedConfig,
+  ReleaseMotionConfig,
 } from "../../../../../../shared";
 import {
   DEFAULT_DRAG_ENGINE_CONFIG,
-  DEFAULT_DRAG_RELEASE_SPEED_CONFIG,
+  DEFAULT_RELEASE_MOTION_CONFIG,
 } from "../../../../../../shared";
 
 const CAROUSEL_DRAG_CONFIG_OVERRIDE: Partial<DragEngineConfig> = {
@@ -49,7 +49,7 @@ const CAROUSEL_DRAG_CONFIG_OVERRIDE: Partial<DragEngineConfig> = {
   SWIPE_THRESHOLD_RATIO: 0.2,
 } as const;
 
-const CAROUSEL_DRAG_RELEASE_SPEED_CONFIG_OVERRIDE: Partial<DragReleaseSpeedConfig> = {
+const CAROUSEL_RELEASE_MOTION_CONFIG_OVERRIDE: Partial<ReleaseMotionConfig> = {
   // Прямой множитель raw release-скорости пальца перед сравнением со штатной MOVE-speed.
   // 1 = честная скорость пальца; 2 = вдвое сильнее.
   // Значения ниже 1 ослабляют только fast-release: итоговое движение все равно не будет медленнее MOVE.
@@ -71,7 +71,7 @@ export const CAROUSEL_DRAG_CONFIG: Required<DragEngineConfig> = {
   ...CAROUSEL_DRAG_CONFIG_OVERRIDE,
 };
 
-export const CAROUSEL_DRAG_RELEASE_SPEED_CONFIG: DragReleaseSpeedConfig = {
-  ...DEFAULT_DRAG_RELEASE_SPEED_CONFIG,
-  ...CAROUSEL_DRAG_RELEASE_SPEED_CONFIG_OVERRIDE,
+export const CAROUSEL_RELEASE_MOTION_CONFIG: ReleaseMotionConfig = {
+  ...DEFAULT_RELEASE_MOTION_CONFIG,
+  ...CAROUSEL_RELEASE_MOTION_CONFIG_OVERRIDE,
 };

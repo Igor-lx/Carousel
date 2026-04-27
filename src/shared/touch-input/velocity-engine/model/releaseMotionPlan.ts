@@ -1,34 +1,34 @@
 import {
-  resolveDragReleaseSpeedConfig,
-} from "./dragReleaseConfig";
+  resolveReleaseMotionConfig,
+} from "./releaseMotionConfig";
 import {
   getBoostedReleaseSpeed,
   getReleaseDecelerationDistanceShare,
-} from "./dragReleaseMath";
+} from "./releaseMotionMath";
 import type {
-  DragReleaseSpeedConfig,
-  DragReleaseVelocityPlan,
-} from "./dragReleaseTypes";
+  ReleaseMotionConfig,
+  ReleaseMotionPlan,
+} from "./releaseMotionTypes";
 import { getSafeSpeed } from "./speed";
 
-export const resolveDragReleaseVelocityPlan = ({
+export const resolveReleasePlan = ({
   releaseSpeed,
   minimumSpeed = 0,
-  dragReleaseSpeedConfig,
+  releaseMotionConfig,
 }: {
   releaseSpeed: number;
   minimumSpeed?: number;
-  dragReleaseSpeedConfig?: Partial<DragReleaseSpeedConfig>;
-}): DragReleaseVelocityPlan => {
-  const resolvedDragReleaseSpeedConfig = resolveDragReleaseSpeedConfig(
-    dragReleaseSpeedConfig,
+  releaseMotionConfig?: Partial<ReleaseMotionConfig>;
+}): ReleaseMotionPlan => {
+  const resolvedReleaseMotionConfig = resolveReleaseMotionConfig(
+    releaseMotionConfig,
   );
   const safeReleaseSpeed = getSafeSpeed(releaseSpeed);
   const safeMinimumSpeed = getSafeSpeed(minimumSpeed);
   const isFasterThanMinimumSpeed = safeReleaseSpeed > safeMinimumSpeed;
   const boostedReleaseSpeed = getBoostedReleaseSpeed(
     safeReleaseSpeed,
-    resolvedDragReleaseSpeedConfig,
+    resolvedReleaseMotionConfig,
   );
   const effectiveReleaseSpeed =
     !isFasterThanMinimumSpeed
@@ -38,7 +38,7 @@ export const resolveDragReleaseVelocityPlan = ({
         : boostedReleaseSpeed;
   const decelerationDistanceShare =
     isFasterThanMinimumSpeed
-      ? getReleaseDecelerationDistanceShare(resolvedDragReleaseSpeedConfig)
+      ? getReleaseDecelerationDistanceShare(resolvedReleaseMotionConfig)
       : 0;
 
   return {

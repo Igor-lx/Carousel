@@ -1,12 +1,12 @@
 import type {
   DragEngineConfig,
-  DragReleaseSpeedConfig,
+  ReleaseMotionConfig,
 } from "../../../../../shared";
 import type { DevNoticeEntry } from "../../../../../shared";
 
 export type {
   DragEngineConfig,
-  DragReleaseSpeedConfig,
+  ReleaseMotionConfig,
 } from "../../../../../shared";
 
 export interface CarouselRuntimePropSettings {
@@ -49,7 +49,7 @@ export interface CarouselRuntimeSettings extends CarouselRuntimePropSettings {
   repeatedClickSettings: CarouselRepeatedClickSettings;
   interactionSettings: CarouselInteractionSettings;
   dragConfig: CarouselDragConfig;
-  dragReleaseSpeedConfig: DragReleaseSpeedConfig;
+  releaseMotionConfig: ReleaseMotionConfig;
   dragReleaseEpsilon: number;
   motionSettings: CarouselMotionSettings;
 }

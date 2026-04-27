@@ -5,7 +5,7 @@ import type {
   CarouselRepeatedClickSettings,
 } from "../model/diagnostic";
 import {
-  type DragReleaseSpeedConfig,
+  type ReleaseMotionConfig,
   velocityEngine,
 } from "../../../../shared";
 import {
@@ -17,12 +17,12 @@ interface MotionDurationProps {
   animMode: AnimationMode;
   isDragging: boolean;
   isInstant: boolean;
-  velocity: number;
+  pointerReleaseVelocity: number;
   isRepeatedClickAdvance: boolean;
   segmentStartVirtualIndex: number;
   targetVirtualIndex: number;
   stepSize: number;
-  dragReleaseSpeedConfig: DragReleaseSpeedConfig;
+  releaseMotionConfig: ReleaseMotionConfig;
   motionSettings: CarouselMotionSettings;
   repeatedClickSettings: CarouselRepeatedClickSettings;
   autoplayDuration: number;
@@ -35,12 +35,12 @@ export function useCarouselMotionDuration({
   animMode,
   isDragging,
   isInstant,
-  velocity,
+  pointerReleaseVelocity,
   isRepeatedClickAdvance,
   segmentStartVirtualIndex,
   targetVirtualIndex,
   stepSize,
-  dragReleaseSpeedConfig,
+  releaseMotionConfig,
   motionSettings,
   repeatedClickSettings,
   autoplayDuration,
@@ -91,25 +91,25 @@ export function useCarouselMotionDuration({
   const gestureReleaseDuration = useMemo(
     () => {
       const gestureDistance = targetVirtualIndex - segmentStartVirtualIndex;
-      const minimumSpeed = velocityEngine.getAverageSpeedForDistance(
+      const minimumSpeed = velocityEngine.speed.getAverageSpeedForDistance(
         gestureDistance,
         gestureSegmentDuration,
       );
 
-      return velocityEngine.mapDragReleaseVelocityToDuration({
+      return velocityEngine.release.resolveDuration({
         distance: gestureDistance,
         fallbackDuration: gestureSegmentDuration,
-        releaseVelocity: velocity,
+        releaseVelocity: pointerReleaseVelocity,
         minimumSpeed,
-        dragReleaseSpeedConfig,
+        releaseMotionConfig,
       });
     },
     [
-      dragReleaseSpeedConfig,
+      releaseMotionConfig,
       gestureSegmentDuration,
       segmentStartVirtualIndex,
       targetVirtualIndex,
-      velocity,
+      pointerReleaseVelocity,
     ],
   );
 

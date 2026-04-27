@@ -1,18 +1,20 @@
 import type {
   DragEngineConfig,
-  DragEngineReleaseResolution,
-  DragEngineSample,
   DragEngineSwipeDirection,
 } from "../model/types";
+import type {
+  DragEngineInternalSample,
+  DragEngineReleaseResolution,
+} from "./types";
 import { getSafeResistance } from "./resistance";
 
 const isQuickFlickGesture = (
-  rawOffset: number,
-  rawVelocity: number,
+  rawPointerOffset: number,
+  rawPointerVelocity: number,
   config: Required<DragEngineConfig>,
 ) =>
-  Math.abs(rawVelocity) >= config.SWIPE_VELOCITY_LIMIT &&
-  Math.abs(rawOffset) >= config.QUICK_SWIPE_MIN_OFFSET;
+  Math.abs(rawPointerVelocity) >= config.SWIPE_VELOCITY_LIMIT &&
+  Math.abs(rawPointerOffset) >= config.QUICK_SWIPE_MIN_OFFSET;
 
 const getAdaptedRawSwipeThreshold = (
   width: number,
@@ -31,16 +33,16 @@ const getAdaptedRawSwipeThreshold = (
 };
 
 const getSwipeDirection = (
-  rawOffset: number,
-  isQuickFlick: boolean,
+  rawPointerOffset: number,
+  hasQuickFlickIntent: boolean,
   adaptedRawThreshold: number,
 ): DragEngineSwipeDirection => {
-  if (isQuickFlick) {
-    return rawOffset < 0 ? "LEFT" : "RIGHT";
+  if (hasQuickFlickIntent) {
+    return rawPointerOffset < 0 ? "LEFT" : "RIGHT";
   }
 
-  if (Math.abs(rawOffset) >= adaptedRawThreshold) {
-    return rawOffset < 0 ? "LEFT" : "RIGHT";
+  if (Math.abs(rawPointerOffset) >= adaptedRawThreshold) {
+    return rawPointerOffset < 0 ? "LEFT" : "RIGHT";
   }
 
   return "NONE";
@@ -48,23 +50,30 @@ const getSwipeDirection = (
 
 export const resolveDragRelease = (
   sample: Pick<
-    DragEngineSample,
-    "rawOffset" | "rawVelocity" | "velocity" | "width"
+    DragEngineInternalSample,
+    "rawPointerOffset" | "rawPointerVelocity" | "width"
   >,
   config: Required<DragEngineConfig>,
   canCommit = true,
 ): DragEngineReleaseResolution => {
-  const isQuickFlick =
+  const hasQuickFlickIntent =
     canCommit &&
-    isQuickFlickGesture(sample.rawOffset, sample.rawVelocity, config);
+    isQuickFlickGesture(
+      sample.rawPointerOffset,
+      sample.rawPointerVelocity,
+      config,
+    );
   const adaptedRawThreshold = getAdaptedRawSwipeThreshold(sample.width, config);
   const result = canCommit
-    ? getSwipeDirection(sample.rawOffset, isQuickFlick, adaptedRawThreshold)
+    ? getSwipeDirection(
+        sample.rawPointerOffset,
+        hasQuickFlickIntent,
+        adaptedRawThreshold,
+      )
     : "NONE";
 
   return {
     result,
-    isQuickFlick,
-    releaseVelocity: sample.rawVelocity,
+    pointerReleaseVelocity: sample.rawPointerVelocity,
   };
 };

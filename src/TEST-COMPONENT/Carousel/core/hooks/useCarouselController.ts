@@ -11,7 +11,7 @@ import {
   type CarouselLayout,
 } from "../utilities";
 import {
-  type DragEngineEndPayload,
+  type DragEngineReleasePayload,
   velocityEngine,
 } from "../../../../shared/touch-input";
 
@@ -36,7 +36,7 @@ interface ControllerResult {
   goTo: (index: number, moveReason?: MoveReason) => void;
   startDrag: () => void;
   updateDrag: (dragOffset: number) => void;
-  finishDrag: (payload: DragEngineEndPayload) => void;
+  finishDrag: (payload: DragEngineReleasePayload) => void;
 }
 
 export function useCarouselController({
@@ -92,7 +92,10 @@ export function useCarouselController({
 
       const slotSize = getTrackSlotSize(viewport, layout.clampedVisible);
 
-      return -velocityEngine.toComponentUnitVelocity(pointerVelocity, slotSize);
+      return -velocityEngine.units.toComponentUnitVelocity(
+        pointerVelocity,
+        slotSize,
+      );
     },
     [layout.clampedVisible, measureRef],
   );
@@ -156,27 +159,25 @@ export function useCarouselController({
   );
 
   const finishDrag = useCallback(
-    (payload: DragEngineEndPayload) => {
+    (payload: DragEngineReleasePayload) => {
       if (!enabled) return;
 
-      const releasePosition = resolveFromVirtualIndex(payload.offset);
+      const releasePosition = resolveFromVirtualIndex(payload.uiOffset);
       const snapTargetIndex = getNearestPageIndex(releasePosition, layout);
       const dragOriginIndex = dragOriginPageIndexRef.current;
       let targetIndex = snapTargetIndex;
       let isSnap = true;
 
-      if (!payload.wasCancelled) {
-        if (payload.result === "LEFT") {
-          targetIndex = layout.isFinite
-            ? clamp(dragOriginIndex + 1, 0, layout.pageCount - 1)
-            : normalizePageIndex(dragOriginIndex + 1, layout.pageCount);
-          isSnap = targetIndex === dragOriginIndex;
-        } else if (payload.result === "RIGHT") {
-          targetIndex = layout.isFinite
-            ? clamp(dragOriginIndex - 1, 0, layout.pageCount - 1)
-            : normalizePageIndex(dragOriginIndex - 1, layout.pageCount);
-          isSnap = targetIndex === dragOriginIndex;
-        }
+      if (payload.result === "LEFT") {
+        targetIndex = layout.isFinite
+          ? clamp(dragOriginIndex + 1, 0, layout.pageCount - 1)
+          : normalizePageIndex(dragOriginIndex + 1, layout.pageCount);
+        isSnap = targetIndex === dragOriginIndex;
+      } else if (payload.result === "RIGHT") {
+        targetIndex = layout.isFinite
+          ? clamp(dragOriginIndex - 1, 0, layout.pageCount - 1)
+          : normalizePageIndex(dragOriginIndex - 1, layout.pageCount);
+        isSnap = targetIndex === dragOriginIndex;
       }
 
       const targetVirtualIndex = layout.isFinite
@@ -193,8 +194,12 @@ export function useCarouselController({
         isSnap:
           isSnap ||
           Math.abs(targetVirtualIndex - releasePosition) < dragReleaseEpsilon,
-        releaseVelocity: resolveVirtualPointerVelocity(payload.releaseVelocity),
-        releaseMotionVelocity: resolveVirtualPointerVelocity(payload.velocity),
+        pointerReleaseVelocity: resolveVirtualPointerVelocity(
+          payload.pointerReleaseVelocity,
+        ),
+        uiReleaseVelocity: resolveVirtualPointerVelocity(
+          payload.uiReleaseVelocity,
+        ),
       });
 
       dragOriginPositionRef.current = null;

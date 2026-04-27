@@ -1,15 +1,15 @@
 import { type RefObject } from "react";
 import type { CarouselDragConfig } from "../model/diagnostic";
 import {
-  type DragEngineEndPayload,
   type DragEngineListeners,
+  type DragEngineReleasePayload,
   useDragEngine,
 } from "../../../../shared/touch-input";
 
 interface GestureProps {
   onPressStart: () => void;
   onDragMove: (dragOffset: number) => void;
-  onDragEnd: (payload: DragEngineEndPayload) => void;
+  onRelease: (payload: DragEngineReleasePayload) => void;
   enabled: boolean;
   dragConfig: CarouselDragConfig;
   measureRef: RefObject<HTMLDivElement | null>;
@@ -24,7 +24,7 @@ interface GestureResult {
 export function useCarouselGesture({
   onPressStart,
   onDragMove,
-  onDragEnd,
+  onRelease,
   enabled,
   dragConfig,
   measureRef,
@@ -34,10 +34,10 @@ export function useCarouselGesture({
     measureRef,
     onPressStart,
     onDragMove: (sample) => {
-      onDragMove(sample.offset);
+      onDragMove(sample.uiOffset);
     },
     config: dragConfig,
-    onDragEnd,
+    onRelease,
   });
 
   return { isDragging, isInteracting, dragListeners };

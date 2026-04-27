@@ -7,9 +7,9 @@ import {
   SNAP_BACK_BEZIER,
 } from "../model/config";
 import type {
-  DragReleaseSpeedConfig,
   CarouselMotionSettings,
   CarouselRepeatedClickSettings,
+  ReleaseMotionConfig,
 } from "../model/diagnostic";
 import type { AnimationMode, MoveReason } from "../model/reducer";
 import { applyTrackPositionStyle } from "../utilities";
@@ -30,13 +30,13 @@ interface MotionProps {
   stepDuration: number;
   motionSettings: CarouselMotionSettings;
   repeatedClickSettings: CarouselRepeatedClickSettings;
-  dragReleaseSpeedConfig: DragReleaseSpeedConfig;
+  releaseMotionConfig: ReleaseMotionConfig;
   isMoving: boolean;
   animMode: AnimationMode;
   reason: MoveReason;
   duration: number;
-  gestureReleaseVelocity: number;
-  gestureReleaseMotionVelocity: number;
+  gesturePointerReleaseVelocity: number;
+  gestureUiReleaseVelocity: number;
   isRepeatedClickAdvance: boolean;
   followUpVirtualIndex: number | null;
   followUpDuration: number;
@@ -579,10 +579,13 @@ const sampleVelocityProfile = (
 
 const getNormalMoveSpeed = (stepSize: number, stepDuration: number) => {
   if (!(stepSize > 0) || !(stepDuration > 0)) {
-    return 0;
+  return 0;
   }
 
-  return velocityEngine.getAverageSpeedForDistance(stepSize, stepDuration);
+  return velocityEngine.speed.getAverageSpeedForDistance(
+    stepSize,
+    stepDuration,
+  );
 };
 
 const createProfileSegment = ({
@@ -609,21 +612,21 @@ const createProfileSegment = ({
   targetDuration?: number;
 }): ProfileMotionSegment => {
   const distance = to - from;
-  const startSpeed = velocityEngine.getSameDirectionSpeed(
+  const startSpeed = velocityEngine.speed.getSameDirectionSpeed(
     currentVelocity,
     distance,
   );
   const peakSpeed = Math.max(
-    velocityEngine.getSameDirectionSpeed(peakVelocity, distance),
+    velocityEngine.speed.getSameDirectionSpeed(peakVelocity, distance),
     startSpeed,
-    velocityEngine.getSameDirectionSpeed(endVelocity, distance),
+    velocityEngine.speed.getSameDirectionSpeed(endVelocity, distance),
     MIN_PROFILE_SPEED,
   );
   const profile = createVelocityProfile({
     distance,
     startSpeed,
     peakSpeed,
-    endSpeed: velocityEngine.getSameDirectionSpeed(endVelocity, distance),
+    endSpeed: velocityEngine.speed.getSameDirectionSpeed(endVelocity, distance),
     accelerationDistanceShare,
     decelerationDistanceShare,
     targetDuration,
@@ -712,13 +715,13 @@ export function useCarouselMotion({
   stepDuration,
   motionSettings,
   repeatedClickSettings,
-  dragReleaseSpeedConfig,
+  releaseMotionConfig,
   isMoving,
   animMode,
   reason,
   duration,
-  gestureReleaseVelocity,
-  gestureReleaseMotionVelocity,
+  gesturePointerReleaseVelocity,
+  gestureUiReleaseVelocity,
   isRepeatedClickAdvance,
   followUpVirtualIndex,
   followUpDuration,
@@ -884,8 +887,8 @@ export function useCarouselMotion({
       animMode,
       reason,
       duration,
-      gestureReleaseVelocity,
-      gestureReleaseMotionVelocity,
+      gesturePointerReleaseVelocity,
+      gestureUiReleaseVelocity,
       startVirtualIndex,
       currentVirtualIndex,
       isRepeatedClickAdvance,
@@ -895,8 +898,8 @@ export function useCarouselMotion({
       repeatedClickSettings.speedMultiplier,
       repeatedClickSettings.accelerationDistanceShare,
       repeatedClickSettings.decelerationDistanceShare,
-      dragReleaseSpeedConfig.releaseDecelerationDistanceShare,
-      dragReleaseSpeedConfig.inertiaBoost,
+      releaseMotionConfig.releaseDecelerationDistanceShare,
+      releaseMotionConfig.inertiaBoost,
       epsilon,
     ].join(":");
 
@@ -954,7 +957,7 @@ export function useCarouselMotion({
           ? {
               progress: 0,
               position: currentPositionRef.current,
-              velocity: gestureReleaseMotionVelocity,
+              velocity: gestureUiReleaseVelocity,
               target: currentVirtualIndex,
               strategy: "gesture" as MotionStrategyKind,
             }
@@ -975,8 +978,8 @@ export function useCarouselMotion({
     const startedAt = canReuseHandoffSnapshot ? handoffSnapshot.timestamp : now;
     const normalMoveSpeed =
       getNormalMoveSpeed(size, stepDuration) ||
-      velocityEngine.getAverageSpeedForDistance(distance, duration);
-    const normalVelocity = velocityEngine.getSignedVelocity(
+      velocityEngine.speed.getAverageSpeedForDistance(distance, duration);
+    const normalVelocity = velocityEngine.speed.getSignedVelocity(
       normalMoveSpeed,
       distance,
     );
@@ -984,21 +987,21 @@ export function useCarouselMotion({
       1,
       repeatedClickSettings.speedMultiplier,
     );
-    const repeatedVelocity = velocityEngine.getSignedVelocity(
+    const repeatedVelocity = velocityEngine.speed.getSignedVelocity(
       normalMoveSpeed * repeatedSpeedMultiplier,
       distance,
     );
-    const gestureIntentSpeed = velocityEngine.getSameDirectionSpeed(
-      gestureReleaseVelocity,
+    const gestureIntentSpeed = velocityEngine.speed.getSameDirectionSpeed(
+      gesturePointerReleaseVelocity,
       distance,
     );
-    const dragReleaseVelocityPlan = velocityEngine.resolveDragReleaseVelocityPlan({
+    const releaseMotionPlan = velocityEngine.release.resolvePlan({
       releaseSpeed: gestureIntentSpeed,
       minimumSpeed: normalMoveSpeed,
-      dragReleaseSpeedConfig,
+      releaseMotionConfig,
     });
-    const gestureReleaseProfileVelocity = velocityEngine.getSignedVelocity(
-      dragReleaseVelocityPlan.effectiveReleaseSpeed,
+    const gestureReleaseProfileVelocity = velocityEngine.speed.getSignedVelocity(
+      releaseMotionPlan.effectiveReleaseSpeed,
       distance,
     );
     const repeatedEndVelocity = hasFollowUpStep ? normalVelocity : 0;
@@ -1023,7 +1026,7 @@ export function useCarouselMotion({
     } else if (
       reason === "gesture" &&
       animMode !== "snap" &&
-      dragReleaseVelocityPlan.isFasterThanMinimumSpeed
+      releaseMotionPlan.isFasterThanMinimumSpeed
     ) {
       activeSegmentRef.current = createProfileSegment({
         strategy: "gesture",
@@ -1035,7 +1038,7 @@ export function useCarouselMotion({
         endVelocity: 0,
         accelerationDistanceShare: 0,
         decelerationDistanceShare:
-          dragReleaseVelocityPlan.decelerationDistanceShare,
+          releaseMotionPlan.decelerationDistanceShare,
         targetDuration: duration,
       });
     } else if (reason === "gesture" && animMode !== "snap") {
@@ -1063,7 +1066,8 @@ export function useCarouselMotion({
     } else if (
       reason === "click" &&
       animMode !== "jump" &&
-      velocityEngine.getSameDirectionSpeed(nowState.velocity, distance) > epsilon
+      velocityEngine.speed.getSameDirectionSpeed(nowState.velocity, distance) >
+        epsilon
     ) {
       activeSegmentRef.current = createProfileSegment({
         strategy: "handoff",
@@ -1116,10 +1120,10 @@ export function useCarouselMotion({
     finalizeMotion,
     followUpDuration,
     followUpVirtualIndex,
-    dragReleaseSpeedConfig.releaseDecelerationDistanceShare,
-    dragReleaseSpeedConfig.inertiaBoost,
-    gestureReleaseMotionVelocity,
-    gestureReleaseVelocity,
+    releaseMotionConfig.releaseDecelerationDistanceShare,
+    releaseMotionConfig.inertiaBoost,
+    gestureUiReleaseVelocity,
+    gesturePointerReleaseVelocity,
     hasFollowUpStep,
     isRepeatedClickAdvance,
     isMoving,

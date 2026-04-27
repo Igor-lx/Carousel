@@ -37,8 +37,8 @@ export type EndDragAction = VirtualIndexSource & {
   targetIndex: number;
   targetVirtualIndex: number;
   isSnap: boolean;
-  releaseVelocity: number;
-  releaseMotionVelocity: number;
+  pointerReleaseVelocity: number;
+  uiReleaseVelocity: number;
 };
 
 export type DragAction = StartDragAction | EndDragAction;
@@ -67,6 +67,6 @@ export interface State {
   isRepeatedClickAdvance: boolean;
   animMode: AnimationMode;
   moveReason: MoveReason;
-  gestureReleaseVelocity: number;
-  gestureReleaseMotionVelocity: number;
+  gesturePointerReleaseVelocity: number;
+  gestureUiReleaseVelocity: number;
 }

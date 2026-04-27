@@ -6,8 +6,8 @@ export {
 
 export type {
   DragEngineConfig,
-  DragEngineEndPayload,
   DragEngineListeners,
+  DragEngineMovePayload,
+  DragEngineReleasePayload,
   DragEngineResult,
-  DragEngineSample,
 } from "./model/types";

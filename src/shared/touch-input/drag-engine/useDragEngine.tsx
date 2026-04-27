@@ -4,7 +4,6 @@ import {
   useCallback,
   useMemo,
   useEffect,
-  useState,
 } from "react";
 import { initialState, dragEngineReducer } from "./model/reducer";
 import {
@@ -16,10 +15,11 @@ import type {
   DragEngineProps,
   DragEngineResult,
   DragEngineConfig,
-  DragEngineEndPayload,
+  DragEngineReleasePayload,
   DragEnginePhase,
-  DragEngineSample,
+  DragEngineMovePayload,
 } from "./model/types";
+import type { DragEngineInternalSample } from "./internal/types";
 import { getInteractiveTarget } from "./internal/pointerTargets";
 import { createIdleSample } from "./internal/samples";
 import { applyResistance } from "./internal/resistance";
@@ -35,7 +35,7 @@ export function useDragEngine({
   onPressStart,
   onDragStart,
   onDragMove,
-  onDragEnd,
+  onRelease,
   enabled = true,
   measureRef,
   config = {},
@@ -53,7 +53,6 @@ export function useDragEngine({
   settingsRef.current = settings;
 
   const [state, dispatch] = useReducer(dragEngineReducer, initialState);
-  const [releasedVelocity, setReleasedVelocity] = useState(0);
 
   const lockUntilRef = useRef<number>(0);
   const allowedClickTargetRef = useRef<Element | null>(null);
@@ -110,29 +109,36 @@ export function useDragEngine({
     [ensurePointerCapture, onPressStart],
   );
 
+  const toMovePayload = useCallback(
+    (sample: DragEngineInternalSample): DragEngineMovePayload => ({
+      uiOffset: sample.uiOffset,
+    }),
+    [],
+  );
+
   const createSample = useCallback(
-    (currentX: number, timestamp: number): DragEngineSample => {
+    (currentX: number, timestamp: number): DragEngineInternalSample => {
       const currentGesture = gesture.current;
       const settingsSnapshot = settingsRef.current;
-      const rawOffset = currentX - currentGesture.startX;
-      const offset = applyResistance(
-        rawOffset,
+      const rawPointerOffset = currentX - currentGesture.startX;
+      const uiOffset = applyResistance(
+        rawPointerOffset,
         settingsSnapshot.RESISTANCE,
         settingsSnapshot.RESISTANCE_CURVATURE,
       );
       const dt = Math.max(1, timestamp - currentGesture.lastTime);
-      const rawVelocity = clampVelocityMagnitude(
+      const rawPointerVelocity = clampVelocityMagnitude(
         (currentX - currentGesture.lastX) / dt,
         settingsSnapshot.MAX_VELOCITY,
       );
-      const instantVelocity = clampVelocityMagnitude(
-        (offset - currentGesture.lastOffset) / dt,
+      const instantUiVelocity = clampVelocityMagnitude(
+        (uiOffset - currentGesture.lastOffset) / dt,
         settingsSnapshot.MAX_VELOCITY,
       );
-      const velocity = clampVelocityMagnitude(
+      const uiVelocity = clampVelocityMagnitude(
         calculateEMA(
-          dragSampleRef.current.velocity,
-          instantVelocity,
+          dragSampleRef.current.uiVelocity,
+          instantUiVelocity,
           getFrameAdjustedEmaAlpha(settingsSnapshot.EMA_ALPHA, dt),
         ),
         settingsSnapshot.MAX_VELOCITY,
@@ -142,13 +148,13 @@ export function useDragEngine({
 
       currentGesture.lastX = currentX;
       currentGesture.lastTime = timestamp;
-      currentGesture.lastOffset = offset;
+      currentGesture.lastOffset = uiOffset;
 
       return {
-        rawOffset,
-        offset,
-        rawVelocity,
-        velocity,
+        rawPointerOffset,
+        uiOffset,
+        rawPointerVelocity,
+        uiVelocity,
         width,
         timestamp,
       };
@@ -156,7 +162,7 @@ export function useDragEngine({
     [measureRef],
   );
 
-  const stopDragging = useCallback(
+  const finishInteraction = useCallback(
     (isCancel = false, currentX?: number) => {
       const target = measureRef.current;
       const now = performance.now();
@@ -180,7 +186,6 @@ export function useDragEngine({
       }
 
       if (!currentGesture.isDragActivated) {
-        setReleasedVelocity(0);
         allowedClickTargetRef.current = null;
         setPhase("IDLE");
         dragSampleRef.current = createIdleSample(target?.offsetWidth ?? 0, now);
@@ -197,13 +202,13 @@ export function useDragEngine({
         ? createSample(currentX, now)
         : {
             ...dragSampleRef.current,
-            rawVelocity: decayReleaseVelocity(
-              dragSampleRef.current.rawVelocity,
+            rawPointerVelocity: decayReleaseVelocity(
+              dragSampleRef.current.rawPointerVelocity,
               settingsRef.current.EMA_ALPHA,
               now - dragSampleRef.current.timestamp,
             ),
-            velocity: decayReleaseVelocity(
-              dragSampleRef.current.velocity,
+            uiVelocity: decayReleaseVelocity(
+              dragSampleRef.current.uiVelocity,
               settingsRef.current.EMA_ALPHA,
               now - dragSampleRef.current.timestamp,
             ),
@@ -211,22 +216,22 @@ export function useDragEngine({
             timestamp: now,
           };
       dragSampleRef.current = sample;
-      const wasDragging = currentPhase === "DRAGGING";
+      const didReachDragPhase = currentPhase === "DRAGGING";
+      const canCommitSwipeIntent = !isCancel && didReachDragPhase;
       const releaseResolution = resolveDragRelease(
         sample,
         settingsRef.current,
-        !isCancel && wasDragging,
+        canCommitSwipeIntent,
       );
-      const payload: DragEngineEndPayload = {
-        ...sample,
-        ...releaseResolution,
-        wasDragging,
-        wasCancelled: isCancel,
+      const payload: DragEngineReleasePayload = {
+        uiOffset: sample.uiOffset,
+        result: releaseResolution.result,
+        pointerReleaseVelocity: releaseResolution.pointerReleaseVelocity,
+        uiReleaseVelocity: sample.uiVelocity,
       };
 
-      if (wasDragging) {
-        setReleasedVelocity(sample.velocity);
-        onDragEnd?.(payload);
+      if (didReachDragPhase) {
+        onRelease?.(payload);
 
         allowedClickTargetRef.current = null;
         lockUntilRef.current = now + settingsRef.current.COOLDOWN_MS;
@@ -242,8 +247,7 @@ export function useDragEngine({
           timeoutRef.current = null;
         }, settingsRef.current.COOLDOWN_MS);
       } else {
-        setReleasedVelocity(0);
-        onDragEnd?.(payload);
+        onRelease?.(payload);
         allowedClickTargetRef.current = null;
         setPhase("IDLE");
       }
@@ -254,7 +258,7 @@ export function useDragEngine({
       currentGesture.hasPointerCapture = false;
       currentGesture.isDragActivated = false;
     },
-    [createSample, measureRef, onDragEnd, setPhase],
+    [createSample, measureRef, onRelease, setPhase],
   );
 
   const handlePointerDown = useCallback(
@@ -293,7 +297,6 @@ export function useDragEngine({
         isDragActivated: false,
       };
       dragSampleRef.current = createIdleSample(target.offsetWidth, now);
-      setReleasedVelocity(0);
       setPhase("PRESS");
 
       if (interactiveTarget) {
@@ -325,7 +328,7 @@ export function useDragEngine({
 
         if (absX > s.INTENT_THRESHOLD || absY > s.INTENT_THRESHOLD) {
           if (absY > absX) {
-            stopDragging(true);
+            finishInteraction(true);
             return;
           }
 
@@ -337,8 +340,9 @@ export function useDragEngine({
           const sample = createSample(e.clientX, now);
           dragSampleRef.current = sample;
           setPhase("DRAGGING");
-          onDragStart?.(sample);
-          onDragMove?.(sample);
+          const payload = toMovePayload(sample);
+          onDragStart?.(payload);
+          onDragMove?.(payload);
         }
         return;
       }
@@ -349,7 +353,7 @@ export function useDragEngine({
 
       const sample = createSample(e.clientX, now);
       dragSampleRef.current = sample;
-      onDragMove?.(sample);
+      onDragMove?.(toMovePayload(sample));
     },
     [
       activateDragOwnership,
@@ -357,7 +361,8 @@ export function useDragEngine({
       onDragMove,
       onDragStart,
       setPhase,
-      stopDragging,
+      finishInteraction,
+      toMovePayload,
     ],
   );
 
@@ -433,17 +438,16 @@ export function useDragEngine({
     return {
       onPointerDown: handlePointerDown,
       onPointerMove: handlePointerMove,
-      onPointerUp: (e) => stopDragging(false, e.clientX),
-      onPointerCancel: (e) => stopDragging(true, e.clientX),
-      onLostPointerCapture: (e) => stopDragging(true, e.clientX),
+      onPointerUp: (e) => finishInteraction(false, e.clientX),
+      onPointerCancel: (e) => finishInteraction(true, e.clientX),
+      onLostPointerCapture: (e) => finishInteraction(true, e.clientX),
       style: DRAG_ENGINE_STYLES,
     };
-  }, [enabled, handlePointerDown, handlePointerMove, stopDragging]);
+  }, [enabled, handlePointerDown, handlePointerMove, finishInteraction]);
 
   return {
     isDragging: state.phase === "DRAGGING",
     isInteracting: state.phase === "PRESS" || state.phase === "DRAGGING",
-    velocity: releasedVelocity,
     dragListeners,
   };
 }

@@ -1,18 +1,18 @@
-import { resolveDragReleaseVelocityPlan } from "./dragReleasePlan";
-import type { DragReleaseSpeedConfig } from "./dragReleaseTypes";
+import { resolveReleasePlan } from "./releaseMotionPlan";
+import type { ReleaseMotionConfig } from "./releaseMotionTypes";
 
-export const mapDragReleaseVelocityToDuration = ({
+export const resolveReleaseDuration = ({
   distance,
   fallbackDuration,
   releaseVelocity,
   minimumSpeed = 0,
-  dragReleaseSpeedConfig,
+  releaseMotionConfig,
 }: {
   distance: number;
   fallbackDuration: number;
   releaseVelocity: number;
   minimumSpeed?: number;
-  dragReleaseSpeedConfig?: Partial<DragReleaseSpeedConfig>;
+  releaseMotionConfig?: Partial<ReleaseMotionConfig>;
 }) => {
   const safeDistance = Math.abs(distance);
 
@@ -20,10 +20,10 @@ export const mapDragReleaseVelocityToDuration = ({
     return fallbackDuration;
   }
 
-  const plan = resolveDragReleaseVelocityPlan({
+  const plan = resolveReleasePlan({
     releaseSpeed: releaseVelocity,
     minimumSpeed,
-    dragReleaseSpeedConfig,
+    releaseMotionConfig,
   });
   const targetSpeed = plan.effectiveReleaseSpeed;
 

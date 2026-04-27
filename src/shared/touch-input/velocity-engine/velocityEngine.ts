@@ -1,5 +1,5 @@
-import { mapDragReleaseVelocityToDuration } from "./model/dragReleaseDuration";
-import { resolveDragReleaseVelocityPlan } from "./model/dragReleasePlan";
+import { resolveReleaseDuration } from "./model/releaseMotionDuration";
+import { resolveReleasePlan } from "./model/releaseMotionPlan";
 import {
   getAverageSpeedForDistance,
   getSameDirectionSpeed,
@@ -8,10 +8,16 @@ import {
 import { toComponentUnitVelocity } from "./model/units";
 
 export const velocityEngine = {
-  getAverageSpeedForDistance,
-  getSameDirectionSpeed,
-  getSignedVelocity,
-  mapDragReleaseVelocityToDuration,
-  resolveDragReleaseVelocityPlan,
-  toComponentUnitVelocity,
+  units: {
+    toComponentUnitVelocity,
+  },
+  speed: {
+    getAverageSpeedForDistance,
+    getSameDirectionSpeed,
+    getSignedVelocity,
+  },
+  release: {
+    resolveDuration: resolveReleaseDuration,
+    resolvePlan: resolveReleasePlan,
+  },
 } as const;

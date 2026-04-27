@@ -1,9 +1,9 @@
-export interface DragReleaseSpeedConfig {
+export interface ReleaseMotionConfig {
   inertiaBoost: number;
   releaseDecelerationDistanceShare: number;
 }
 
-export interface DragReleaseVelocityPlan {
+export interface ReleaseMotionPlan {
   releaseSpeed: number;
   minimumSpeed: number;
   boostedReleaseSpeed: number;
