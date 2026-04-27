@@ -388,19 +388,6 @@ const Carousel = memo((props: CarouselProps) => {
     jumpDuration,
   });
 
-  const followUpDuration = useMemo(() => {
-    if (followUpVirtualIndex === null || clampedVisible <= 0) {
-      return 0;
-    }
-
-    return getDurationByVirtualSpan({
-      from: virtualIndex,
-      to: followUpVirtualIndex,
-      stepSize: clampedVisible,
-      baseDuration: stepDuration,
-    });
-  }, [clampedVisible, followUpVirtualIndex, stepDuration, virtualIndex]);
-
   useCarouselMotion({
     trackRef: movingRef,
     currentPositionRef: motionPositionRef,
@@ -422,7 +409,6 @@ const Carousel = memo((props: CarouselProps) => {
     gestureUiReleaseVelocity,
     isRepeatedClickAdvance,
     followUpVirtualIndex,
-    followUpDuration,
     onComplete: finalizeEngineStep,
   });
 
