@@ -1,15 +1,20 @@
-import { type RefObject } from "react";
+import { useCallback, type RefObject } from "react";
 import type { CarouselDragConfig } from "../model/diagnostic";
 import {
   type DragEngineListeners,
+  type DragEngineMovePayload,
   type DragEngineReleasePayload,
   useDragEngine,
 } from "../../../../shared/touch-input";
 
+interface CarouselGestureController {
+  startDrag: () => void;
+  updateDrag: (dragOffset: number) => void;
+  finishDrag: (payload: DragEngineReleasePayload) => void;
+}
+
 interface GestureProps {
-  onPressStart: () => void;
-  onDragMove: (dragOffset: number) => void;
-  onRelease: (payload: DragEngineReleasePayload) => void;
+  controller: CarouselGestureController;
   enabled: boolean;
   dragConfig: CarouselDragConfig;
   measureRef: RefObject<HTMLDivElement | null>;
@@ -22,22 +27,25 @@ interface GestureResult {
 }
 
 export function useCarouselGesture({
-  onPressStart,
-  onDragMove,
-  onRelease,
+  controller,
   enabled,
   dragConfig,
   measureRef,
 }: GestureProps): GestureResult {
+  const handleDragMove = useCallback(
+    (sample: DragEngineMovePayload) => {
+      controller.updateDrag(sample.uiOffset);
+    },
+    [controller],
+  );
+
   const { isDragging, isInteracting, dragListeners } = useDragEngine({
     enabled,
     measureRef,
-    onPressStart,
-    onDragMove: (sample) => {
-      onDragMove(sample.uiOffset);
-    },
+    onPressStart: controller.startDrag,
+    onDragMove: handleDragMove,
     config: dragConfig,
-    onRelease,
+    onRelease: controller.finishDrag,
   });
 
   return { isDragging, isInteracting, dragListeners };

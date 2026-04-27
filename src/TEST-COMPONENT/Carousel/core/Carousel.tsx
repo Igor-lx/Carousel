@@ -1,5 +1,4 @@
 import {
-  isValidElement,
   memo,
   useCallback,
   useMemo,
@@ -19,15 +18,12 @@ import {
   useCarouselMotion,
   useCarouselSlides,
   useCarouselMotionDuration,
-  useResponsiveRepeatedClickSettings,
+  useCarouselRuntimeSetup,
 } from "./hooks";
 
 import {
   manageFocusShift,
   mergeStyles,
-  resolveSlots,
-  useComponentVisibility,
-  useExternalRefBridge,
   useIsomorphicLayoutEffect,
   useIsReducedMotion,
   useIsTouchDevice,
@@ -47,17 +43,12 @@ import {
 } from "./model/config";
 import {
   EMPTY_DIAGNOSTIC_CORRECTIONS,
-  type CarouselDiagnosticPropsInput,
-  type CarouselDiagnosticResolver,
-  resolveRawCarouselRuntimeSettings,
 } from "./model/diagnostic";
 import {
   CarouselDiagnosticContext,
   CarouselModuleApiContext,
 } from "./model/context";
-import { CAROUSEL_SLOTS } from "./model/slots";
 import {
-  type CarouselExternalControlHandle,
   useCarouselExternalControlSync,
 } from "./external-control";
 import { SLIDE_KEYS, type CarouselProps } from "./types";
@@ -106,56 +97,25 @@ const Carousel = memo((props: CarouselProps) => {
 
   const isReducedMotion = isInstantMotion ?? useIsReducedMotion();
   const isTouch = isTouchDevice ?? useIsTouchDevice();
+  
   const {
-    instanceRef: externalControlRef,
-    connectedChildren: childrenWithExternalControlRef,
-  } = useExternalRefBridge<CarouselExternalControlHandle>(children);
-
-  const slots = useMemo(
-    () => resolveSlots(childrenWithExternalControlRef, CAROUSEL_SLOTS),
-    [childrenWithExternalControlRef],
-  );
-  const rawDiagnosticInput = useMemo<CarouselDiagnosticPropsInput>(
-    () => ({
-      visibleSlidesNr: rawVisibleSlidesNr,
-      durationAutoplay: rawDurationAutoplay,
-      durationStep: rawDurationStep,
-      durationJump: rawDurationJump,
-      intervalAutoplay: rawIntervalAutoplay,
-      errAltPlaceholder: rawErrAltPlaceholder,
-    }),
-    [
-      rawDurationAutoplay,
-      rawDurationJump,
-      rawDurationStep,
-      rawErrAltPlaceholder,
-      rawIntervalAutoplay,
-      rawVisibleSlidesNr,
-    ],
-  );
-  const rawRuntimeSettings = useMemo(
-    () => resolveRawCarouselRuntimeSettings(rawDiagnosticInput),
-    [rawDiagnosticInput],
-  );
-  const diagnosticResolver = useMemo(
-    () => {
-      if (!isValidElement(slots.diagnostic)) {
-        return null;
-      }
-
-      const resolver = (
-        slots.diagnostic.type as { resolveDiagnostic?: CarouselDiagnosticResolver }
-      ).resolveDiagnostic;
-
-      return typeof resolver === "function" ? resolver : null;
-    },
-    [slots.diagnostic],
-  );
-  const diagnosticPayload = useMemo(
-    () => diagnosticResolver?.(rawDiagnosticInput) ?? null,
-    [diagnosticResolver, rawDiagnosticInput],
-  );
-  const runtimeSettings = diagnosticPayload?.settings ?? rawRuntimeSettings;
+    externalControlRef,
+    slots,
+    diagnosticPayload,
+    runtimeSettings,
+    responsiveRepeatedClickSettings,
+    isVisible,
+  } = useCarouselRuntimeSetup({
+    children,
+    containerRef,
+    isTouch,
+    visibleSlidesNr: rawVisibleSlidesNr,
+    durationAutoplay: rawDurationAutoplay,
+    durationStep: rawDurationStep,
+    durationJump: rawDurationJump,
+    intervalAutoplay: rawIntervalAutoplay,
+    errAltPlaceholder: rawErrAltPlaceholder,
+  });
 
   const {
     visibleSlidesCount,
@@ -165,21 +125,12 @@ const Carousel = memo((props: CarouselProps) => {
     autoplayInterval,
     errorAltPlaceholder,
     layoutSettings,
-    repeatedClickSettings,
     interactionSettings,
     dragConfig,
     releaseMotionConfig,
     dragReleaseEpsilon,
     motionSettings,
   } = runtimeSettings;
-  const responsiveRepeatedClickSettings = useResponsiveRepeatedClickSettings({
-    repeatedClickSettings,
-    isTouch,
-  });
-  const { visible: isVisible } = useComponentVisibility({
-    elementRef: containerRef,
-    threshold: interactionSettings.visibilityThreshold,
-  });
 
   const hasPartialPageLayoutMismatch = hasPartialPageLayout(
     totalSlides,
@@ -320,10 +271,17 @@ const Carousel = memo((props: CarouselProps) => {
       applyDragPosition,
     });
 
+  const gestureController = useMemo(
+    () => ({
+      startDrag,
+      updateDrag,
+      finishDrag,
+    }),
+    [finishDrag, startDrag, updateDrag],
+  );
+
   const { isDragging, isInteracting, dragListeners } = useCarouselGesture({
-    onPressStart: startDrag,
-    onDragMove: updateDrag,
-    onRelease: finishDrag,
+    controller: gestureController,
     enabled: canSlide,
     dragConfig,
     measureRef: containerRef,
@@ -487,7 +445,6 @@ const Carousel = memo((props: CarouselProps) => {
   const shouldRenderControls = isControlsOn && canSlide && hasControlsSlot;
 
   const shouldRenderPagination = isPaginationOn && hasPaginationSlot;
-
 
   return (
     <CarouselModuleApiContext.Provider value={moduleApi}>
