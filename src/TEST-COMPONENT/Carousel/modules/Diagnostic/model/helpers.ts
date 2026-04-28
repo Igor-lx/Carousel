@@ -6,7 +6,7 @@ import {
   isFiniteNumber,
 } from "../../../../../shared/value-resolution";
 import {
-  HARD_ERROR_ALT_PLACEHOLDER,
+  DIAGNOSTIC_FALLBACK_ERROR_ALT_PLACEHOLDER,
   MAX_REPEATED_CLICK_DESTINATION_POSITION,
   MAX_REPEATED_CLICK_PROFILE_SHARE,
   MAX_VISIBILITY_THRESHOLD,
@@ -111,5 +111,5 @@ export const normalizeErrorAltPlaceholder = (
     return fallback;
   }
 
-  return HARD_ERROR_ALT_PLACEHOLDER;
+  return DIAGNOSTIC_FALLBACK_ERROR_ALT_PLACEHOLDER;
 };

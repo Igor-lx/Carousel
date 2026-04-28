@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { CarouselRepeatedClickSettings } from "../model/diagnostic";
+import type { CarouselRepeatedClickSettings } from "../../model/diagnostic";
 
 interface ResponsiveRepeatedClickSettingsInput {
   repeatedClickSettings: CarouselRepeatedClickSettings;

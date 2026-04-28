@@ -1,14 +1,14 @@
 import { useMemo } from "react";
-import type { MoveReason, AnimationMode } from "../model/reducer";
+import type { MoveReason, AnimationMode } from "../../model/reducer";
 import type {
   CarouselMotionSettings,
   CarouselRepeatedClickSettings,
-} from "../model/diagnostic";
+} from "../../model/diagnostic";
 import {
   getDurationByVirtualSpan,
-} from "../utilities";
+} from "../../utilities";
 
-interface MotionDurationProps {
+interface UseCarouselMotionDurationProps {
   reason: MoveReason;
   animMode: AnimationMode;
   isDragging: boolean;
@@ -40,7 +40,7 @@ export function useCarouselMotionDuration({
   autoplayDuration,
   stepDuration,
   jumpDuration,
-}: MotionDurationProps): number {
+}: UseCarouselMotionDurationProps): number {
   const clickSegmentDuration = useMemo(
     () =>
       getDurationByVirtualSpan({

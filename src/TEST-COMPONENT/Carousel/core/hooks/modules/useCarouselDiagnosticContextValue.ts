@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 
-import type { CarouselDiagnosticContextValue } from "../model/context";
+import type { CarouselDiagnosticContextValue } from "../../model/context";
 import {
   EMPTY_DIAGNOSTIC_CORRECTIONS,
   type CarouselDiagnosticPayload,
   type CarouselPerfectPageLayoutNoticeInput,
-} from "../model/diagnostic";
+} from "../../model/diagnostic";
 
 type PerfectPageLayoutInfo = Omit<
   CarouselPerfectPageLayoutNoticeInput,

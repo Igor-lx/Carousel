@@ -3,11 +3,14 @@ import { useMemo, type ReactNode, type RefObject } from "react";
 import {
   resolveSlots,
   useExternalRefBridge,
-} from "../../../../shared";
-import type { CarouselExternalControlHandle } from "../external-control";
-import { CAROUSEL_SLOTS } from "../model/slots";
+} from "../../../../../shared";
+import type { CarouselExternalControlHandle } from "../../external-control";
+import {
+  CAROUSEL_SLOTS,
+  type CarouselSlotName,
+} from "../../model/slots";
 
-type CarouselSlots = Record<(typeof CAROUSEL_SLOTS)[number], ReactNode>;
+type CarouselSlots = Record<CarouselSlotName, ReactNode>;
 
 interface UseCarouselSlotsResult {
   externalControlRef: RefObject<CarouselExternalControlHandle | null>;

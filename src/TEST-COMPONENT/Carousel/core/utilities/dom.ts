@@ -18,6 +18,17 @@ export const getTrackSlotSize = (
   return (viewportWidth + gap) / visibleSlidesNr;
 };
 
+export const getVirtualVelocityFromPointerVelocity = (
+  pointerVelocity: number,
+  slotSize: number,
+) => {
+  if (!Number.isFinite(pointerVelocity) || !(slotSize > 0)) {
+    return 0;
+  }
+
+  return -(pointerVelocity / slotSize);
+};
+
 interface VirtualIndexFromDragOffsetParams {
   baseVirtualIndex: number;
   dragOffset: number;

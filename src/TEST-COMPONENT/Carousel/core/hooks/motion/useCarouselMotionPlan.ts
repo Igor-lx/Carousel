@@ -4,15 +4,15 @@ import type {
   CarouselMotionSettings,
   CarouselRepeatedClickSettings,
   ReleaseMotionConfig,
-} from "../model/diagnostic";
-import type { AnimationMode, MoveReason } from "../model/reducer";
+} from "../../model/diagnostic";
+import type { AnimationMode, MoveReason } from "../../model/reducer";
 import {
   getDurationByVirtualSpan,
-} from "../utilities";
+} from "../../utilities";
 import {
   type ReleaseMotionResult,
   velocityEngine,
-} from "../../../../shared";
+} from "../../../../../shared";
 import { useCarouselMotionDuration } from "./useCarouselMotionDuration";
 
 interface UseCarouselMotionPlanProps {

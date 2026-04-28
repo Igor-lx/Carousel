@@ -3,7 +3,7 @@ export type ChevronDirection = "right" | "left" | "up" | "down";
 export interface ChevronIconProps {
   direction: ChevronDirection;
   className?: string;
-};
+}
 
 const transformMap: Record<ChevronDirection, string | undefined> = {
   right: "rotate(0deg)",

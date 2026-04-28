@@ -1,11 +1,11 @@
 import { useCallback, type RefObject } from "react";
-import type { CarouselDragConfig } from "../model/diagnostic";
+import type { CarouselDragConfig } from "../../model/diagnostic";
 import {
   type DragEngineListeners,
   type DragEngineMovePayload,
   type DragEngineReleasePayload,
   useDragEngine,
-} from "../../../../shared/touch-input";
+} from "../../../../../shared/touch-input";
 
 interface CarouselGestureController {
   startDrag: () => void;
@@ -13,14 +13,14 @@ interface CarouselGestureController {
   finishDrag: (payload: DragEngineReleasePayload) => void;
 }
 
-interface GestureProps {
+interface UseCarouselGestureProps {
   controller: CarouselGestureController;
   enabled: boolean;
   dragConfig: CarouselDragConfig;
   measureRef: RefObject<HTMLDivElement | null>;
 }
 
-interface GestureResult {
+interface UseCarouselGestureResult {
   isDragging: boolean;
   isInteracting: boolean;
   dragListeners: DragEngineListeners;
@@ -31,7 +31,7 @@ export function useCarouselGesture({
   enabled,
   dragConfig,
   measureRef,
-}: GestureProps): GestureResult {
+}: UseCarouselGestureProps): UseCarouselGestureResult {
   const handleDragMove = useCallback(
     (sample: DragEngineMovePayload) => {
       controller.updateDrag(sample.uiOffset);

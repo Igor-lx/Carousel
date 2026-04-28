@@ -8,9 +8,9 @@ import {
   type CarouselLayout,
   type CarouselSlideRecord,
   type VirtualSlide,
-} from "../utilities";
+} from "../../utilities";
 
-interface SlidesProps {
+interface UseCarouselSlidesProps {
   current: number;
   prev: number;
   isMoving: boolean;
@@ -20,7 +20,7 @@ interface SlidesProps {
   slidesData: CarouselSlideRecord[];
 }
 
-interface SlidesResult {
+interface UseCarouselSlidesResult {
   slides: VirtualSlide[];
   isAtStart: boolean;
   isAtEnd: boolean;
@@ -35,7 +35,7 @@ export function useCarouselSlides({
   renderWindowBufferMultiplier,
   layout,
   slidesData,
-}: SlidesProps): SlidesResult {
+}: UseCarouselSlidesProps): UseCarouselSlidesResult {
   const renderWindowRef = useRef(
     getRenderWindow(prev, current, layout, renderWindowBufferMultiplier),
   );

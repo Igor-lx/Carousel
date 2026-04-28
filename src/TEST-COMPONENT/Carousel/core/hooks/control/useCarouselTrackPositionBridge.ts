@@ -1,6 +1,6 @@
 import { useCallback, type MutableRefObject, type RefObject } from "react";
 
-import { applyTrackPositionStyle } from "../utilities";
+import { applyTrackPositionStyle } from "../../utilities";
 
 interface UseCarouselTrackPositionBridgeProps {
   trackRef: RefObject<HTMLDivElement | null>;
@@ -10,13 +10,18 @@ interface UseCarouselTrackPositionBridgeProps {
   visibleSlidesCount: number;
 }
 
+interface UseCarouselTrackPositionBridgeResult {
+  applyDragPosition: (position: number) => void;
+  readCurrentPosition: () => number;
+}
+
 export function useCarouselTrackPositionBridge({
   trackRef,
   currentPositionRef,
   positionReaderRef,
   windowStart,
   visibleSlidesCount,
-}: UseCarouselTrackPositionBridgeProps) {
+}: UseCarouselTrackPositionBridgeProps): UseCarouselTrackPositionBridgeResult {
   const applyDragPosition = useCallback(
     (position: number) => {
       currentPositionRef.current = position;

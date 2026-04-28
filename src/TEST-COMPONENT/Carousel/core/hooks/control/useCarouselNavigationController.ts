@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 
-import type { Action, MoveReason } from "../model/reducer";
+import type { Action, MoveReason } from "../../model/reducer";
 
 interface UseCarouselNavigationControllerProps {
   dispatchAction: React.Dispatch<Action>;

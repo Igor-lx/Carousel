@@ -16,9 +16,9 @@ export const MIN_DRAG_EMA_ALPHA = 0;
 export const MAX_DRAG_EMA_ALPHA = 1;
 export const MIN_DRAG_INERTIA_BOOST = 0;
 
-export const HARD_ERROR_ALT_PLACEHOLDER = "Downloading Error";
+export const DIAGNOSTIC_FALLBACK_ERROR_ALT_PLACEHOLDER = "Downloading Error";
 
-export const HARD_REPEATED_CLICK_SETTINGS = {
+export const DIAGNOSTIC_FALLBACK_REPEATED_CLICK_SETTINGS = {
   destinationPosition: 0.65,
   touchDestinationPosition: 0.99,
   speedMultiplier: 3,
@@ -26,13 +26,13 @@ export const HARD_REPEATED_CLICK_SETTINGS = {
   decelerationDistanceShare: 0.5,
 } as const;
 
-export const HARD_INTERACTION_SETTINGS = {
+export const DIAGNOSTIC_FALLBACK_INTERACTION_SETTINGS = {
   hoverPauseDelay: 150,
   visibilityThreshold: 0.2,
   autoplayPaginationFactor: 0.4,
 } as const;
 
-export const HARD_DRAG_CONFIG = {
+export const DIAGNOSTIC_FALLBACK_DRAG_CONFIG = {
   COOLDOWN_MS: 150,
   INTENT_THRESHOLD: 8,
   RESISTANCE: 0.5,
@@ -45,11 +45,11 @@ export const HARD_DRAG_CONFIG = {
   SWIPE_THRESHOLD_RATIO: 0.16,
 } as const;
 
-export const HARD_RELEASE_MOTION_CONFIG = {
+export const DIAGNOSTIC_FALLBACK_RELEASE_MOTION_CONFIG = {
   inertiaBoost: 1,
   releaseDecelerationDistanceShare: 0.65,
 } as const;
 
-export const HARD_DRAG_SNAP_SETTINGS = {
+export const DIAGNOSTIC_FALLBACK_MOTION_SETTINGS = {
   snapBackDuration: 900,
 } as const;

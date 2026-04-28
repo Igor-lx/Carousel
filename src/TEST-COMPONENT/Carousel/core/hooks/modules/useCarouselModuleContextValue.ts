@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
-import type { CarouselModuleContextValue } from "../model/context";
-import type { MoveReason } from "../model/reducer";
+import type { CarouselModuleContextValue } from "../../model/context";
+import type { MoveReason } from "../../model/reducer";
 
 interface UseCarouselModuleContextValueProps {
   pageCount: number;

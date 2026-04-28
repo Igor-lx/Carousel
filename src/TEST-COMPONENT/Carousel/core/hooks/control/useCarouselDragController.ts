@@ -1,17 +1,18 @@
 import { useCallback, useRef } from "react";
 
-import type { Action } from "../model/reducer";
+import type { Action } from "../../model/reducer";
 import {
   clamp,
   getAlignedVirtualIndex,
   getNearestPageIndex,
   getPageStart,
   getTrackSlotSize,
+  getVirtualVelocityFromPointerVelocity,
   getVirtualIndexFromDragOffset,
   normalizePageIndex,
-  type CarouselLayout,
-} from "../utilities";
-import { type DragEngineReleasePayload } from "../../../../shared/touch-input";
+} from "../../utilities";
+import type { CarouselLayout } from "../../utilities";
+import { type DragEngineReleasePayload } from "../../../../../shared/touch-input";
 
 interface UseCarouselDragControllerProps {
   dispatchAction: React.Dispatch<Action>;
@@ -30,17 +31,6 @@ interface UseCarouselDragControllerResult {
   updateDrag: (dragOffset: number) => void;
   finishDrag: (payload: DragEngineReleasePayload) => void;
 }
-
-const toVirtualPointerVelocity = (
-  pointerVelocity: number,
-  slotSize: number,
-) => {
-  if (!Number.isFinite(pointerVelocity) || !(slotSize > 0)) {
-    return 0;
-  }
-
-  return -(pointerVelocity / slotSize);
-};
 
 export function useCarouselDragController({
   dispatchAction,
@@ -86,7 +76,7 @@ export function useCarouselDragController({
 
       const slotSize = getTrackSlotSize(viewport, layout.clampedVisible);
 
-      return toVirtualPointerVelocity(pointerVelocity, slotSize);
+      return getVirtualVelocityFromPointerVelocity(pointerVelocity, slotSize);
     },
     [layout.clampedVisible, measureRef],
   );

@@ -1,11 +1,12 @@
 import { memo, useMemo } from "react";
 import { ControlsView } from "./components/ControlsView";
 import { useCarouselModuleContext } from "../../core/model/context";
+import type { CarouselSlotComponent } from "../../core/model/slots";
 import type { ControlsProps } from "./types";
 import styles from "./Controls.module.scss";
 import { mergeStyles } from "../../../../shared";
 
-export const Controls = memo(({ className }: ControlsProps) => {
+const ControlsBase = memo(({ className }: ControlsProps) => {
   const { canMovePrev, canMoveNext, handlePrev, handleNext } =
     useCarouselModuleContext();
 
@@ -25,4 +26,9 @@ export const Controls = memo(({ className }: ControlsProps) => {
   );
 });
 
-(Controls as any).slot = "controls";
+export const Controls = ControlsBase as CarouselSlotComponent<
+  typeof ControlsBase,
+  "controls"
+>;
+
+Controls.slot = "controls";

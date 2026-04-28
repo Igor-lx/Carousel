@@ -1,9 +1,8 @@
 import { memo, useEffect } from "react";
 import { useGroupedDevNotice } from "../../../../shared";
-import {
-  type CarouselDiagnosticResolver,
-} from "../../core/model/diagnostic";
+import { type CarouselDiagnosticResolver } from "../../core/model/diagnostic";
 import { useCarouselDiagnosticContext } from "../../core/model/context";
+import type { CarouselSlotComponent } from "../../core/model/slots";
 import { resolveCarouselDiagnostic } from "./model/resolveCarouselDiagnostic";
 import { useMissingSlotAttachmentNotice } from "./useMissingSlotAttachmentNotice";
 import { usePerfectPageLayoutNotice } from "./usePerfectPageLayoutNotice";
@@ -41,8 +40,10 @@ const CarouselDiagnosticView = memo(() => {
   return null;
 });
 
-type CarouselDiagnosticSlotComponent = typeof CarouselDiagnosticView & {
-  slot: "diagnostic";
+type CarouselDiagnosticSlotComponent = CarouselSlotComponent<
+  typeof CarouselDiagnosticView,
+  "diagnostic"
+> & {
   resolveDiagnostic: CarouselDiagnosticResolver;
 };
 

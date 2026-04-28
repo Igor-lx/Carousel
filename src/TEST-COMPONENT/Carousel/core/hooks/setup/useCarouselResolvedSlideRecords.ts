@@ -1,13 +1,13 @@
 import { useMemo } from "react";
 
-import type { CarouselPerfectPageLayoutNoticeInput } from "../model/diagnostic";
-import type { Slide } from "../types";
+import type { CarouselPerfectPageLayoutNoticeInput } from "../../model/diagnostic";
+import type { Slide } from "../../types";
 import {
   buildSlideRecords,
   extendSlideRecordsToFullPages,
   hasPartialPageLayout,
   type CarouselSlideRecord,
-} from "../utilities";
+} from "../../utilities";
 
 type PerfectPageLayoutInfo = Omit<
   CarouselPerfectPageLayoutNoticeInput,

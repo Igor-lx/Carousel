@@ -23,12 +23,12 @@ import type {
   CarouselRuntimePropSettings,
 } from "../../../core/model/diagnostic";
 import {
-  HARD_DRAG_CONFIG,
-  HARD_DRAG_SNAP_SETTINGS,
-  HARD_RELEASE_MOTION_CONFIG,
-  HARD_ERROR_ALT_PLACEHOLDER,
-  HARD_INTERACTION_SETTINGS,
-  HARD_REPEATED_CLICK_SETTINGS,
+  DIAGNOSTIC_FALLBACK_DRAG_CONFIG,
+  DIAGNOSTIC_FALLBACK_ERROR_ALT_PLACEHOLDER,
+  DIAGNOSTIC_FALLBACK_INTERACTION_SETTINGS,
+  DIAGNOSTIC_FALLBACK_MOTION_SETTINGS,
+  DIAGNOSTIC_FALLBACK_RELEASE_MOTION_CONFIG,
+  DIAGNOSTIC_FALLBACK_REPEATED_CLICK_SETTINGS,
   MAX_DRAG_EMA_ALPHA,
   MAX_REASONABLE_JUMP_DURATION,
   MAX_REPEATED_CLICK_DESTINATION_POSITION,
@@ -186,7 +186,7 @@ const getUnreasonablyHighJumpDurationMessage = ({
   `durationAutoplay resolved to ${autoplayDuration}${DURATION_UNIT} together with durationJump=${jumpDuration}${DURATION_UNIT}, ` +
   `so the resulting motion may feel unexpectedly slow.`;
 
-const createFallbackDefaultSettings = (
+const createDiagnosticPropFallbackSettings = (
   minVisibleSlides: number,
 ): CarouselRuntimePropSettings => ({
   visibleSlidesCount: minVisibleSlides,
@@ -194,7 +194,7 @@ const createFallbackDefaultSettings = (
   stepDuration: SAFE_DURATION,
   jumpDuration: SAFE_DURATION,
   autoplayInterval: SAFE_DURATION,
-  errorAltPlaceholder: HARD_ERROR_ALT_PLACEHOLDER,
+  errorAltPlaceholder: DIAGNOSTIC_FALLBACK_ERROR_ALT_PLACEHOLDER,
 });
 
 const resolveRuntimePropSettings = (
@@ -410,7 +410,7 @@ const resolveDefaultPropSettings = () =>
       intervalAutoplay: DEFAULT_SETTINGS.intervalAutoplay,
       errAltPlaceholder: DEFAULT_SETTINGS.errAltPlaceholder,
     },
-    createFallbackDefaultSettings(MIN_VISIBLE_SLIDES),
+    createDiagnosticPropFallbackSettings(MIN_VISIBLE_SLIDES),
     {
       visibleSlidesNr: "DEFAULT_SETTINGS.visibleSlidesNr",
       durationAutoplay: "DEFAULT_SETTINGS.durationAutoplay",
@@ -425,20 +425,20 @@ const resolveDefaultPropSettings = () =>
 const resolveRepeatedClickSettings = () => {
   const destinationPosition = normalizeRepeatedClickDestination(
     REPEATED_CLICK_DESTINATION_POSITION,
-    HARD_REPEATED_CLICK_SETTINGS.destinationPosition,
+    DIAGNOSTIC_FALLBACK_REPEATED_CLICK_SETTINGS.destinationPosition,
   );
   const touchDestinationPosition = normalizeRepeatedClickDestination(
     REPEATED_CLICK_TOUCH_DESTINATION_POSITION,
-    HARD_REPEATED_CLICK_SETTINGS.touchDestinationPosition,
+    DIAGNOSTIC_FALLBACK_REPEATED_CLICK_SETTINGS.touchDestinationPosition,
   );
   const speedMultiplier = REPEATED_CLICK_SPEED_MULTIPLIER;
   const accelerationDistanceShare = normalizeRepeatedClickProfileShare(
     REPEATED_CLICK_ACCELERATION_DISTANCE_SHARE,
-    HARD_REPEATED_CLICK_SETTINGS.accelerationDistanceShare,
+    DIAGNOSTIC_FALLBACK_REPEATED_CLICK_SETTINGS.accelerationDistanceShare,
   );
   const decelerationDistanceShare = normalizeRepeatedClickProfileShare(
     REPEATED_CLICK_DECELERATION_DISTANCE_SHARE,
-    HARD_REPEATED_CLICK_SETTINGS.decelerationDistanceShare,
+    DIAGNOSTIC_FALLBACK_REPEATED_CLICK_SETTINGS.decelerationDistanceShare,
   );
   const epsilon = REPEATED_CLICK_EPSILON;
   const corrections: DevNoticeEntry[] = [];
@@ -545,15 +545,15 @@ const resolveRepeatedClickSettings = () => {
 const resolveInteractionSettings = () => {
   const hoverPauseDelay = normalizeNonNegativeNumber(
     HOVER_PAUSE_DELAY,
-    HARD_INTERACTION_SETTINGS.hoverPauseDelay,
+    DIAGNOSTIC_FALLBACK_INTERACTION_SETTINGS.hoverPauseDelay,
   );
   const visibilityThreshold = normalizeVisibilityThreshold(
     VISIBILITY_THRESHOLD,
-    HARD_INTERACTION_SETTINGS.visibilityThreshold,
+    DIAGNOSTIC_FALLBACK_INTERACTION_SETTINGS.visibilityThreshold,
   );
   const autoplayPaginationFactor = normalizeAutoplayPaginationFactor(
     AUTOPLAY_PAGINATION_FACTOR,
-    HARD_INTERACTION_SETTINGS.autoplayPaginationFactor,
+    DIAGNOSTIC_FALLBACK_INTERACTION_SETTINGS.autoplayPaginationFactor,
   );
   const corrections: DevNoticeEntry[] = [];
 
@@ -600,34 +600,34 @@ const resolveInteractionSettings = () => {
 const resolveDragConfig = () => {
   const cooldownMs = normalizeNonNegativeNumber(
     CAROUSEL_DRAG_CONFIG.COOLDOWN_MS,
-    HARD_DRAG_CONFIG.COOLDOWN_MS,
+    DIAGNOSTIC_FALLBACK_DRAG_CONFIG.COOLDOWN_MS,
   );
   const resistance = CAROUSEL_DRAG_CONFIG.RESISTANCE;
   const resistanceCurvature = CAROUSEL_DRAG_CONFIG.RESISTANCE_CURVATURE;
   const intentThreshold = normalizeNonNegativeNumber(
     CAROUSEL_DRAG_CONFIG.INTENT_THRESHOLD,
-    HARD_DRAG_CONFIG.INTENT_THRESHOLD,
+    DIAGNOSTIC_FALLBACK_DRAG_CONFIG.INTENT_THRESHOLD,
   );
   const maxVelocity = normalizePositiveNumber(
     CAROUSEL_DRAG_CONFIG.MAX_VELOCITY,
-    HARD_DRAG_CONFIG.MAX_VELOCITY,
+    DIAGNOSTIC_FALLBACK_DRAG_CONFIG.MAX_VELOCITY,
   );
   const emaAlpha = CAROUSEL_DRAG_CONFIG.EMA_ALPHA;
   const swipeVelocityLimit = normalizeNonNegativeNumber(
     CAROUSEL_DRAG_CONFIG.SWIPE_VELOCITY_LIMIT,
-    HARD_DRAG_CONFIG.SWIPE_VELOCITY_LIMIT,
+    DIAGNOSTIC_FALLBACK_DRAG_CONFIG.SWIPE_VELOCITY_LIMIT,
   );
   const quickSwipeMinOffset = normalizeNonNegativeNumber(
     CAROUSEL_DRAG_CONFIG.QUICK_SWIPE_MIN_OFFSET,
-    HARD_DRAG_CONFIG.QUICK_SWIPE_MIN_OFFSET,
+    DIAGNOSTIC_FALLBACK_DRAG_CONFIG.QUICK_SWIPE_MIN_OFFSET,
   );
   const minSwipeDistance = normalizeNonNegativeNumber(
     CAROUSEL_DRAG_CONFIG.MIN_SWIPE_DISTANCE,
-    HARD_DRAG_CONFIG.MIN_SWIPE_DISTANCE,
+    DIAGNOSTIC_FALLBACK_DRAG_CONFIG.MIN_SWIPE_DISTANCE,
   );
   const swipeThresholdRatio = normalizeNonNegativeNumber(
     CAROUSEL_DRAG_CONFIG.SWIPE_THRESHOLD_RATIO,
-    HARD_DRAG_CONFIG.SWIPE_THRESHOLD_RATIO,
+    DIAGNOSTIC_FALLBACK_DRAG_CONFIG.SWIPE_THRESHOLD_RATIO,
   );
   const corrections: DevNoticeEntry[] = [];
 
@@ -752,7 +752,7 @@ const resolveReleaseMotionConfig = () => {
   const inertiaBoost = CAROUSEL_RELEASE_MOTION_CONFIG.inertiaBoost;
   const releaseDecelerationDistanceShare = normalizeRepeatedClickProfileShare(
     CAROUSEL_RELEASE_MOTION_CONFIG.releaseDecelerationDistanceShare,
-    HARD_RELEASE_MOTION_CONFIG.releaseDecelerationDistanceShare,
+    DIAGNOSTIC_FALLBACK_RELEASE_MOTION_CONFIG.releaseDecelerationDistanceShare,
   );
   const corrections: DevNoticeEntry[] = [];
 
@@ -830,7 +830,7 @@ const resolveDragReleaseEpsilon = () => {
 const resolveMotionSettings = () => {
   const snapBackDuration = normalizePositiveDuration(
     SNAP_BACK_DURATION,
-    HARD_DRAG_SNAP_SETTINGS.snapBackDuration,
+    DIAGNOSTIC_FALLBACK_MOTION_SETTINGS.snapBackDuration,
   );
   const epsilon = MOTION_EPSILON;
   const corrections: DevNoticeEntry[] = [];

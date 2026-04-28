@@ -146,7 +146,7 @@ function App() {
           >
             {isTouch ? <CarouselPaginationWidget /> : <Pagination />}
             <Controls />
-       <Diagnostic/>
+            <Diagnostic />
           </Carousel>
         </div>
       </section>

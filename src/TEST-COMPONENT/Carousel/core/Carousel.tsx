@@ -53,15 +53,14 @@ import {
 } from "./utilities";
 
 const Carousel = memo((props: CarouselProps) => {
-  const rawVisibleSlidesNr = props.visibleSlidesNr;
-  const rawDurationAutoplay = props.durationAutoplay;
-  const rawDurationStep = props.durationStep;
-  const rawDurationJump = props.durationJump;
-  const rawIntervalAutoplay = props.intervalAutoplay;
-  const rawErrAltPlaceholder = props.errAltPlaceholder;
-
   const {
     slidesData = [],
+    visibleSlidesNr,
+    durationAutoplay,
+    durationStep,
+    durationJump,
+    intervalAutoplay,
+    errAltPlaceholder,
     isPagePaddingOn = DEFAULT_SETTINGS.isPagePaddingOn,
     isContentImg = DEFAULT_SETTINGS.isContentImg,
     isAuto = DEFAULT_SETTINGS.isAuto,
@@ -89,12 +88,12 @@ const Carousel = memo((props: CarouselProps) => {
 
   const { diagnosticPayload, runtimeSettings } = useCarouselRuntimeSettings({
     diagnosticSlot: slots.diagnostic,
-    visibleSlidesNr: rawVisibleSlidesNr,
-    durationAutoplay: rawDurationAutoplay,
-    durationStep: rawDurationStep,
-    durationJump: rawDurationJump,
-    intervalAutoplay: rawIntervalAutoplay,
-    errAltPlaceholder: rawErrAltPlaceholder,
+    visibleSlidesNr,
+    durationAutoplay,
+    durationStep,
+    durationJump,
+    intervalAutoplay,
+    errAltPlaceholder,
   });
 
   const {
@@ -237,13 +236,13 @@ const Carousel = memo((props: CarouselProps) => {
       onClick: onSlideClick,
     });
 
-  const isPaused = !isVisible || isInteracting || isMoving;
+  const isAutoplayPaused = !isVisible || isInteracting || isMoving;
   const { onHover } = useCarouselAutoPlay({
     enabled: isAuto && canSlide,
     ignoreHover: isTouch,
     autoplayInterval,
     hoverPauseDelay: interactionSettings.hoverPauseDelay,
-    isPaused,
+    isPaused: isAutoplayPaused,
     isAtEnd,
     onGoTo: goTo,
     onMove: move,

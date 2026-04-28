@@ -5,10 +5,11 @@ import type { PaginationProps } from "./types";
 import styles from "./Pagination.module.scss";
 import { mergeStyles } from "../../../../shared";
 import { useCarouselModuleContext } from "../../core/model/context";
+import type { CarouselSlotComponent } from "../../core/model/slots";
 import { usePaginationSync } from "./hooks/usePaginationSync";
 import { PaginationView } from "./components/PaginationView";
 
-export const Pagination = memo(({ className }: PaginationProps) => {
+const PaginationBase = memo(({ className }: PaginationProps) => {
   const {
     motionDuration,
     activePageIndex,
@@ -47,4 +48,9 @@ export const Pagination = memo(({ className }: PaginationProps) => {
   );
 });
 
-(Pagination as any).slot = "pagination";
+export const Pagination = PaginationBase as CarouselSlotComponent<
+  typeof PaginationBase,
+  "pagination"
+>;
+
+Pagination.slot = "pagination";

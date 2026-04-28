@@ -6,7 +6,7 @@ import {
   type CarouselDiagnosticResolver,
   type CarouselRuntimeSettings,
   resolveRawCarouselRuntimeSettings,
-} from "../model/diagnostic";
+} from "../../model/diagnostic";
 
 interface UseCarouselRuntimeSettingsProps {
   diagnosticSlot: ReactNode;

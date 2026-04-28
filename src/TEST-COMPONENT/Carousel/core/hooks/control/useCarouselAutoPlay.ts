@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import type { MoveReason } from "../model/reducer";
+import type { MoveReason } from "../../model/reducer";
 
-interface AutoPlayProps {
+interface UseCarouselAutoPlayProps {
   enabled: boolean;
   autoplayInterval: number;
   hoverPauseDelay: number;
@@ -12,7 +12,7 @@ interface AutoPlayProps {
   onMove: (step: number, reason: MoveReason) => void;
 }
 
-interface AutoPlayResult {
+interface UseCarouselAutoPlayResult {
   onHover: (active: boolean) => void;
 }
 
@@ -25,7 +25,7 @@ export function useCarouselAutoPlay({
   isAtEnd,
   onGoTo,
   onMove,
-}: AutoPlayProps): AutoPlayResult {
+}: UseCarouselAutoPlayProps): UseCarouselAutoPlayResult {
   const [isInternalPaused, setIsInternalPaused] = useState(false);
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
