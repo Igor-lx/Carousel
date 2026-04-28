@@ -4,7 +4,7 @@ import styles from "./Carousel.module.scss";
 
 import {
   useCarouselAutoPlay,
-  useCarouselClick,
+  useCarouselClickHandlers,
   useCarouselDragController,
   useCarouselDiagnosticContextValue,
   useCarouselModuleContextValue,
@@ -77,13 +77,11 @@ const Carousel = memo((props: CarouselProps) => {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const movingRef = useRef<HTMLDivElement>(null);
-  const motionPositionRef = useRef(0);
-  const motionPositionReaderRef = useRef<() => number>(
-    () => motionPositionRef.current,
-  );
 
-  const isReducedMotion = isInstantMotion ?? useIsReducedMotion();
-  const isTouch = isTouchDevice ?? useIsTouchDevice();
+  const prefersReducedMotion = useIsReducedMotion();
+  const detectedTouchDevice = useIsTouchDevice();
+  const isReducedMotion = isInstantMotion ?? prefersReducedMotion;
+  const isTouch = isTouchDevice ?? detectedTouchDevice;
   const { externalControlRef, slots } = useCarouselSlots(children);
 
   const { diagnosticPayload, runtimeSettings } = useCarouselRuntimeSettings({
@@ -184,14 +182,16 @@ const Carousel = memo((props: CarouselProps) => {
       repeatedClickSettings: responsiveRepeatedClickSettings,
     });
 
-  const { applyDragPosition, readCurrentPosition } =
-    useCarouselTrackPositionBridge({
-      trackRef: movingRef,
-      currentPositionRef: motionPositionRef,
-      positionReaderRef: motionPositionReaderRef,
-      windowStart,
-      visibleSlidesCount: clampedVisible,
-    });
+  const {
+    currentPositionRef: motionPositionRef,
+    positionReaderRef: motionPositionReaderRef,
+    applyPosition: applyTrackPosition,
+    readCurrentPosition,
+  } = useCarouselTrackPositionBridge({
+    trackRef: movingRef,
+    windowStart,
+    visibleSlidesCount: clampedVisible,
+  });
 
   const { move, goTo } = useCarouselNavigationController({
     dispatchAction,
@@ -210,27 +210,20 @@ const Carousel = memo((props: CarouselProps) => {
       dragReleaseEpsilon,
       currentPositionRef: motionPositionRef,
       readCurrentPosition,
-      applyDragPosition,
+      applyDragPosition: applyTrackPosition,
     });
 
-  const gestureController = useMemo(
-    () => ({
-      startDrag,
-      updateDrag,
-      finishDrag,
-    }),
-    [finishDrag, startDrag, updateDrag],
-  );
-
   const { isDragging, isInteracting, dragListeners } = useCarouselGesture({
-    controller: gestureController,
+    startDrag,
+    updateDrag,
+    finishDrag,
     enabled: canSlide,
     dragConfig,
     measureRef: containerRef,
   });
 
   const { handlePrev, handleNext, handlePageSelect, handleSlideClick } =
-    useCarouselClick({
+    useCarouselClickHandlers({
       onMove: move,
       onGoTo: goTo,
       onClick: onSlideClick,
@@ -267,13 +260,12 @@ const Carousel = memo((props: CarouselProps) => {
   });
 
   useCarouselMotion({
-    trackRef: movingRef,
     currentPositionRef: motionPositionRef,
     positionReaderRef: motionPositionReaderRef,
+    applyPosition: applyTrackPosition,
     enabled: canSlide,
     startVirtualIndex: fromVirtualIndex,
     currentVirtualIndex: virtualIndex,
-    windowStart,
     size: clampedVisible,
     stepDuration,
     motionSettings,

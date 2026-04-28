@@ -1,23 +1,24 @@
-import { useMemo, type Ref, type RefObject } from "react";
+import { useCallback, useRef, type Ref, type RefObject } from "react";
 
 type Writable<T> = { -readonly [P in keyof T]: T[P] };
 
 export function useMergeRefs<T>(...refs: (Ref<T> | undefined | null)[]) {
-  return useMemo(() => {
-    if (refs.every((ref) => ref === null || ref === undefined)) {
-      return null;
-    }
+  const refsRef = useRef(refs);
+  refsRef.current = refs;
 
-    return (node: T | null) => {
-      refs.forEach((ref) => {
-        if (!ref) return;
+  const mergedRef = useCallback((node: T | null) => {
+    refsRef.current.forEach((ref) => {
+      if (!ref) return;
 
-        if (typeof ref === "function") {
-          ref(node);
-        } else if (ref && typeof ref === "object" && "current" in ref) {
-          (ref as Writable<RefObject<T | null>>).current = node;
-        }
-      });
-    };
-  }, refs);
+      if (typeof ref === "function") {
+        ref(node);
+      } else if (ref && typeof ref === "object" && "current" in ref) {
+        (ref as Writable<RefObject<T | null>>).current = node;
+      }
+    });
+  }, []);
+
+  return refs.some((ref) => ref !== null && ref !== undefined)
+    ? mergedRef
+    : null;
 }

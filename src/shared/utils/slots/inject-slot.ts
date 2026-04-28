@@ -1,9 +1,6 @@
-export function injectSlot<T, S extends string>(
+export function injectSlot<T extends object, S extends string>(
   Component: T,
   slotValue: S,
 ): T & { slot: S } {
-  const SlotComponent = Component as any;
-  SlotComponent.slot = slotValue;
-
-  return SlotComponent as T & { slot: S };
+  return Object.assign(Component, { slot: slotValue });
 }

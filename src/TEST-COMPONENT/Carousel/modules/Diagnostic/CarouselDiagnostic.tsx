@@ -47,10 +47,10 @@ type CarouselDiagnosticSlotComponent = CarouselSlotComponent<
   resolveDiagnostic: CarouselDiagnosticResolver;
 };
 
-export const CarouselDiagnostic =
-  CarouselDiagnosticView as CarouselDiagnosticSlotComponent;
-
-CarouselDiagnostic.slot = "diagnostic";
-CarouselDiagnostic.resolveDiagnostic = resolveCarouselDiagnostic;
+export const CarouselDiagnostic: CarouselDiagnosticSlotComponent =
+  Object.assign(CarouselDiagnosticView, {
+    slot: "diagnostic" as const,
+    resolveDiagnostic: resolveCarouselDiagnostic,
+  });
 
 export default CarouselDiagnostic;

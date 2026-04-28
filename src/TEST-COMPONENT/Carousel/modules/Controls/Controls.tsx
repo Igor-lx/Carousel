@@ -26,9 +26,7 @@ const ControlsBase = memo(({ className }: ControlsProps) => {
   );
 });
 
-export const Controls = ControlsBase as CarouselSlotComponent<
-  typeof ControlsBase,
-  "controls"
->;
-
-Controls.slot = "controls";
+export const Controls: CarouselSlotComponent<typeof ControlsBase, "controls"> =
+  Object.assign(ControlsBase, {
+    slot: "controls" as const,
+  });

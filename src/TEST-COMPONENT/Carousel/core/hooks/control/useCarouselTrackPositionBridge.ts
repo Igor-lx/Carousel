@@ -1,28 +1,36 @@
-import { useCallback, type MutableRefObject, type RefObject } from "react";
+import {
+  useCallback,
+  useRef,
+  type MutableRefObject,
+  type RefObject,
+} from "react";
 
 import { applyTrackPositionStyle } from "../../utilities";
 
 interface UseCarouselTrackPositionBridgeProps {
   trackRef: RefObject<HTMLDivElement | null>;
-  currentPositionRef: MutableRefObject<number>;
-  positionReaderRef: MutableRefObject<() => number>;
   windowStart: number;
   visibleSlidesCount: number;
 }
 
 interface UseCarouselTrackPositionBridgeResult {
-  applyDragPosition: (position: number) => void;
+  currentPositionRef: MutableRefObject<number>;
+  positionReaderRef: MutableRefObject<() => number>;
+  applyPosition: (position: number) => void;
   readCurrentPosition: () => number;
 }
 
 export function useCarouselTrackPositionBridge({
   trackRef,
-  currentPositionRef,
-  positionReaderRef,
   windowStart,
   visibleSlidesCount,
 }: UseCarouselTrackPositionBridgeProps): UseCarouselTrackPositionBridgeResult {
-  const applyDragPosition = useCallback(
+  const currentPositionRef = useRef(0);
+  const positionReaderRef = useRef<() => number>(
+    () => currentPositionRef.current,
+  );
+
+  const applyPosition = useCallback(
     (position: number) => {
       currentPositionRef.current = position;
 
@@ -45,7 +53,9 @@ export function useCarouselTrackPositionBridge({
   );
 
   return {
-    applyDragPosition,
+    currentPositionRef,
+    positionReaderRef,
+    applyPosition,
     readCurrentPosition,
   };
 }

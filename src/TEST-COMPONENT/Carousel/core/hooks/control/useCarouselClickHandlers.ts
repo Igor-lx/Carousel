@@ -2,24 +2,24 @@ import { useCallback } from "react";
 import type { MoveReason } from "../../model/reducer";
 import type { Slide } from "../../types";
 
-interface UseCarouselClickProps {
+interface UseCarouselClickHandlersProps {
   onMove: (step: number, reason: MoveReason) => void;
   onGoTo: (target: number, reason: MoveReason) => void;
   onClick?: (slideData: Slide) => void;
 }
 
-interface UseCarouselClickResult {
+interface UseCarouselClickHandlersResult {
   handlePrev: () => void;
   handleNext: () => void;
   handlePageSelect: (index: number) => void;
   handleSlideClick: (slideData: Slide) => void;
 }
 
-export function useCarouselClick({
+export function useCarouselClickHandlers({
   onMove,
   onGoTo,
   onClick,
-}: UseCarouselClickProps): UseCarouselClickResult {
+}: UseCarouselClickHandlersProps): UseCarouselClickHandlersResult {
   const handleMove = useCallback(
     (step: number) => {
       onMove(step, "click");

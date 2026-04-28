@@ -13,20 +13,18 @@ import {
   type CarouselMotionSegment,
 } from "../../model/motion-execution";
 import type { AnimationMode, MoveReason } from "../../model/reducer";
-import { applyTrackPositionStyle } from "../../utilities";
 import {
   useIsomorphicLayoutEffect,
   type ReleaseMotionResult,
 } from "../../../../../shared";
 
 interface UseCarouselMotionProps {
-  trackRef: React.RefObject<HTMLDivElement | null>;
   currentPositionRef: React.MutableRefObject<number>;
   positionReaderRef: React.MutableRefObject<() => number>;
+  applyPosition: (position: number) => void;
   enabled: boolean;
   startVirtualIndex: number;
   currentVirtualIndex: number;
-  windowStart: number;
   size: number;
   stepDuration: number;
   motionSettings: CarouselMotionSettings;
@@ -44,13 +42,12 @@ interface UseCarouselMotionProps {
 }
 
 export function useCarouselMotion({
-  trackRef,
   currentPositionRef,
   positionReaderRef,
+  applyPosition,
   enabled,
   startVirtualIndex,
   currentVirtualIndex,
-  windowStart,
   size,
   stepDuration,
   motionSettings,
@@ -75,18 +72,6 @@ export function useCarouselMotion({
     useRef<CarouselMotionHandoffSnapshot | null>(null);
   const velocityRef = useRef(0);
   const lastPlanRef = useRef<string>("");
-
-  const applyPosition = useCallback(
-    (position: number) => {
-      currentPositionRef.current = position;
-
-      const track = trackRef.current;
-      if (!track) return;
-
-      applyTrackPositionStyle(track, position, windowStart, size);
-    },
-    [size, trackRef, windowStart],
-  );
 
   const cancelAnimation = useCallback(() => {
     if (frameRef.current !== null) {

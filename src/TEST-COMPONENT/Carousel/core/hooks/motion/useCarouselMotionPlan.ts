@@ -8,12 +8,12 @@ import type {
 import type { AnimationMode, MoveReason } from "../../model/reducer";
 import {
   getDurationByVirtualSpan,
-} from "../../utilities";
+  resolveCarouselMotionDuration,
+} from "../../model/motion-duration";
 import {
   type ReleaseMotionResult,
   velocityEngine,
 } from "../../../../../shared";
-import { useCarouselMotionDuration } from "./useCarouselMotionDuration";
 
 interface UseCarouselMotionPlanProps {
   gesturePointerReleaseVelocity: number;
@@ -78,22 +78,41 @@ export function useCarouselMotionPlan({
     ],
   );
 
-  const motionDuration = useCarouselMotionDuration({
-    gestureReleaseDuration: releaseMotion.duration,
-    reason,
-    animMode,
-    isDragging,
-    isInstant,
-    isRepeatedClickAdvance,
-    segmentStartVirtualIndex,
-    targetVirtualIndex,
-    stepSize,
-    motionSettings,
-    repeatedClickSettings,
-    autoplayDuration,
-    stepDuration,
-    jumpDuration,
-  });
+  const motionDuration = useMemo(
+    () =>
+      resolveCarouselMotionDuration({
+        gestureReleaseDuration: releaseMotion.duration,
+        reason,
+        animMode,
+        isDragging,
+        isInstant,
+        isRepeatedClickAdvance,
+        segmentStartVirtualIndex,
+        targetVirtualIndex,
+        stepSize,
+        snapBackDuration: motionSettings.snapBackDuration,
+        repeatedClickSpeedMultiplier: repeatedClickSettings.speedMultiplier,
+        autoplayDuration,
+        stepDuration,
+        jumpDuration,
+      }),
+    [
+      animMode,
+      autoplayDuration,
+      isDragging,
+      isInstant,
+      isRepeatedClickAdvance,
+      jumpDuration,
+      motionSettings.snapBackDuration,
+      reason,
+      releaseMotion.duration,
+      repeatedClickSettings.speedMultiplier,
+      segmentStartVirtualIndex,
+      stepDuration,
+      stepSize,
+      targetVirtualIndex,
+    ],
+  );
 
   return {
     releaseMotion,

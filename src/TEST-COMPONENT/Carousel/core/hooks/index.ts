@@ -1,5 +1,5 @@
 export * from "./control/useCarouselAutoPlay";
-export * from "./control/useCarouselClick";
+export * from "./control/useCarouselClickHandlers";
 export * from "./control/useCarouselDragController";
 export * from "./control/useCarouselEngine";
 export * from "./control/useCarouselGesture";

@@ -90,7 +90,9 @@ export function useDragEngine({
       try {
         target.setPointerCapture(pointerId);
         currentGesture.hasPointerCapture = true;
-      } catch {}
+      } catch {
+        // Some targets can lose capture eligibility between pointer events.
+      }
     },
     [],
   );
@@ -176,7 +178,9 @@ export function useDragEngine({
       ) {
         try {
           target.releasePointerCapture(currentGesture.pointerId);
-        } catch {}
+        } catch {
+          // Pointer capture may already be gone after cancellation/lost capture.
+        }
 
         currentGesture.hasPointerCapture = false;
       }

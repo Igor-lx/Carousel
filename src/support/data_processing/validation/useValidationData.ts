@@ -2,8 +2,8 @@ import { useMemo } from "react";
 import type { ZodType } from "zod";
 import { isDataValid, resolveWithFallback } from "./tools/validation";
 
-export function useValidationData<T extends Record<string, any>>(
-  rawData: any[],
+export function useValidationData<T extends object>(
+  rawData: unknown[],
   schema: ZodType<T[]>,
   fallback: T,
 ) {

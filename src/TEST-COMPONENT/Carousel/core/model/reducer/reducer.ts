@@ -16,7 +16,7 @@ export function reducer(state: State, action: ReducerAction): State {
   const status = getAnimStatus(animMode);
 
   switch (action.type) {
-    case "START_DRAG":
+    case "START_DRAG": {
       const dragTargetIndex =
         action.targetIndex ?? syncedState.targetIndex;
 
@@ -33,8 +33,9 @@ export function reducer(state: State, action: ReducerAction): State {
         gesturePointerReleaseVelocity: 0,
         gestureUiReleaseVelocity: 0,
       };
+    }
 
-    case "END_DRAG":
+    case "END_DRAG": {
       const dragReleaseOrigin =
         action.fromVirtualIndex ?? syncedState.virtualIndex;
       const nextTargetIndex = currentLayout.isFinite
@@ -80,6 +81,7 @@ export function reducer(state: State, action: ReducerAction): State {
           ? 0
           : action.uiReleaseVelocity,
       };
+    }
 
     case "MOVE":
     case "GO_TO": {

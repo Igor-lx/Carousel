@@ -2,11 +2,18 @@ import { type ReactElement, type ReactNode } from "react";
 import { z } from "zod";
 
 const ReactElementSchema = z.custom<ReactElement>(
-  (val) =>
-    typeof val === "object" &&
-    val !== null &&
-    ((val as any)?.$$typeof === Symbol.for("react.element") ||
-      (val as any)?.$$typeof === Symbol.for("react.transitional.element")),
+  (val) => {
+    if (typeof val !== "object" || val === null) {
+      return false;
+    }
+
+    const elementType = (val as { $$typeof?: unknown }).$$typeof;
+
+    return (
+      elementType === Symbol.for("react.element") ||
+      elementType === Symbol.for("react.transitional.element")
+    );
+  },
 );
 
 const ContentSchema = z.union([

@@ -7,8 +7,14 @@ import {
   useCallback,
   Fragment,
   type ReactNode,
+  type ReactElement,
+  type Ref,
   type RefObject,
 } from "react";
+
+type WritableRefObject<T> = {
+  current: T | null;
+};
 
 const canAcceptRef = (type: unknown): boolean => {
   if (!type) return false;
@@ -36,15 +42,15 @@ export function useExternalRefBridge<T>(children: ReactNode): BridgeResult<T> {
   const instanceRef = useRef<T | null>(null);
   const didWarnAboutAmbiguityRef = useRef(false);
 
-  const setBridgeRef = useCallback((node: T | null, originalRef: any) => {
+  const setBridgeRef = useCallback((node: T | null, originalRef?: Ref<T>) => {
     instanceRef.current = node;
 
     if (!originalRef) return;
 
     if (typeof originalRef === "function") {
       originalRef(node);
-    } else if (originalRef && "current" in originalRef) {
-      originalRef.current = node;
+    } else if (typeof originalRef === "object" && "current" in originalRef) {
+      (originalRef as WritableRefObject<T>).current = node;
     }
   }, []);
 
@@ -72,9 +78,12 @@ export function useExternalRefBridge<T>(children: ReactNode): BridgeResult<T> {
       }
 
       refAttached = true;
-      const originalRef = (child as any).ref;
+      const childWithRef = child as ReactElement<{ ref?: Ref<T> }> & {
+        ref?: Ref<T>;
+      };
+      const originalRef = childWithRef.ref ?? childWithRef.props.ref;
 
-      return cloneElement(child as any, {
+      return cloneElement(childWithRef, {
         ref: (node: T | null) => setBridgeRef(node, originalRef),
       });
     });

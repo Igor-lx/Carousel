@@ -48,9 +48,9 @@ const PaginationBase = memo(({ className }: PaginationProps) => {
   );
 });
 
-export const Pagination = PaginationBase as CarouselSlotComponent<
+export const Pagination: CarouselSlotComponent<
   typeof PaginationBase,
   "pagination"
->;
-
-Pagination.slot = "pagination";
+> = Object.assign(PaginationBase, {
+  slot: "pagination" as const,
+});

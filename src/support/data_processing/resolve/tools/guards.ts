@@ -1,9 +1,11 @@
 export const isDev = process.env.NODE_ENV === "development";
 
+export type DataRecord = Record<string, unknown>;
+
 export function checkStructure(
   data: unknown,
   context?: string,
-): data is Record<string, any>[] {
+): data is DataRecord[] {
   const prefix = context ? `${context}->` : "";
 
   if (!Array.isArray(data)) {
@@ -37,11 +39,11 @@ export function checkStructure(
 }
 
 export function checkIDs(
-  data: Record<string, any>[],
+  data: DataRecord[],
   context?: string,
 ): boolean {
   const prefix = context ? `${context}->` : "";
-  const ids = new Set();
+  const ids = new Set<string | number>();
 
   for (const item of data) {
     const id = item.id;

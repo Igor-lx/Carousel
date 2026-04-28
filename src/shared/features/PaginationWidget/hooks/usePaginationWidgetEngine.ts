@@ -54,7 +54,11 @@ export function usePaginationWidgetEngine(
 
     if (state.mode === "WAITING") {
       const run = () => dispatch({ type: "START_ANIMATION" });
-      config.delay > 0 ? setWaitTimer(run, config.delay) : run();
+      if (config.delay > 0) {
+        setWaitTimer(run, config.delay);
+      } else {
+        run();
+      }
     }
     return clearWaitTimer;
   }, [

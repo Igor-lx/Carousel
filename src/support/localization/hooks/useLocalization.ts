@@ -8,14 +8,14 @@ export const localizeFields = <T extends object>(
   t: (key: string) => string,
 ): T[] => {
   return content.map((item) => {
-    const localizedItem = { ...item };
+    const localizedItem = { ...item } as Record<keyof T, unknown>;
     contentKeys.forEach((field) => {
       const value = item[field];
       if (typeof value === "string") {
-        (localizedItem as any)[field] = t(value);
+        localizedItem[field] = t(value);
       }
     });
-    return localizedItem;
+    return localizedItem as T;
   });
 };
 
@@ -37,9 +37,9 @@ export const useLocalizedData = <T extends object>(
   contentKeys: Array<keyof T>,
   nameSpace: string = DEFAULT_NAMESPACE,
 ) => {
-  const { localize, i18n } = useLocalization(nameSpace);
+  const { localize } = useLocalization(nameSpace);
 
   return useMemo(() => {
     return localize(content, contentKeys);
-  }, [content, contentKeys, localize, i18n.language]);
+  }, [content, contentKeys, localize]);
 };

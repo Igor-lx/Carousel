@@ -1,5 +1,5 @@
 import appStyles from "./App.module.scss";
-import { useTheme } from "../support/theme_toggle/useThemeSwitcher";
+import { useTheme } from "../support/theme_toggle/useTheme";
 //--------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------

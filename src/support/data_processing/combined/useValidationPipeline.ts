@@ -8,7 +8,7 @@ import {
 } from "../validation/tools/validation";
 
 export function useValidationPipeline<
-  T extends Record<string, any>,
+  T extends object,
   K extends string,
 >(rawData: unknown, schema: ZodType<T[]>, key: K, fallback: T) {
   return useMemo(() => {

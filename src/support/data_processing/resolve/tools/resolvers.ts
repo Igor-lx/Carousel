@@ -1,10 +1,13 @@
 import { v4 as uuidv4 } from "uuid";
-import { isDev, checkStructure, checkIDs } from "./guards";
+import { isDev, checkStructure, checkIDs, type DataRecord } from "./guards";
+
+const formatValue = (value: unknown) =>
+  typeof value === "number" && Number.isNaN(value) ? "NaN" : String(value);
 
 export function resolveStructure<T extends string>(
   rawData: unknown,
   key: T,
-): Record<string, any>[] {
+): DataRecord[] {
   const context = "Resolve Structure";
 
   const isInvalid = (val: unknown) =>
@@ -17,7 +20,7 @@ export function resolveStructure<T extends string>(
 
   if (isInvalid(rawData)) {
     if (isDev) {
-      const display = Number.isNaN(rawData as any) ? "NaN" : String(rawData);
+      const display = formatValue(rawData);
       console.warn(`⚠️ ${context}: Incompatible data type: ${display}`);
       console.error(
         `❌ ${context}: Normalization failed, returned an empty array.`,
@@ -27,13 +30,13 @@ export function resolveStructure<T extends string>(
   }
 
   if (Array.isArray(rawData)) {
-    const result: Record<string, any>[] = [];
+    const result: DataRecord[] = [];
     let primitivesCount = 0;
 
     for (const item of rawData) {
       if (isInvalid(item)) {
         if (isDev) {
-          const display = Number.isNaN(item as any) ? "NaN" : String(item);
+          const display = formatValue(item);
           console.warn(
             `⚠️ ${context}: Array contains invalid element: ${display}`,
           );
@@ -44,9 +47,9 @@ export function resolveStructure<T extends string>(
         return [];
       }
 
-      if (typeof item === "object" && !Array.isArray(item)) {
+      if (item !== null && typeof item === "object" && !Array.isArray(item)) {
         if (key in item) {
-          result.push(item);
+          result.push(item as DataRecord);
         } else {
           if (isDev) {
             console.warn(
@@ -79,7 +82,7 @@ export function resolveStructure<T extends string>(
       }
     }
 
-    return primitivesCount === 0 ? (rawData as Record<string, any>[]) : result;
+    return primitivesCount === 0 ? (rawData as DataRecord[]) : result;
   }
 
   if (typeof rawData === "object") {
@@ -88,7 +91,7 @@ export function resolveStructure<T extends string>(
         console.warn(`⚠️ ${context}: Received single object. Expected Array.`);
         console.info(`ℹ️ ${context} FIX: Object wrapped with Array.`);
       }
-      return [rawData as Record<string, any>];
+      return [rawData as DataRecord];
     }
     if (isDev) {
       console.warn(`⚠️ ${context}: Single object missing key: "${key}".`);
@@ -108,7 +111,7 @@ export function resolveStructure<T extends string>(
   return [{ [key]: rawData }];
 }
 
-export function resolveID(data: unknown): Record<string, any>[] {
+export function resolveID(data: unknown): DataRecord[] {
   const context = "Resolve ID";
 
   if (!checkStructure(data, context)) {
@@ -120,7 +123,7 @@ export function resolveID(data: unknown): Record<string, any>[] {
     return [];
   }
 
-  const structuredData = data as Record<string, any>[];
+  const structuredData = data as DataRecord[];
 
   if (checkIDs(structuredData, context)) {
     if (isDev) {

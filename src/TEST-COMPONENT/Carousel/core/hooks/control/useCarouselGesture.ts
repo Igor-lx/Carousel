@@ -7,14 +7,10 @@ import {
   useDragEngine,
 } from "../../../../../shared/touch-input";
 
-interface CarouselGestureController {
+interface UseCarouselGestureProps {
   startDrag: () => void;
   updateDrag: (dragOffset: number) => void;
   finishDrag: (payload: DragEngineReleasePayload) => void;
-}
-
-interface UseCarouselGestureProps {
-  controller: CarouselGestureController;
   enabled: boolean;
   dragConfig: CarouselDragConfig;
   measureRef: RefObject<HTMLDivElement | null>;
@@ -27,25 +23,27 @@ interface UseCarouselGestureResult {
 }
 
 export function useCarouselGesture({
-  controller,
+  startDrag,
+  updateDrag,
+  finishDrag,
   enabled,
   dragConfig,
   measureRef,
 }: UseCarouselGestureProps): UseCarouselGestureResult {
   const handleDragMove = useCallback(
     (sample: DragEngineMovePayload) => {
-      controller.updateDrag(sample.uiOffset);
+      updateDrag(sample.uiOffset);
     },
-    [controller],
+    [updateDrag],
   );
 
   const { isDragging, isInteracting, dragListeners } = useDragEngine({
     enabled,
     measureRef,
-    onPressStart: controller.startDrag,
+    onPressStart: startDrag,
     onDragMove: handleDragMove,
     config: dragConfig,
-    onRelease: controller.finishDrag,
+    onRelease: finishDrag,
   });
 
   return { isDragging, isInteracting, dragListeners };

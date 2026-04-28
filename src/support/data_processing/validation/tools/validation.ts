@@ -8,7 +8,7 @@ export type ValidatedState<T> = {
 };
 
 export function isDataValid<T>(
-  data: any[],
+  data: unknown[],
   schema: ZodType<T[]>,
 ): ValidatedState<T> {
   const result = schema.safeParse(data);
@@ -35,7 +35,7 @@ export function isDataValid<T>(
   }
 
   return {
-    data: (success ? data : []) as T[],
+    data: success ? (data as T[]) : [],
     isValid: success,
   };
 }
