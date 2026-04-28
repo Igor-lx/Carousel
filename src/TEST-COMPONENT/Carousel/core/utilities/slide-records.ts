@@ -1,10 +1,6 @@
 import type { Slide } from "../types";
 import type { CarouselSlideRecord } from "./types";
-
-const getClampedVisibleSlidesCount = (
-  slidesLength: number,
-  visibleSlidesNr: number,
-) => Math.min(visibleSlidesNr, slidesLength);
+import { getClampedVisibleSlidesCount } from "./visible-slides";
 
 const createSlideRecord = (
   slideData: Slide,

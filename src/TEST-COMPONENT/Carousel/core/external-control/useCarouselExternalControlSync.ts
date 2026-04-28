@@ -1,7 +1,7 @@
 import { useRef, type RefObject } from "react";
 
 import { useIsomorphicLayoutEffect } from "../../../../shared";
-import { getShortestDistance } from "../utilities";
+import { getShortestCyclicDistance } from "../utilities";
 import type { CarouselExternalControlHandle } from "./types";
 
 interface ExternalControlSyncProps {
@@ -33,7 +33,7 @@ const getExternalControlStepDirection = ({
   }
 
   return Math.sign(
-    getShortestDistance(previousTargetIndex, nextTargetIndex, pageCount),
+    getShortestCyclicDistance(previousTargetIndex, nextTargetIndex, pageCount),
   );
 };
 

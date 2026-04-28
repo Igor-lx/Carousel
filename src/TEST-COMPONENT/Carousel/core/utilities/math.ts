@@ -11,7 +11,7 @@ export const normalizePageIndex = (pageIndex: number, pageCount: number) => {
   return mod(pageIndex, pageCount);
 };
 
-export const getShortestDistance = (
+export const getShortestCyclicDistance = (
   from: number,
   to: number,
   total: number,

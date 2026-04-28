@@ -5,7 +5,7 @@ import {
   getAlignedVirtualIndex,
   getPageStart,
   getReconciledPageIndex,
-  getShortestDistance,
+  getShortestCyclicDistance,
   normalizePageIndex,
   type CarouselLayout,
 } from "../../utilities";
@@ -152,7 +152,7 @@ export const resolveStepAction = (state: State, action: StepAction) => {
 
     logicalDelta = currentLayout.isFinite
       ? clampedTarget - currentLogicalIndex
-      : getShortestDistance(
+      : getShortestCyclicDistance(
           currentLogicalIndex,
           clampedTarget,
           currentLayout.pageCount,

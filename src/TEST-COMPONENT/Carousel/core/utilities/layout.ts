@@ -5,14 +5,10 @@ import type {
   CarouselSlideRecord,
 } from "./types";
 import { clamp, mod, normalizePageIndex } from "./math";
+import { getClampedVisibleSlidesCount } from "./visible-slides";
 
 export const getPageStart = (pageIndex: number, visibleSlidesNr: number) =>
   pageIndex * visibleSlidesNr;
-
-const getClampedVisibleSlidesCount = (
-  slidesLength: number,
-  visibleSlidesNr: number,
-) => Math.min(visibleSlidesNr, slidesLength);
 
 const getSlideContentKey = (slideData: Slide) =>
   `${slideData.id}-${typeof slideData.content === "string" ? slideData.content : "obj"}`;

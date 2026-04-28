@@ -3,7 +3,7 @@ import { useMemo, useRef } from "react";
 import {
   getLoopedSlideIndex,
   getRenderWindow,
-  getSlideA11y,
+  getSlideA11yProps,
   getSlideVisibility,
   type CarouselLayout,
   type CarouselSlideRecord,
@@ -106,7 +106,7 @@ export function useCarouselSlides({
         isMoving,
       );
 
-      const a11yProps = getSlideA11y(
+      const a11yProps = getSlideA11yProps(
         { slideIndex: slideRecord.layoutIndex },
         isActual,
         totalSlides,

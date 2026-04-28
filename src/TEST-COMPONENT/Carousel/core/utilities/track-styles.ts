@@ -1,4 +1,4 @@
-export const getCarouselTransform = (
+const getTrackTransform = (
   index: number,
   visibleSlidesNr: number,
 ): string =>
@@ -11,12 +11,6 @@ export const applyTrackPositionStyle = (
   visibleSlidesNr: number,
 ) => {
   const relativeIndex = position - windowStart;
-  track.style.transform = `${getCarouselTransform(relativeIndex, visibleSlidesNr)} translateX(0px)`;
+  track.style.transform = `${getTrackTransform(relativeIndex, visibleSlidesNr)} translateX(0px)`;
   track.style.transition = "none";
 };
-
-export const getSlideFlexStyle = (
-  visibleSlidesNr: number,
-): { flex: string } => ({
-  flex: `0 0 calc((100% - (var(--gap, 0px) * ${visibleSlidesNr - 1})) / ${visibleSlidesNr})`,
-});

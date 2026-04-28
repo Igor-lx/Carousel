@@ -23,7 +23,7 @@ export const getSlideVisibility = (
   return { isActual, isActive: isActual };
 };
 
-export const getSlideA11y = (
+export const getSlideA11yProps = (
   metadata: { slideIndex: number },
   isActual: boolean,
   totalSlides: number,
