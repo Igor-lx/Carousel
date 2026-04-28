@@ -1,7 +1,10 @@
 import { useMemo, useRef } from "react";
 
 import {
+  containsRenderWindow,
+  expandRenderWindow,
   getLoopedSlideIndex,
+  getRenderMovementSegment,
   getRenderWindow,
   getSlideA11yProps,
   getSlideVisibility,
@@ -14,7 +17,6 @@ interface UseCarouselSlidesProps {
   current: number;
   prev: number;
   isMoving: boolean;
-  targetIndex: number;
   renderWindowBufferMultiplier: number;
   layout: CarouselLayout;
   slidesData: CarouselSlideRecord[];
@@ -22,8 +24,6 @@ interface UseCarouselSlidesProps {
 
 interface UseCarouselSlidesResult {
   slides: VirtualSlide[];
-  isAtStart: boolean;
-  isAtEnd: boolean;
   windowStart: number;
 }
 
@@ -31,7 +31,6 @@ export function useCarouselSlides({
   current,
   prev,
   isMoving,
-  targetIndex,
   renderWindowBufferMultiplier,
   layout,
   slidesData,
@@ -54,34 +53,17 @@ export function useCarouselSlides({
     }
 
     const currentWindow = renderWindowRef.current;
-    const segmentStart = Math.floor(Math.min(prev, current));
-    const segmentEnd =
-      Math.ceil(Math.max(prev, current)) + layout.clampedVisible - 1;
-    const containsSegment =
-      currentWindow.start <= segmentStart && currentWindow.end >= segmentEnd;
+    const movementSegment = getRenderMovementSegment(prev, current, layout);
 
-    if (containsSegment) {
+    if (containsRenderWindow(currentWindow, movementSegment)) {
       return currentWindow;
     }
 
-    const expandedWindow = {
-      start: Math.min(currentWindow.start, nextWindow.start),
-      end: Math.max(currentWindow.end, nextWindow.end),
-    };
+    const expandedWindow = expandRenderWindow(currentWindow, nextWindow);
 
     renderWindowRef.current = expandedWindow;
     return expandedWindow;
   }, [prev, current, layout, isMoving, renderWindowBufferMultiplier]);
-
-  const { isAtStart, isAtEnd } = useMemo(() => {
-    if (!layout.isFinite) {
-      return { isAtStart: false, isAtEnd: false };
-    }
-    return {
-      isAtStart: targetIndex <= 0,
-      isAtEnd: targetIndex >= layout.pageCount - 1,
-    };
-  }, [layout.isFinite, layout.pageCount, targetIndex]);
 
   const virtualData = useMemo((): VirtualSlide[] => {
     const totalSlides = slidesData.length;
@@ -126,8 +108,6 @@ export function useCarouselSlides({
 
   return {
     slides: virtualData,
-    isAtStart,
-    isAtEnd,
     windowStart: renderWindow.start,
   };
 }

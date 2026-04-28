@@ -51,11 +51,46 @@ export type LifecycleAction = EndStepAction;
 
 export type Action = StepAction | DragAction | LifecycleAction;
 
-export type ReducerAction = Action & {
+type ReducerLayoutContext = {
   layout: CarouselLayout;
+};
+
+type ReducerInstantMotionContext = {
+  isInstant: boolean;
+};
+
+type ReducerDragReleaseContext = {
   dragReleaseEpsilon: number;
+};
+
+type ReducerRepeatedClickContext = {
   repeatedClickSettings: CarouselRepeatedClickSettings;
 };
+
+export type MoveReducerAction = MoveAction &
+  ReducerLayoutContext &
+  ReducerInstantMotionContext &
+  ReducerRepeatedClickContext;
+
+export type GoToReducerAction = GoToAction &
+  ReducerLayoutContext &
+  ReducerInstantMotionContext;
+
+export type StartDragReducerAction = StartDragAction & ReducerLayoutContext;
+
+export type EndDragReducerAction = EndDragAction &
+  ReducerLayoutContext &
+  ReducerInstantMotionContext &
+  ReducerDragReleaseContext;
+
+export type EndStepReducerAction = EndStepAction & ReducerLayoutContext;
+
+export type ReducerAction =
+  | MoveReducerAction
+  | GoToReducerAction
+  | StartDragReducerAction
+  | EndDragReducerAction
+  | EndStepReducerAction;
 
 export interface State {
   currentLayout: CarouselLayout;

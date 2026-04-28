@@ -1,13 +1,13 @@
-import type { ReducerAction, State } from ".";
+import type { ReducerAction, State } from "./types";
+import { clamp, normalizePageIndex } from "../../utilities";
 import {
-  clamp,
-  normalizePageIndex,
-} from "../../utilities";
-import {
+  CLEARED_TRANSIENT_MOTION_STATE,
+  getDragReleaseAnimationMode,
   getAnimStatus,
+  hasReachedDragTarget,
   reconcileStateToLayout,
   resolveRepeatedClickPlan,
-  resolveStepAction,
+  resolveStepTransition,
 } from "./helpers";
 
 export function reducer(state: State, action: ReducerAction): State {
@@ -19,19 +19,18 @@ export function reducer(state: State, action: ReducerAction): State {
     case "START_DRAG": {
       const dragTargetIndex =
         action.targetIndex ?? syncedState.targetIndex;
+      const dragOrigin =
+        action.fromVirtualIndex ?? syncedState.virtualIndex;
 
       return {
         ...syncedState,
         activeIndex: dragTargetIndex,
         targetIndex: dragTargetIndex,
-        fromVirtualIndex: action.fromVirtualIndex ?? syncedState.virtualIndex,
-        virtualIndex: action.fromVirtualIndex ?? syncedState.virtualIndex,
-        followUpVirtualIndex: null,
-        isRepeatedClickAdvance: false,
+        fromVirtualIndex: dragOrigin,
+        virtualIndex: dragOrigin,
+        ...CLEARED_TRANSIENT_MOTION_STATE,
         animMode: "none",
         moveReason: "gesture",
-        gesturePointerReleaseVelocity: 0,
-        gestureUiReleaseVelocity: 0,
       };
     }
 
@@ -43,8 +42,11 @@ export function reducer(state: State, action: ReducerAction): State {
         : normalizePageIndex(action.targetIndex, currentLayout.pageCount);
 
       if (
-        Math.abs(dragReleaseOrigin - action.targetVirtualIndex) <
-        action.dragReleaseEpsilon
+        hasReachedDragTarget(
+          dragReleaseOrigin,
+          action.targetVirtualIndex,
+          action.dragReleaseEpsilon,
+        )
       ) {
         return {
           ...syncedState,
@@ -52,12 +54,9 @@ export function reducer(state: State, action: ReducerAction): State {
           targetIndex: nextTargetIndex,
           fromVirtualIndex: action.targetVirtualIndex,
           virtualIndex: action.targetVirtualIndex,
-          followUpVirtualIndex: null,
-          isRepeatedClickAdvance: false,
+          ...CLEARED_TRANSIENT_MOTION_STATE,
           animMode: "none",
           moveReason: "gesture",
-          gesturePointerReleaseVelocity: 0,
-          gestureUiReleaseVelocity: 0,
         };
       }
 
@@ -66,13 +65,8 @@ export function reducer(state: State, action: ReducerAction): State {
         targetIndex: nextTargetIndex,
         fromVirtualIndex: dragReleaseOrigin,
         virtualIndex: action.targetVirtualIndex,
-        followUpVirtualIndex: null,
-        isRepeatedClickAdvance: false,
-        animMode: action.isInstant
-          ? "instant"
-          : action.isSnap
-            ? "snap"
-            : "normal",
+        ...CLEARED_TRANSIENT_MOTION_STATE,
+        animMode: getDragReleaseAnimationMode(action),
         moveReason: "gesture",
         gesturePointerReleaseVelocity: action.isInstant
           ? 0
@@ -89,8 +83,8 @@ export function reducer(state: State, action: ReducerAction): State {
         nextFromVirtualIndex,
         nextTargetIndex,
         nextVirtualIndex,
-        mode,
-      } = resolveStepAction(syncedState, action);
+        animationMode,
+      } = resolveStepTransition(syncedState, action);
       const repeatedClickPlan =
         action.moveReason === "click" &&
         !action.isInstant &&
@@ -119,24 +113,18 @@ export function reducer(state: State, action: ReducerAction): State {
           return {
             ...syncedState,
             fromVirtualIndex: nextFromVirtualIndex,
-            followUpVirtualIndex: null,
-            isRepeatedClickAdvance: false,
+            ...CLEARED_TRANSIENT_MOTION_STATE,
             animMode: "snap",
             moveReason: "gesture",
-            gesturePointerReleaseVelocity: 0,
-            gestureUiReleaseVelocity: 0,
           };
         }
         return {
           ...syncedState,
           fromVirtualIndex: nextFromVirtualIndex,
           virtualIndex: plannedVirtualIndex,
-          followUpVirtualIndex: null,
-          isRepeatedClickAdvance: false,
+          ...CLEARED_TRANSIENT_MOTION_STATE,
           animMode: action.isInstant ? "instant" : syncedState.animMode,
           moveReason: action.moveReason,
-          gesturePointerReleaseVelocity: 0,
-          gestureUiReleaseVelocity: 0,
         };
       }
 
@@ -145,12 +133,11 @@ export function reducer(state: State, action: ReducerAction): State {
         targetIndex: plannedTargetIndex,
         fromVirtualIndex: nextFromVirtualIndex,
         virtualIndex: plannedVirtualIndex,
+        ...CLEARED_TRANSIENT_MOTION_STATE,
         followUpVirtualIndex,
         isRepeatedClickAdvance: repeatedClickPlan !== null,
-        animMode: mode,
+        animMode: animationMode,
         moveReason: action.moveReason,
-        gesturePointerReleaseVelocity: 0,
-        gestureUiReleaseVelocity: 0,
       };
     }
 
@@ -162,12 +149,9 @@ export function reducer(state: State, action: ReducerAction): State {
           ...syncedState,
           fromVirtualIndex: syncedState.virtualIndex,
           virtualIndex: syncedState.followUpVirtualIndex,
-          followUpVirtualIndex: null,
-          isRepeatedClickAdvance: false,
+          ...CLEARED_TRANSIENT_MOTION_STATE,
           animMode: "normal",
           moveReason: "click",
-          gesturePointerReleaseVelocity: 0,
-          gestureUiReleaseVelocity: 0,
         };
       }
 
@@ -175,11 +159,8 @@ export function reducer(state: State, action: ReducerAction): State {
         ...syncedState,
         activeIndex: syncedState.targetIndex,
         fromVirtualIndex: syncedState.virtualIndex,
-        followUpVirtualIndex: null,
-        isRepeatedClickAdvance: false,
+        ...CLEARED_TRANSIENT_MOTION_STATE,
         animMode: "none",
-        gesturePointerReleaseVelocity: 0,
-        gestureUiReleaseVelocity: 0,
       };
     }
 

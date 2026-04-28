@@ -47,6 +47,7 @@ import {
 import { useCarouselExternalControlSync } from "./external-control";
 import { SLIDE_KEYS, type CarouselProps } from "./types";
 import {
+  getCarouselBoundaryState,
   getCarouselLayout,
   getSlideFlexStyle,
   type CarouselLayout,
@@ -157,16 +158,15 @@ const Carousel = memo((props: CarouselProps) => {
     [animMode],
   );
 
-  const {
-    slides: virtualSlides,
-    isAtStart,
-    isAtEnd,
-    windowStart,
-  } = useCarouselSlides({
+  const { isAtStart, isAtEnd } = useMemo(
+    () => getCarouselBoundaryState(targetIndex, nextLayout),
+    [nextLayout, targetIndex],
+  );
+
+  const { slides: virtualSlides, windowStart } = useCarouselSlides({
     current: virtualIndex,
     prev: fromVirtualIndex,
     isMoving,
-    targetIndex,
     renderWindowBufferMultiplier: layoutSettings.renderWindowBufferMultiplier,
     layout: nextLayout,
     slidesData: resolvedSlideRecords,
@@ -196,7 +196,6 @@ const Carousel = memo((props: CarouselProps) => {
   const { move, goTo } = useCarouselNavigationController({
     dispatchAction,
     enabled: canSlide,
-    currentPositionRef: motionPositionRef,
     readCurrentPosition,
   });
 
@@ -208,7 +207,6 @@ const Carousel = memo((props: CarouselProps) => {
       layout: nextLayout,
       baseVirtualIndex: virtualIndex,
       dragReleaseEpsilon,
-      currentPositionRef: motionPositionRef,
       readCurrentPosition,
       applyDragPosition: applyTrackPosition,
     });

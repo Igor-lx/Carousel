@@ -5,7 +5,6 @@ import type { Action, MoveReason } from "../../model/reducer";
 interface UseCarouselNavigationControllerProps {
   dispatchAction: React.Dispatch<Action>;
   enabled: boolean;
-  currentPositionRef: React.MutableRefObject<number>;
   readCurrentPosition: () => number;
 }
 
@@ -17,15 +16,8 @@ interface UseCarouselNavigationControllerResult {
 export function useCarouselNavigationController({
   dispatchAction,
   enabled,
-  currentPositionRef,
   readCurrentPosition,
 }: UseCarouselNavigationControllerProps): UseCarouselNavigationControllerResult {
-  const resolveCurrentPosition = useCallback(() => {
-    const position = readCurrentPosition();
-
-    return Number.isFinite(position) ? position : currentPositionRef.current;
-  }, [currentPositionRef, readCurrentPosition]);
-
   const move = useCallback(
     (step: number, moveReason: MoveReason = "unknown") => {
       if (!enabled) return;
@@ -34,10 +26,10 @@ export function useCarouselNavigationController({
         type: "MOVE",
         step,
         moveReason,
-        fromVirtualIndex: resolveCurrentPosition(),
+        fromVirtualIndex: readCurrentPosition(),
       });
     },
-    [dispatchAction, enabled, resolveCurrentPosition],
+    [dispatchAction, enabled, readCurrentPosition],
   );
 
   const goTo = useCallback(
@@ -48,10 +40,10 @@ export function useCarouselNavigationController({
         type: "GO_TO",
         target: index,
         moveReason,
-        fromVirtualIndex: resolveCurrentPosition(),
+        fromVirtualIndex: readCurrentPosition(),
       });
     },
-    [dispatchAction, enabled, resolveCurrentPosition],
+    [dispatchAction, enabled, readCurrentPosition],
   );
 
   return {

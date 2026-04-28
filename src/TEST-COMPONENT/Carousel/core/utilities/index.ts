@@ -1,3 +1,4 @@
+export * from "./drag-release";
 export * from "./math";
 export * from "./layout";
 export * from "./slide-records";

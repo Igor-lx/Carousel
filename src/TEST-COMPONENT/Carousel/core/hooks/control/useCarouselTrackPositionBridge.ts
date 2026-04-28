@@ -5,7 +5,7 @@ import {
   type RefObject,
 } from "react";
 
-import { applyTrackPositionStyle } from "../../utilities";
+import { getTrackPositionStyle } from "../../utilities";
 
 interface UseCarouselTrackPositionBridgeProps {
   trackRef: RefObject<HTMLDivElement | null>;
@@ -37,20 +37,23 @@ export function useCarouselTrackPositionBridge({
       const track = trackRef.current;
       if (!track) return;
 
-      applyTrackPositionStyle(
-        track,
+      const trackStyle = getTrackPositionStyle(
         position,
         windowStart,
         visibleSlidesCount,
       );
+
+      track.style.transform = trackStyle.transform;
+      track.style.transition = trackStyle.transition;
     },
     [currentPositionRef, trackRef, visibleSlidesCount, windowStart],
   );
 
-  const readCurrentPosition = useCallback(
-    () => positionReaderRef.current(),
-    [positionReaderRef],
-  );
+  const readCurrentPosition = useCallback(() => {
+    const position = positionReaderRef.current();
+
+    return Number.isFinite(position) ? position : currentPositionRef.current;
+  }, [currentPositionRef, positionReaderRef]);
 
   return {
     currentPositionRef,

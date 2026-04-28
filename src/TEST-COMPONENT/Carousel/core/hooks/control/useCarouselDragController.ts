@@ -2,14 +2,11 @@ import { useCallback, useRef } from "react";
 
 import type { Action } from "../../model/reducer";
 import {
-  clamp,
-  getAlignedVirtualIndex,
   getNearestPageIndex,
-  getPageStart,
   getTrackSlotSize,
   getVirtualVelocityFromPointerVelocity,
   getVirtualIndexFromDragOffset,
-  normalizePageIndex,
+  resolveCarouselDragReleaseTarget,
 } from "../../utilities";
 import type { CarouselLayout } from "../../utilities";
 import { type DragEngineReleasePayload } from "../../../../../shared/touch-input";
@@ -21,7 +18,6 @@ interface UseCarouselDragControllerProps {
   layout: CarouselLayout;
   baseVirtualIndex: number;
   dragReleaseEpsilon: number;
-  currentPositionRef: React.MutableRefObject<number>;
   readCurrentPosition: () => number;
   applyDragPosition: (position: number) => void;
 }
@@ -39,18 +35,11 @@ export function useCarouselDragController({
   layout,
   baseVirtualIndex,
   dragReleaseEpsilon,
-  currentPositionRef,
   readCurrentPosition,
   applyDragPosition,
 }: UseCarouselDragControllerProps): UseCarouselDragControllerResult {
   const dragOriginPageIndexRef = useRef(0);
   const dragOriginPositionRef = useRef<number | null>(null);
-
-  const resolveCurrentPosition = useCallback(() => {
-    const position = readCurrentPosition();
-
-    return Number.isFinite(position) ? position : currentPositionRef.current;
-  }, [currentPositionRef, readCurrentPosition]);
 
   const resolveDragPosition = useCallback(
     (dragOffset: number) => {
@@ -82,7 +71,7 @@ export function useCarouselDragController({
   );
 
   const startDrag = useCallback(() => {
-    const dragOriginPosition = resolveCurrentPosition();
+    const dragOriginPosition = readCurrentPosition();
     const dragOriginIndex = getNearestPageIndex(dragOriginPosition, layout);
 
     dragOriginPageIndexRef.current = dragOriginIndex;
@@ -92,7 +81,7 @@ export function useCarouselDragController({
       fromVirtualIndex: dragOriginPosition,
       targetIndex: dragOriginIndex,
     });
-  }, [dispatchAction, layout, resolveCurrentPosition]);
+  }, [dispatchAction, layout, readCurrentPosition]);
 
   const updateDrag = useCallback(
     (dragOffset: number) => {
@@ -107,37 +96,23 @@ export function useCarouselDragController({
       if (!enabled) return;
 
       const releasePosition = resolveDragPosition(payload.uiOffset);
-      const snapTargetIndex = getNearestPageIndex(releasePosition, layout);
       const dragOriginIndex = dragOriginPageIndexRef.current;
-      let targetIndex = snapTargetIndex;
-      let isSnap = true;
-
-      if (payload.result === "LEFT") {
-        targetIndex = layout.isFinite
-          ? clamp(dragOriginIndex + 1, 0, layout.pageCount - 1)
-          : normalizePageIndex(dragOriginIndex + 1, layout.pageCount);
-        isSnap = targetIndex === dragOriginIndex;
-      } else if (payload.result === "RIGHT") {
-        targetIndex = layout.isFinite
-          ? clamp(dragOriginIndex - 1, 0, layout.pageCount - 1)
-          : normalizePageIndex(dragOriginIndex - 1, layout.pageCount);
-        isSnap = targetIndex === dragOriginIndex;
-      }
-
-      const targetVirtualIndex = layout.isFinite
-        ? getPageStart(targetIndex, layout.clampedVisible)
-        : getAlignedVirtualIndex(targetIndex, releasePosition, layout);
+      const releaseTarget = resolveCarouselDragReleaseTarget({
+        releaseDirection: payload.result,
+        releasePosition,
+        dragOriginPageIndex: dragOriginIndex,
+        layout,
+        dragReleaseEpsilon,
+      });
 
       applyDragPosition(releasePosition);
 
       dispatchAction({
         type: "END_DRAG",
         fromVirtualIndex: releasePosition,
-        targetIndex,
-        targetVirtualIndex,
-        isSnap:
-          isSnap ||
-          Math.abs(targetVirtualIndex - releasePosition) < dragReleaseEpsilon,
+        targetIndex: releaseTarget.targetIndex,
+        targetVirtualIndex: releaseTarget.targetVirtualIndex,
+        isSnap: releaseTarget.isSnap,
         pointerReleaseVelocity: resolveVirtualPointerVelocity(
           payload.pointerReleaseVelocity,
         ),

@@ -115,6 +115,47 @@ export const getRenderWindow = (
   };
 };
 
+export const getRenderMovementSegment = (
+  fromVirtualIndex: number,
+  toVirtualIndex: number,
+  layout: CarouselLayout,
+): RenderWindow => ({
+  start: Math.floor(Math.min(fromVirtualIndex, toVirtualIndex)),
+  end:
+    Math.ceil(Math.max(fromVirtualIndex, toVirtualIndex)) +
+    layout.clampedVisible -
+    1,
+});
+
+export const containsRenderWindow = (
+  renderWindow: RenderWindow,
+  containedWindow: RenderWindow,
+) =>
+  renderWindow.start <= containedWindow.start &&
+  renderWindow.end >= containedWindow.end;
+
+export const expandRenderWindow = (
+  currentWindow: RenderWindow,
+  nextWindow: RenderWindow,
+): RenderWindow => ({
+  start: Math.min(currentWindow.start, nextWindow.start),
+  end: Math.max(currentWindow.end, nextWindow.end),
+});
+
+export const getCarouselBoundaryState = (
+  targetIndex: number,
+  layout: CarouselLayout,
+) => {
+  if (!layout.isFinite) {
+    return { isAtStart: false, isAtEnd: false };
+  }
+
+  return {
+    isAtStart: targetIndex <= 0,
+    isAtEnd: targetIndex >= layout.pageCount - 1,
+  };
+};
+
 export const getReconciledPageIndex = (
   currentIndex: number,
   prevLayout: CarouselLayout,

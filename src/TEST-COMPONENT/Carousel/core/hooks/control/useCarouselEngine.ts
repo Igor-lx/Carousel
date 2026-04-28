@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import type { Action, ReducerAction, StepAction } from "../../model/reducer";
+import type { Action, ReducerAction } from "../../model/reducer";
 import type { CarouselRepeatedClickSettings } from "../../model/diagnostic";
 import type { CarouselLayout } from "../../utilities";
 
@@ -17,9 +17,6 @@ interface UseCarouselEngineResult {
   finalizeStep: () => void;
 }
 
-const isStepAction = (action: Action): action is StepAction =>
-  action.type === "MOVE" || action.type === "GO_TO";
-
 export function useCarouselEngine({
   dispatch,
   isMoving,
@@ -30,12 +27,20 @@ export function useCarouselEngine({
 }: UseCarouselEngineProps): UseCarouselEngineResult {
   const dispatchAction = useCallback(
     (action: Action) => {
-      if (isStepAction(action)) {
+      if (action.type === "MOVE") {
         dispatch({
           ...action,
           layout,
-          dragReleaseEpsilon,
           repeatedClickSettings,
+          isInstant: Boolean(isInstantMode || action.isInstant),
+        });
+        return;
+      }
+
+      if (action.type === "GO_TO") {
+        dispatch({
+          ...action,
+          layout,
           isInstant: Boolean(isInstantMode || action.isInstant),
         });
         return;
@@ -46,7 +51,6 @@ export function useCarouselEngine({
           ...action,
           layout,
           dragReleaseEpsilon,
-          repeatedClickSettings,
           isInstant: Boolean(isInstantMode || action.isInstant),
         });
         return;
@@ -55,8 +59,6 @@ export function useCarouselEngine({
       dispatch({
         ...action,
         layout,
-        dragReleaseEpsilon,
-        repeatedClickSettings,
       });
     },
     [dispatch, dragReleaseEpsilon, isInstantMode, layout, repeatedClickSettings],
