@@ -66,9 +66,17 @@ const formatNoticeEntryValue = (value: unknown, unit?: string) => {
   return `${formattedValue}${unit}`;
 };
 
+const formatNoticeSentence = (message: string) => {
+  const trimmed = message.trim();
+
+  if (!trimmed) return "";
+
+  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+};
+
 export const formatNoticeEntry = (entry: DevNoticeEntry) => {
   if (entry.message) {
-    return `- ${entry.field}: ${entry.message}`;
+    return `- ${entry.field}: ${formatNoticeSentence(entry.message)}`;
   }
 
   const transition =
@@ -76,7 +84,10 @@ export const formatNoticeEntry = (entry: DevNoticeEntry) => {
     `${formatNoticeEntryValue(entry.normalized, entry.unit)}`;
 
   if (entry.reason) {
-    return `- ${entry.field}: ${transition} (${entry.reason})`;
+    return (
+      `- ${entry.field}: ${transition}. ` +
+      formatNoticeSentence(entry.reason)
+    );
   }
 
   return `- ${entry.field}: ${transition}`;
@@ -107,7 +118,9 @@ const publishGroupedDevNotice = ({
 
   previousSignatureRef.current = signature;
 
-  console.warn(`[${scope}] ${summary}\n${entries.map(formatNoticeEntry).join("\n")}`);
+  console.warn(
+    `${scope}: ${summary}\n${entries.map(formatNoticeEntry).join("\n")}`,
+  );
 };
 
 export function useGroupedDevNotice({

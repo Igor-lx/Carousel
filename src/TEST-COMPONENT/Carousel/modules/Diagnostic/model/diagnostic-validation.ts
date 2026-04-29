@@ -3,8 +3,51 @@ export const DURATION_UNIT = "ms";
 export const isFiniteNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 
+export const formatDiagnosticValue = (value: unknown, unit?: string) => {
+  if (typeof value === "number") {
+    const formattedNumber = String(value);
+
+    return unit && Number.isFinite(value)
+      ? `${formattedNumber}${unit}`
+      : formattedNumber;
+  }
+
+  if (typeof value === "string") {
+    return `"${value}"`;
+  }
+
+  if (typeof value === "undefined") {
+    return "undefined";
+  }
+
+  if (value === null) {
+    return "null";
+  }
+
+  try {
+    return JSON.stringify(value) ?? String(value);
+  } catch {
+    return String(value);
+  }
+};
+
+export const getDiagnosticFallbackReason = (
+  fallbackValue: unknown,
+  unit?: string,
+) =>
+  `Replaced with diagnostic fallback: ${formatDiagnosticValue(
+    fallbackValue,
+    unit,
+  )}`;
+
+export const getAllowedRangeReason = (
+  minValue: number,
+  maxValue: number,
+  label = "allowed range",
+) => `Clamped to ${label}: ${minValue}..${maxValue}`;
+
 export const getInternalConstantNoticeMessage = (reason: string) =>
-  `${reason}; Diagnostic reports this internal constant but does not normalize runtime behavior`;
+  `Invalid internal config. Runtime keeps the current value. ${reason}`;
 
 export const isPositiveFiniteNumber = (value: unknown): value is number =>
   isFiniteNumber(value) && value > 0;
@@ -26,16 +69,16 @@ export const isPositiveIntegerAtLeast = (
 export const joinReasons = (...reasons: Array<string | undefined>) => {
   const definedReasons = reasons.filter(Boolean);
 
-  return definedReasons.length > 0 ? definedReasons.join("; ") : undefined;
+  return definedReasons.length > 0 ? definedReasons.join(". ") : undefined;
 };
 
 export const getPositiveIntegerReason = (value: unknown) => {
   if (!isFiniteNumber(value) || value <= 0) {
-    return "expected a finite positive integer";
+    return "Expected a positive integer";
   }
 
   if (!Number.isInteger(value)) {
-    return "coerced to a positive integer";
+    return "Rounded down to a positive integer";
   }
 
   return undefined;
@@ -43,16 +86,15 @@ export const getPositiveIntegerReason = (value: unknown) => {
 
 export const getPositiveDurationReason = (value: unknown) =>
   !isFiniteNumber(value) || value <= 0
-    ? `expected a finite positive duration in ${DURATION_UNIT}`
+    ? "Expected a positive duration"
     : undefined;
 
 export const getNonNegativeDurationReason = (value: unknown) =>
   !isFiniteNumber(value) || value < 0
-    ? `expected a finite non-negative duration in ${DURATION_UNIT}`
+    ? "Expected a non-negative duration"
     : undefined;
 
 export const getNonEmptyStringReason = (value: unknown) =>
   typeof value === "string" && value.trim()
     ? undefined
-    : "expected a non-empty string";
-
+    : "Expected a non-empty string";

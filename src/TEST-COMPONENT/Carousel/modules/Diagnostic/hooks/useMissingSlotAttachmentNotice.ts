@@ -2,9 +2,9 @@ import { useMemo } from "react";
 import { type DevNoticeEntry, useGroupedDevNotice } from "../../../../../shared";
 import type { CarouselSlotAttachmentNoticeInput } from "../../../core/model/diagnostic";
 
-const MISSING_SLOT_ATTACHMENT_NOTICE_SCOPE = "useMissingSlotAttachmentNotice";
+const MISSING_SLOT_ATTACHMENT_NOTICE_SCOPE = "Carousel modules";
 const MISSING_SLOT_ATTACHMENT_NOTICE_SUMMARY =
-  "Enabled carousel modules are missing slot attachments.";
+  "Enabled modules are not mounted.";
 
 const EMPTY_NOTICE_ENTRIES: DevNoticeEntry[] = [];
 
@@ -23,17 +23,17 @@ export function useMissingSlotAttachmentNotice({
 
     if (isControlsOn && !hasControlsSlot) {
       nextEntries.push({
-        field: "controls module",
+        field: "controls",
         message:
-          "`isControlsOn` is enabled, but no module is attached to the `controls` slot. Mount `<Controls />` or disable `isControlsOn`.",
+          "`isControlsOn` is enabled, but the `controls` slot is empty. Mount `<Controls />` or disable `isControlsOn`.",
       });
     }
 
     if (isPaginationOn && !hasPaginationSlot) {
       nextEntries.push({
-        field: "pagination module",
+        field: "pagination",
         message:
-          "`isPaginationOn` is enabled, but no module is attached to the `pagination` slot. Mount `<Pagination />` or disable `isPaginationOn`.",
+          "`isPaginationOn` is enabled, but the `pagination` slot is empty. Mount `<Pagination />` or disable `isPaginationOn`.",
       });
     }
 

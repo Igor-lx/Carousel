@@ -55,7 +55,7 @@ import {
 
 const Carousel = memo((props: CarouselProps) => {
   const {
-    slidesData = [],
+    slidesData,
     visibleSlidesNr,
     durationAutoplay,
     durationStep,
@@ -203,16 +203,15 @@ const Carousel = memo((props: CarouselProps) => {
     readCurrentPosition,
   });
 
-  const { startDrag, updateDrag, finishDrag } =
-    useCarouselDragController({
-      dispatchAction,
-      enabled: canSlide,
-      measureRef: containerRef,
-      layout,
-      baseVirtualIndex: virtualIndex,
-      readCurrentPosition,
-      applyDragPosition: applyTrackPosition,
-    });
+  const { startDrag, updateDrag, finishDrag } = useCarouselDragController({
+    dispatchAction,
+    enabled: canSlide,
+    measureRef: containerRef,
+    layout,
+    baseVirtualIndex: virtualIndex,
+    readCurrentPosition,
+    applyDragPosition: applyTrackPosition,
+  });
 
   const { isDragging, isInteracting, dragListeners } = useCarouselGesture({
     startDrag,
@@ -228,7 +227,7 @@ const Carousel = memo((props: CarouselProps) => {
       onMove: move,
       onGoTo: goTo,
       onClick: onSlideClick,
-  });
+    });
 
   const isAutoplayPaused = !isVisible || isInteracting || isMoving;
   const { handleHoverChange } = useCarouselAutoPlay({
@@ -291,6 +290,7 @@ const Carousel = memo((props: CarouselProps) => {
     pageCount,
     isFinite: layout.isFinite,
     shouldSyncMotion: shouldSyncExternalControlMotion,
+    shouldReportInvalidHandle: Boolean(slots.diagnostic),
   });
 
   const slideStyle = useMemo(

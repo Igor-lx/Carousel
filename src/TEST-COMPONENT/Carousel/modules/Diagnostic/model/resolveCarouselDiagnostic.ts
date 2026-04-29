@@ -54,15 +54,15 @@ export const resolveCarouselDiagnostic = (
       motionSettings: motionResolution.settings,
     },
     correctionEntries: [
-      ...layoutResolution.corrections,
+      ...propResolution.corrections,
       ...defaultPropResolution.corrections,
-      ...repeatedClickResolution.corrections,
+      ...layoutResolution.corrections,
       ...interactionResolution.corrections,
+      ...repeatedClickResolution.corrections,
       ...dragConfigResolution.corrections,
       ...releaseMotionConfigResolution.corrections,
       ...dragReleaseEpsilonResolution.corrections,
       ...motionResolution.corrections,
-      ...propResolution.corrections,
     ],
   };
 };

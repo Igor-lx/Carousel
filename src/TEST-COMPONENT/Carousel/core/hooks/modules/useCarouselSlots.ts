@@ -4,7 +4,6 @@ import {
   resolveSlots,
   useExternalRefBridge,
 } from "../../../../../shared";
-import type { CarouselExternalControlHandle } from "../../external-control";
 import {
   CAROUSEL_SLOTS,
   type CarouselSlotName,
@@ -13,7 +12,7 @@ import {
 type CarouselSlots = Record<CarouselSlotName, ReactNode>;
 
 interface UseCarouselSlotsResult {
-  externalControlRef: RefObject<CarouselExternalControlHandle | null>;
+  externalControlRef: RefObject<unknown | null>;
   slots: CarouselSlots;
 }
 
@@ -21,7 +20,7 @@ export function useCarouselSlots(children: ReactNode): UseCarouselSlotsResult {
   const {
     instanceRef: externalControlRef,
     connectedChildren: childrenWithExternalControlRef,
-  } = useExternalRefBridge<CarouselExternalControlHandle>(children);
+  } = useExternalRefBridge<unknown>(children);
 
   const slots = useMemo(
     () => resolveSlots(childrenWithExternalControlRef, CAROUSEL_SLOTS),

@@ -24,7 +24,7 @@ export const resolveLayoutSettings = () => {
       field: "RENDER_WINDOW_BUFFER_MULTIPLIER",
       provided: RENDER_WINDOW_BUFFER_MULTIPLIER,
       message: getInternalConstantNoticeMessage(
-        `expected an integer greater than or equal to ${MIN_RENDER_WINDOW_BUFFER_MULTIPLIER}`,
+        `Expected an integer >= ${MIN_RENDER_WINDOW_BUFFER_MULTIPLIER}`,
       ),
     });
   }

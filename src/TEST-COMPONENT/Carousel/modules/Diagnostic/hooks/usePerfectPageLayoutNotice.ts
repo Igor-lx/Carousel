@@ -2,9 +2,9 @@ import { useMemo } from "react";
 import { type DevNoticeEntry, useGroupedDevNotice } from "../../../../../shared";
 import type { CarouselPerfectPageLayoutNoticeInput } from "../../../core/model/diagnostic";
 
-export const PERFECT_PAGE_LAYOUT_NOTICE_SCOPE = "usePerfectPageLayoutNotice";
+export const PERFECT_PAGE_LAYOUT_NOTICE_SCOPE = "Carousel layout";
 export const PERFECT_PAGE_LAYOUT_NOTICE_SUMMARY =
-  "Perfect page layout conditions were not met.";
+  "Slide pages are uneven.";
 
 const EMPTY_NOTICE_ENTRIES: DevNoticeEntry[] = [];
 
@@ -21,34 +21,34 @@ export function usePerfectPageLayoutNotice({
     }
 
     const mismatchMessage =
-      `slide count (${rawLength}) is not evenly divisible by visibleSlidesNr (${visibleSlidesCount}).`;
+      `${rawLength} slides cannot be split evenly into pages of ${visibleSlidesCount}`;
 
     if (!didExtendLayout) {
       return [
         {
-          field: "perfect page layout",
+          field: "page layout",
           message:
-            `${mismatchMessage} Pagination will keep fixed page steps, while the rendered window cycles through raw slides and may drift between groups.`,
+            `${mismatchMessage}. Pagination uses fixed page steps, so raw slide groups may drift.`,
         },
         {
           field: "suggestion",
           message:
-            "Enable isPagePaddingOn to extend the layout to full pages and keep pagination deterministic.",
+            "Enable isPagePaddingOn to pad the final page.",
         },
       ];
     }
 
     return [
       {
-        field: "perfect page layout",
+        field: "page layout",
         message: mismatchMessage,
       },
       {
-        field: "extended page layout",
+        field: "padded page layout",
         provided: rawLength,
         normalized: extendedLength,
         reason:
-          `appended ${extendedLength - rawLength} slide clone(s) from the start of slidesData to keep pagination deterministic`,
+          `Added ${extendedLength - rawLength} clone(s) from the start of slidesData to complete the final page`,
       },
     ];
   }, [

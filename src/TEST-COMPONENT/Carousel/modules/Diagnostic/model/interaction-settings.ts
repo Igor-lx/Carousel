@@ -11,14 +11,54 @@ import {
 } from "./constraints";
 import {
   DURATION_UNIT,
+  getAllowedRangeReason,
+  getDiagnosticFallbackReason,
   getNonNegativeDurationReason,
   isFiniteNumber,
+  joinReasons,
 } from "./diagnostic-validation";
 import {
   normalizeAutoplayPaginationFactor,
   normalizeNonNegativeNumber,
   normalizeVisibilityThreshold,
 } from "./normalization";
+
+const getNonNegativeDurationFallbackReason = (
+  value: unknown,
+  fallbackValue: number,
+) =>
+  joinReasons(
+    getNonNegativeDurationReason(value),
+    !isFiniteNumber(value) || value < 0
+      ? getDiagnosticFallbackReason(fallbackValue, DURATION_UNIT)
+      : undefined,
+  );
+
+const getVisibilityThresholdReason = (value: unknown) =>
+  isFiniteNumber(value)
+    ? getAllowedRangeReason(
+        MIN_VISIBILITY_THRESHOLD,
+        MAX_VISIBILITY_THRESHOLD,
+        "IntersectionObserver threshold range",
+      )
+    : joinReasons(
+        "Expected a finite visibility threshold",
+        getDiagnosticFallbackReason(
+          DIAGNOSTIC_FALLBACK_INTERACTION_SETTINGS.visibilityThreshold,
+        ),
+      );
+
+const getAutoplayPaginationFactorReason = (value: unknown) =>
+  isFiniteNumber(value)
+    ? `Clamped to strict internal range: ${Number.EPSILON}..${
+        1 - Number.EPSILON
+      } so pagination sync stays inside the motion duration`
+    : joinReasons(
+        "Expected a finite pagination factor",
+        getDiagnosticFallbackReason(
+          DIAGNOSTIC_FALLBACK_INTERACTION_SETTINGS.autoplayPaginationFactor,
+        ),
+      );
 
 export const resolveInteractionSettings = () => {
   const hoverPauseDelay = normalizeNonNegativeNumber(
@@ -41,7 +81,10 @@ export const resolveInteractionSettings = () => {
       provided: HOVER_PAUSE_DELAY,
       normalized: hoverPauseDelay,
       unit: DURATION_UNIT,
-      reason: getNonNegativeDurationReason(HOVER_PAUSE_DELAY),
+      reason: getNonNegativeDurationFallbackReason(
+        HOVER_PAUSE_DELAY,
+        DIAGNOSTIC_FALLBACK_INTERACTION_SETTINGS.hoverPauseDelay,
+      ),
     });
   }
 
@@ -50,9 +93,7 @@ export const resolveInteractionSettings = () => {
       field: "VISIBILITY_THRESHOLD",
       provided: VISIBILITY_THRESHOLD,
       normalized: visibilityThreshold,
-      reason: isFiniteNumber(VISIBILITY_THRESHOLD)
-        ? `clamped to [${MIN_VISIBILITY_THRESHOLD}, ${MAX_VISIBILITY_THRESHOLD}]`
-        : "expected a finite threshold between 0 and 1",
+      reason: getVisibilityThresholdReason(VISIBILITY_THRESHOLD),
     });
   }
 
@@ -61,7 +102,7 @@ export const resolveInteractionSettings = () => {
       field: "AUTOPLAY_PAGINATION_FACTOR",
       provided: AUTOPLAY_PAGINATION_FACTOR,
       normalized: autoplayPaginationFactor,
-      reason: "expected a finite factor strictly between 0 and 1",
+      reason: getAutoplayPaginationFactorReason(AUTOPLAY_PAGINATION_FACTOR),
     });
   }
 

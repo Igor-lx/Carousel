@@ -13,6 +13,7 @@ import {
 } from "./constraints";
 import {
   DURATION_UNIT,
+  formatDiagnosticValue,
   getNonEmptyStringReason,
   getPositiveDurationReason,
   getPositiveIntegerReason,
@@ -36,55 +37,151 @@ interface RuntimePropDiagnosticFieldNames {
   errAltPlaceholder: string;
 }
 
+type PropFallbackSource =
+  | "resolved-default-prop"
+  | "diagnostic-safe-default";
+
+const getPropFallbackReason = (
+  fallbackValue: unknown,
+  unit: string | undefined,
+  fallbackSource: PropFallbackSource,
+) =>
+  fallbackSource === "resolved-default-prop"
+    ? `Replaced with resolved default prop value: ${formatDiagnosticValue(
+        fallbackValue,
+        unit,
+      )}`
+    : `Replaced with diagnostic safe-default constant: ${formatDiagnosticValue(
+        fallbackValue,
+        unit,
+      )}`;
+
 const getAutoplayDurationReason = ({
   source,
   normalizedAutoplayDuration,
   reconciledAutoplayDuration,
   stepDuration,
+  fallbackDuration,
+  fallbackSource,
 }: {
   source: unknown;
   normalizedAutoplayDuration: number;
   reconciledAutoplayDuration: number;
   stepDuration: number;
+  fallbackDuration: number;
+  fallbackSource: PropFallbackSource;
 }) =>
   joinReasons(
     getPositiveDurationReason(source),
+    (!isFiniteNumber(source) || source <= 0)
+      ? getPropFallbackReason(
+          fallbackDuration,
+          DURATION_UNIT,
+          fallbackSource,
+        )
+      : undefined,
     reconciledAutoplayDuration > normalizedAutoplayDuration &&
       reconciledAutoplayDuration === stepDuration
-      ? `raised to durationStep (${stepDuration}${DURATION_UNIT})`
+      ? `Raised to match durationStep: ${stepDuration}${DURATION_UNIT} so autoplay is not faster than step motion`
       : undefined,
   );
 
-const getSafeAutoplayIntervalReason = (value: unknown) =>
-  !isFiniteNumber(value) || value < MIN_AUTOPLAY_INTERVAL
-    ? `expected a finite interval of at least ${MIN_AUTOPLAY_INTERVAL}${DURATION_UNIT}`
-    : undefined;
+const getSafeAutoplayIntervalReason = (
+  value: unknown,
+  fallbackInterval: number,
+  fallbackSource: PropFallbackSource,
+) =>
+  joinReasons(
+    !isFiniteNumber(value) || value <= 0
+      ? "Expected a positive interval"
+      : undefined,
+    !isFiniteNumber(value) || value <= 0
+      ? getPropFallbackReason(
+          fallbackInterval,
+          DURATION_UNIT,
+          fallbackSource,
+        )
+      : undefined,
+    isFiniteNumber(value) && value > 0 && value < MIN_AUTOPLAY_INTERVAL
+      ? `Raised to minimum timer interval: ${MIN_AUTOPLAY_INTERVAL}${DURATION_UNIT} to keep autoplay timers valid`
+      : undefined,
+  );
 
 const getStepDurationReason = ({
   source,
   normalizedStepDuration,
   reconciledStepDuration,
+  fallbackDuration,
+  fallbackSource,
 }: {
   source: unknown;
   normalizedStepDuration: number;
   reconciledStepDuration: number;
+  fallbackDuration: number;
+  fallbackSource: PropFallbackSource;
 }) =>
   joinReasons(
     getPositiveDurationReason(source),
+    (!isFiniteNumber(source) || source <= 0)
+      ? getPropFallbackReason(
+          fallbackDuration,
+          DURATION_UNIT,
+          fallbackSource,
+        )
+      : undefined,
     reconciledStepDuration > normalizedStepDuration
-      ? `raised to durationJump (${reconciledStepDuration}${DURATION_UNIT})`
+      ? `Raised to match durationJump: ${reconciledStepDuration}${DURATION_UNIT} so step motion is not faster than jump motion`
       : undefined,
   );
 
 const getVisibleSlidesCountReason = (
   value: unknown,
+  fallbackValue: number,
   minVisibleSlides: number,
+  fallbackSource: PropFallbackSource,
 ) =>
   joinReasons(
     getPositiveIntegerReason(value),
-    isFiniteNumber(value) && value < minVisibleSlides
-      ? `must be greater than or equal to minVisibleSlides (${minVisibleSlides})`
+    (!isFiniteNumber(value) || value <= 0)
+      ? getPropFallbackReason(fallbackValue, undefined, fallbackSource)
       : undefined,
+    isFiniteNumber(value) &&
+      value > 0 &&
+      Math.floor(value) < minVisibleSlides
+      ? `Raised to minimum layout-safe value: ${minVisibleSlides} to keep page math valid`
+      : undefined,
+  );
+
+const getPositiveDurationNormalizationReason = (
+  value: unknown,
+  fallbackDuration: number,
+  fallbackSource: PropFallbackSource,
+) =>
+  joinReasons(
+    getPositiveDurationReason(value),
+    (!isFiniteNumber(value) || value <= 0)
+      ? getPropFallbackReason(
+          fallbackDuration,
+          DURATION_UNIT,
+          fallbackSource,
+        )
+      : undefined,
+  );
+
+const getErrorAltPlaceholderReason = (
+  value: unknown,
+  normalizedPlaceholder: string,
+  fallbackSource: PropFallbackSource,
+) =>
+  joinReasons(
+    getNonEmptyStringReason(value),
+    typeof value === "string" && value.trim()
+      ? undefined
+      : getPropFallbackReason(
+          normalizedPlaceholder,
+          undefined,
+          fallbackSource,
+        ),
   );
 
 const getUnreasonablyHighJumpDurationMessage = ({
@@ -96,11 +193,10 @@ const getUnreasonablyHighJumpDurationMessage = ({
   stepDuration: number;
   autoplayDuration: number;
 }) =>
-  `durationJump exceeds reasonable UX threshold (${MAX_REASONABLE_JUMP_DURATION}${DURATION_UNIT}); ` +
-  `this is not invalid, but it is higher than the expected visual/behavioral range. ` +
-  `To preserve the invariant, durationStep resolved to ${stepDuration}${DURATION_UNIT} and ` +
-  `durationAutoplay resolved to ${autoplayDuration}${DURATION_UNIT} together with durationJump=${jumpDuration}${DURATION_UNIT}, ` +
-  `so the resulting motion may feel unexpectedly slow.`;
+  `durationJump is unusually high: ${jumpDuration}${DURATION_UNIT}. ` +
+  `Expected at most ${MAX_REASONABLE_JUMP_DURATION}${DURATION_UNIT}. ` +
+  `Motion is still valid, but durationStep resolved to ${stepDuration}${DURATION_UNIT} ` +
+  `and durationAutoplay resolved to ${autoplayDuration}${DURATION_UNIT} to preserve timing order.`;
 
 const createDiagnosticPropFallbackSettings = (
   minVisibleSlides: number,
@@ -125,6 +221,7 @@ export const resolveRuntimePropSettings = (
   fallbackSettings: CarouselRuntimePropSettings,
   fieldNames: RuntimePropDiagnosticFieldNames,
   minVisibleSlides: number,
+  fallbackSource: PropFallbackSource = "resolved-default-prop",
 ) => {
   const corrections: DevNoticeEntry[] = [];
 
@@ -144,7 +241,9 @@ export const resolveRuntimePropSettings = (
       normalized: visibleSlidesCount,
       reason: getVisibleSlidesCountReason(
         visibleSlidesSource,
+        fallbackSettings.visibleSlidesCount,
         minVisibleSlides,
+        fallbackSource,
       ),
     });
   }
@@ -193,6 +292,8 @@ export const resolveRuntimePropSettings = (
         normalizedAutoplayDuration,
         reconciledAutoplayDuration: autoplayDuration,
         stepDuration,
+        fallbackDuration: fallbackSettings.autoplayDuration,
+        fallbackSource,
       }),
     });
   }
@@ -207,6 +308,8 @@ export const resolveRuntimePropSettings = (
         source: stepDurationSource,
         normalizedStepDuration,
         reconciledStepDuration: stepDuration,
+        fallbackDuration: fallbackSettings.stepDuration,
+        fallbackSource,
       }),
     });
   }
@@ -217,7 +320,11 @@ export const resolveRuntimePropSettings = (
       provided: jumpDurationSource,
       normalized: jumpDuration,
       unit: DURATION_UNIT,
-      reason: getPositiveDurationReason(jumpDurationSource),
+      reason: getPositiveDurationNormalizationReason(
+        jumpDurationSource,
+        fallbackSettings.jumpDuration,
+        fallbackSource,
+      ),
     });
   }
 
@@ -248,7 +355,11 @@ export const resolveRuntimePropSettings = (
       provided: autoplayIntervalSource,
       normalized: autoplayInterval,
       unit: DURATION_UNIT,
-      reason: getSafeAutoplayIntervalReason(autoplayIntervalSource),
+      reason: getSafeAutoplayIntervalReason(
+        autoplayIntervalSource,
+        fallbackSettings.autoplayInterval,
+        fallbackSource,
+      ),
     });
   }
 
@@ -265,7 +376,11 @@ export const resolveRuntimePropSettings = (
       field: fieldNames.errAltPlaceholder,
       provided: errorAltPlaceholderSource,
       normalized: errorAltPlaceholder,
-      reason: getNonEmptyStringReason(errorAltPlaceholderSource),
+      reason: getErrorAltPlaceholderReason(
+        errorAltPlaceholderSource,
+        errorAltPlaceholder,
+        fallbackSource,
+      ),
     });
   }
 
@@ -302,4 +417,5 @@ export const resolveDefaultPropSettings = () =>
       errAltPlaceholder: "DEFAULT_SETTINGS.errAltPlaceholder",
     },
     MIN_VISIBLE_SLIDES,
+    "diagnostic-safe-default",
   );

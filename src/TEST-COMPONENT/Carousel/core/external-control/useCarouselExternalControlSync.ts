@@ -1,17 +1,22 @@
-import { useRef, type RefObject } from "react";
+import { useCallback, useRef, type RefObject } from "react";
 
 import { useIsomorphicLayoutEffect } from "../../../../shared";
 import { getShortestCyclicDistance } from "../utilities";
-import type { CarouselExternalControlHandle } from "./types";
+import { isCarouselExternalControlHandle } from "./types";
 
 interface UseCarouselExternalControlSyncProps {
-  externalControlRef: RefObject<CarouselExternalControlHandle | null>;
+  externalControlRef: RefObject<unknown | null>;
   motionDuration: number;
   targetPageIndex: number;
   pageCount: number;
   isFinite: boolean;
   shouldSyncMotion: boolean;
+  shouldReportInvalidHandle: boolean;
 }
+
+const INVALID_EXTERNAL_CONTROL_HANDLE_MESSAGE =
+  "Carousel external control: Invalid ref handle. The selected child must expose " +
+  "moveRight, moveLeft, and setDuration.";
 
 const getExternalControlStepDirection = ({
   previousTargetPageIndex,
@@ -48,12 +53,39 @@ export function useCarouselExternalControlSync({
   pageCount,
   isFinite,
   shouldSyncMotion,
+  shouldReportInvalidHandle,
 }: UseCarouselExternalControlSyncProps): void {
   const previousTargetPageIndexRef = useRef<number | null>(null);
+  const lastReportedInvalidHandleRef = useRef<unknown | null>(null);
+
+  const getExternalControlHandle = useCallback(() => {
+    const candidate = externalControlRef.current;
+
+    if (candidate === null) {
+      lastReportedInvalidHandleRef.current = null;
+      return null;
+    }
+
+    if (isCarouselExternalControlHandle(candidate)) {
+      lastReportedInvalidHandleRef.current = null;
+      return candidate;
+    }
+
+    if (
+      import.meta.env.DEV &&
+      shouldReportInvalidHandle &&
+      lastReportedInvalidHandleRef.current !== candidate
+    ) {
+      lastReportedInvalidHandleRef.current = candidate;
+      console.warn(INVALID_EXTERNAL_CONTROL_HANDLE_MESSAGE, candidate);
+    }
+
+    return null;
+  }, [externalControlRef, shouldReportInvalidHandle]);
 
   useIsomorphicLayoutEffect(() => {
-    externalControlRef.current?.setDuration(motionDuration);
-  }, [motionDuration, externalControlRef]);
+    getExternalControlHandle()?.setDuration(motionDuration);
+  }, [getExternalControlHandle, motionDuration]);
 
   useIsomorphicLayoutEffect(() => {
     const previousTargetPageIndex = previousTargetPageIndexRef.current;
@@ -71,15 +103,15 @@ export function useCarouselExternalControlSync({
     });
 
     if (direction > 0) {
-      externalControlRef.current?.moveRight?.();
+      getExternalControlHandle()?.moveRight();
       return;
     }
 
     if (direction < 0) {
-      externalControlRef.current?.moveLeft?.();
+      getExternalControlHandle()?.moveLeft();
     }
   }, [
-    externalControlRef,
+    getExternalControlHandle,
     isFinite,
     pageCount,
     shouldSyncMotion,

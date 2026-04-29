@@ -7,10 +7,10 @@ import { resolveCarouselDiagnostic } from "./model/resolveCarouselDiagnostic";
 import { useMissingSlotAttachmentNotice } from "./hooks/useMissingSlotAttachmentNotice";
 import { usePerfectPageLayoutNotice } from "./hooks/usePerfectPageLayoutNotice";
 
-const DIAGNOSTIC_NOTICE_SCOPE = "CarouselDiagnostic";
+const DIAGNOSTIC_NOTICE_SCOPE = "Carousel diagnostics";
 const DIAGNOSTIC_NOTICE_SUMMARY =
-  "Carousel diagnostic notices detected.";
-const DIAGNOSTIC_MODE_BANNER = "DIAGNOSTIC MODE ON";
+  "Runtime settings were normalized.";
+const DIAGNOSTIC_MODE_BANNER = "Carousel diagnostics enabled";
 
 const CarouselDiagnosticView = memo(() => {
   const {

@@ -183,7 +183,7 @@ export const createCarouselMotionSegment = ({
       from: nowState.position,
       to: targetVirtualIndex,
       startedAt,
-      currentVelocity: gestureReleaseProfileVelocity,
+      currentVelocity: nowState.velocity,
       peakVelocity: gestureReleaseProfileVelocity,
       endVelocity: 0,
       accelerationDistanceShare: 0,

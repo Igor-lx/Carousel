@@ -18,6 +18,8 @@ import {
 } from "./constraints";
 import {
   DURATION_UNIT,
+  getAllowedRangeReason,
+  getDiagnosticFallbackReason,
   getInternalConstantNoticeMessage,
   getNonNegativeDurationReason,
   getPositiveDurationReason,
@@ -25,6 +27,7 @@ import {
   isFiniteNumberInRange,
   isNonNegativeFiniteNumber,
   isPositiveFiniteNumber,
+  joinReasons,
 } from "./diagnostic-validation";
 import {
   normalizeNonNegativeNumber,
@@ -32,6 +35,59 @@ import {
   normalizePositiveNumber,
   normalizeRepeatedClickProfileShare,
 } from "./normalization";
+
+const getNonNegativeConfigFallbackReason = (
+  value: unknown,
+  fallbackValue: number,
+  unit?: string,
+) =>
+  joinReasons(
+    !isFiniteNumber(value) || value < 0
+      ? "Expected a finite non-negative value"
+      : undefined,
+    !isFiniteNumber(value) || value < 0
+      ? getDiagnosticFallbackReason(fallbackValue, unit)
+      : undefined,
+  );
+
+const getPositiveConfigFallbackReason = (
+  value: unknown,
+  fallbackValue: number,
+  unit?: string,
+) =>
+  joinReasons(
+    !isFiniteNumber(value) || value <= 0
+      ? "Expected a finite positive value"
+      : undefined,
+    !isFiniteNumber(value) || value <= 0
+      ? getDiagnosticFallbackReason(fallbackValue, unit)
+      : undefined,
+  );
+
+const getReleaseDecelerationShareReason = (value: unknown) =>
+  isFiniteNumber(value)
+    ? getAllowedRangeReason(
+        MIN_REPEATED_CLICK_PROFILE_SHARE,
+        MAX_REPEATED_CLICK_PROFILE_SHARE,
+        "release deceleration share range",
+      )
+    : joinReasons(
+        "Expected a finite release deceleration share",
+        getDiagnosticFallbackReason(
+          DIAGNOSTIC_FALLBACK_RELEASE_MOTION_CONFIG.releaseDecelerationDistanceShare,
+        ),
+      );
+
+const getPositiveDurationFallbackReason = (
+  value: unknown,
+  fallbackValue: number,
+) =>
+  joinReasons(
+    getPositiveDurationReason(value),
+    !isFiniteNumber(value) || value <= 0
+      ? getDiagnosticFallbackReason(fallbackValue, DURATION_UNIT)
+      : undefined,
+  );
 
 export const resolveDragConfig = () => {
   const cooldownMs = normalizeNonNegativeNumber(
@@ -73,7 +129,13 @@ export const resolveDragConfig = () => {
       provided: CAROUSEL_DRAG_CONFIG.COOLDOWN_MS,
       normalized: cooldownMs,
       unit: DURATION_UNIT,
-      reason: getNonNegativeDurationReason(CAROUSEL_DRAG_CONFIG.COOLDOWN_MS),
+      reason: joinReasons(
+        getNonNegativeDurationReason(CAROUSEL_DRAG_CONFIG.COOLDOWN_MS),
+        getDiagnosticFallbackReason(
+          DIAGNOSTIC_FALLBACK_DRAG_CONFIG.COOLDOWN_MS,
+          DURATION_UNIT,
+        ),
+      ),
     });
   }
 
@@ -82,7 +144,7 @@ export const resolveDragConfig = () => {
       field: "CAROUSEL_DRAG_CONFIG.RESISTANCE",
       provided: CAROUSEL_DRAG_CONFIG.RESISTANCE,
       message: getInternalConstantNoticeMessage(
-        "expected a finite value between 0 and 1",
+        "Expected a finite value in 0..1",
       ),
     });
   }
@@ -92,7 +154,7 @@ export const resolveDragConfig = () => {
       field: "CAROUSEL_DRAG_CONFIG.RESISTANCE_CURVATURE",
       provided: CAROUSEL_DRAG_CONFIG.RESISTANCE_CURVATURE,
       message: getInternalConstantNoticeMessage(
-        "expected a finite non-negative value",
+        "Expected a finite non-negative value",
       ),
     });
   }
@@ -102,7 +164,10 @@ export const resolveDragConfig = () => {
       field: "CAROUSEL_DRAG_CONFIG.INTENT_THRESHOLD",
       provided: CAROUSEL_DRAG_CONFIG.INTENT_THRESHOLD,
       normalized: intentThreshold,
-      reason: "expected a finite non-negative value",
+      reason: getNonNegativeConfigFallbackReason(
+        CAROUSEL_DRAG_CONFIG.INTENT_THRESHOLD,
+        DIAGNOSTIC_FALLBACK_DRAG_CONFIG.INTENT_THRESHOLD,
+      ),
     });
   }
 
@@ -111,7 +176,10 @@ export const resolveDragConfig = () => {
       field: "CAROUSEL_DRAG_CONFIG.MAX_VELOCITY",
       provided: CAROUSEL_DRAG_CONFIG.MAX_VELOCITY,
       normalized: maxVelocity,
-      reason: "expected a finite positive value",
+      reason: getPositiveConfigFallbackReason(
+        CAROUSEL_DRAG_CONFIG.MAX_VELOCITY,
+        DIAGNOSTIC_FALLBACK_DRAG_CONFIG.MAX_VELOCITY,
+      ),
     });
   }
 
@@ -126,7 +194,7 @@ export const resolveDragConfig = () => {
       field: "CAROUSEL_DRAG_CONFIG.EMA_ALPHA",
       provided: CAROUSEL_DRAG_CONFIG.EMA_ALPHA,
       message: getInternalConstantNoticeMessage(
-        `expected a finite value between ${MIN_DRAG_EMA_ALPHA} and ${MAX_DRAG_EMA_ALPHA}`,
+        `Expected a finite value in ${MIN_DRAG_EMA_ALPHA}..${MAX_DRAG_EMA_ALPHA}`,
       ),
     });
   }
@@ -136,7 +204,10 @@ export const resolveDragConfig = () => {
       field: "CAROUSEL_DRAG_CONFIG.SWIPE_VELOCITY_LIMIT",
       provided: CAROUSEL_DRAG_CONFIG.SWIPE_VELOCITY_LIMIT,
       normalized: swipeVelocityLimit,
-      reason: "expected a finite non-negative value",
+      reason: getNonNegativeConfigFallbackReason(
+        CAROUSEL_DRAG_CONFIG.SWIPE_VELOCITY_LIMIT,
+        DIAGNOSTIC_FALLBACK_DRAG_CONFIG.SWIPE_VELOCITY_LIMIT,
+      ),
     });
   }
 
@@ -145,7 +216,10 @@ export const resolveDragConfig = () => {
       field: "CAROUSEL_DRAG_CONFIG.QUICK_SWIPE_MIN_OFFSET",
       provided: CAROUSEL_DRAG_CONFIG.QUICK_SWIPE_MIN_OFFSET,
       normalized: quickSwipeMinOffset,
-      reason: "expected a finite non-negative value",
+      reason: getNonNegativeConfigFallbackReason(
+        CAROUSEL_DRAG_CONFIG.QUICK_SWIPE_MIN_OFFSET,
+        DIAGNOSTIC_FALLBACK_DRAG_CONFIG.QUICK_SWIPE_MIN_OFFSET,
+      ),
     });
   }
 
@@ -154,7 +228,10 @@ export const resolveDragConfig = () => {
       field: "CAROUSEL_DRAG_CONFIG.MIN_SWIPE_DISTANCE",
       provided: CAROUSEL_DRAG_CONFIG.MIN_SWIPE_DISTANCE,
       normalized: minSwipeDistance,
-      reason: "expected a finite non-negative value",
+      reason: getNonNegativeConfigFallbackReason(
+        CAROUSEL_DRAG_CONFIG.MIN_SWIPE_DISTANCE,
+        DIAGNOSTIC_FALLBACK_DRAG_CONFIG.MIN_SWIPE_DISTANCE,
+      ),
     });
   }
 
@@ -163,7 +240,10 @@ export const resolveDragConfig = () => {
       field: "CAROUSEL_DRAG_CONFIG.SWIPE_THRESHOLD_RATIO",
       provided: CAROUSEL_DRAG_CONFIG.SWIPE_THRESHOLD_RATIO,
       normalized: swipeThresholdRatio,
-      reason: "expected a finite non-negative value",
+      reason: getNonNegativeConfigFallbackReason(
+        CAROUSEL_DRAG_CONFIG.SWIPE_THRESHOLD_RATIO,
+        DIAGNOSTIC_FALLBACK_DRAG_CONFIG.SWIPE_THRESHOLD_RATIO,
+      ),
     });
   }
 
@@ -200,7 +280,7 @@ export const resolveReleaseMotionConfig = () => {
       field: "CAROUSEL_RELEASE_MOTION_CONFIG.inertiaBoost",
       provided: CAROUSEL_RELEASE_MOTION_CONFIG.inertiaBoost,
       message: getInternalConstantNoticeMessage(
-        `expected a finite value greater than or equal to ${MIN_DRAG_INERTIA_BOOST}`,
+        `Expected a finite value >= ${MIN_DRAG_INERTIA_BOOST}`,
       ),
     });
   }
@@ -214,7 +294,7 @@ export const resolveReleaseMotionConfig = () => {
       field: "CAROUSEL_RELEASE_MOTION_CONFIG.inertiaBoost",
       provided: CAROUSEL_RELEASE_MOTION_CONFIG.inertiaBoost,
       message:
-        "inertiaBoost below 1 is valid, but it intentionally weakens fast-release velocity; runtime still keeps slow releases at MOVE speed",
+        "inertiaBoost below 1 is valid. Fast releases are softened; slow releases still use MOVE speed",
     });
   }
 
@@ -226,11 +306,9 @@ export const resolveReleaseMotionConfig = () => {
       field: "CAROUSEL_RELEASE_MOTION_CONFIG.releaseDecelerationDistanceShare",
       provided: CAROUSEL_RELEASE_MOTION_CONFIG.releaseDecelerationDistanceShare,
       normalized: releaseDecelerationDistanceShare,
-      reason: isFiniteNumber(
+      reason: getReleaseDecelerationShareReason(
         CAROUSEL_RELEASE_MOTION_CONFIG.releaseDecelerationDistanceShare,
-      )
-        ? `clamped to [${MIN_REPEATED_CLICK_PROFILE_SHARE}, ${MAX_REPEATED_CLICK_PROFILE_SHARE}]`
-        : "expected a finite value between 0 and 1",
+      ),
     });
   }
 
@@ -252,7 +330,7 @@ export const resolveDragReleaseEpsilon = () => {
       field: "CAROUSEL_DRAG_RELEASE_EPSILON",
       provided: CAROUSEL_DRAG_RELEASE_EPSILON,
       message: getInternalConstantNoticeMessage(
-        "expected a finite positive value",
+        "Expected a finite positive value",
       ),
     });
   }
@@ -277,7 +355,10 @@ export const resolveMotionSettings = () => {
       provided: SNAP_BACK_DURATION,
       normalized: snapBackDuration,
       unit: DURATION_UNIT,
-      reason: getPositiveDurationReason(SNAP_BACK_DURATION),
+      reason: getPositiveDurationFallbackReason(
+        SNAP_BACK_DURATION,
+        DIAGNOSTIC_FALLBACK_MOTION_SETTINGS.snapBackDuration,
+      ),
     });
   }
 
@@ -286,7 +367,7 @@ export const resolveMotionSettings = () => {
       field: "MOTION_EPSILON",
       provided: MOTION_EPSILON,
       message: getInternalConstantNoticeMessage(
-        "expected a finite positive value",
+        "Expected a finite positive value",
       ),
     });
   }

@@ -16,9 +16,12 @@ import {
   MIN_REPEATED_CLICK_SPEED_MULTIPLIER,
 } from "./constraints";
 import {
+  getAllowedRangeReason,
+  getDiagnosticFallbackReason,
   getInternalConstantNoticeMessage,
   isFiniteNumber,
   isPositiveFiniteNumber,
+  joinReasons,
 } from "./diagnostic-validation";
 import {
   normalizeRepeatedClickDestination,
@@ -29,6 +32,36 @@ const OVERFLOW_PROFILE_DISTANCE_SHARES_NORMALIZED = {
   accelerationDistanceShare: 0.5,
   decelerationDistanceShare: 0.5,
 } as const;
+
+const getRepeatedClickDestinationReason = (
+  value: unknown,
+  fallbackValue: number,
+) =>
+  isFiniteNumber(value)
+    ? getAllowedRangeReason(
+        MIN_REPEATED_CLICK_DESTINATION_POSITION,
+        MAX_REPEATED_CLICK_DESTINATION_POSITION,
+        "destination position range",
+      )
+    : joinReasons(
+        "Expected a finite destination position",
+        getDiagnosticFallbackReason(fallbackValue),
+      );
+
+const getRepeatedClickProfileShareReason = (
+  value: unknown,
+  fallbackValue: number,
+) =>
+  isFiniteNumber(value)
+    ? getAllowedRangeReason(
+        MIN_REPEATED_CLICK_PROFILE_SHARE,
+        MAX_REPEATED_CLICK_PROFILE_SHARE,
+        "motion-profile share range",
+      )
+    : joinReasons(
+        "Expected a finite motion-profile share",
+        getDiagnosticFallbackReason(fallbackValue),
+      );
 
 export const resolveRepeatedClickSettings = () => {
   const destinationPosition = normalizeRepeatedClickDestination(
@@ -56,9 +89,10 @@ export const resolveRepeatedClickSettings = () => {
       field: "REPEATED_CLICK_DESTINATION_POSITION",
       provided: REPEATED_CLICK_DESTINATION_POSITION,
       normalized: destinationPosition,
-      reason: isFiniteNumber(REPEATED_CLICK_DESTINATION_POSITION)
-        ? `clamped to [${MIN_REPEATED_CLICK_DESTINATION_POSITION}, ${MAX_REPEATED_CLICK_DESTINATION_POSITION}]`
-        : "expected a finite value between 0 and 1",
+      reason: getRepeatedClickDestinationReason(
+        REPEATED_CLICK_DESTINATION_POSITION,
+        DIAGNOSTIC_FALLBACK_REPEATED_CLICK_SETTINGS.destinationPosition,
+      ),
     });
   }
 
@@ -69,9 +103,10 @@ export const resolveRepeatedClickSettings = () => {
       field: "REPEATED_CLICK_TOUCH_DESTINATION_POSITION",
       provided: REPEATED_CLICK_TOUCH_DESTINATION_POSITION,
       normalized: touchDestinationPosition,
-      reason: isFiniteNumber(REPEATED_CLICK_TOUCH_DESTINATION_POSITION)
-        ? `clamped to [${MIN_REPEATED_CLICK_DESTINATION_POSITION}, ${MAX_REPEATED_CLICK_DESTINATION_POSITION}]`
-        : "expected a finite value between 0 and 1",
+      reason: getRepeatedClickDestinationReason(
+        REPEATED_CLICK_TOUCH_DESTINATION_POSITION,
+        DIAGNOSTIC_FALLBACK_REPEATED_CLICK_SETTINGS.touchDestinationPosition,
+      ),
     });
   }
 
@@ -83,7 +118,7 @@ export const resolveRepeatedClickSettings = () => {
       field: "REPEATED_CLICK_SPEED_MULTIPLIER",
       provided: REPEATED_CLICK_SPEED_MULTIPLIER,
       message: getInternalConstantNoticeMessage(
-        `expected a finite value greater than or equal to ${MIN_REPEATED_CLICK_SPEED_MULTIPLIER}`,
+        `Expected a finite value >= ${MIN_REPEATED_CLICK_SPEED_MULTIPLIER}`,
       ),
     });
   }
@@ -95,9 +130,10 @@ export const resolveRepeatedClickSettings = () => {
       field: "REPEATED_CLICK_ACCELERATION_DISTANCE_SHARE",
       provided: REPEATED_CLICK_ACCELERATION_DISTANCE_SHARE,
       normalized: accelerationDistanceShare,
-      reason: isFiniteNumber(REPEATED_CLICK_ACCELERATION_DISTANCE_SHARE)
-        ? `clamped to [${MIN_REPEATED_CLICK_PROFILE_SHARE}, ${MAX_REPEATED_CLICK_PROFILE_SHARE}]`
-        : "expected a finite value between 0 and 1",
+      reason: getRepeatedClickProfileShareReason(
+        REPEATED_CLICK_ACCELERATION_DISTANCE_SHARE,
+        DIAGNOSTIC_FALLBACK_REPEATED_CLICK_SETTINGS.accelerationDistanceShare,
+      ),
     });
   }
 
@@ -108,9 +144,10 @@ export const resolveRepeatedClickSettings = () => {
       field: "REPEATED_CLICK_DECELERATION_DISTANCE_SHARE",
       provided: REPEATED_CLICK_DECELERATION_DISTANCE_SHARE,
       normalized: decelerationDistanceShare,
-      reason: isFiniteNumber(REPEATED_CLICK_DECELERATION_DISTANCE_SHARE)
-        ? `clamped to [${MIN_REPEATED_CLICK_PROFILE_SHARE}, ${MAX_REPEATED_CLICK_PROFILE_SHARE}]`
-        : "expected a finite value between 0 and 1",
+      reason: getRepeatedClickProfileShareReason(
+        REPEATED_CLICK_DECELERATION_DISTANCE_SHARE,
+        DIAGNOSTIC_FALLBACK_REPEATED_CLICK_SETTINGS.decelerationDistanceShare,
+      ),
     });
   }
 
@@ -123,7 +160,7 @@ export const resolveRepeatedClickSettings = () => {
       },
       normalized: OVERFLOW_PROFILE_DISTANCE_SHARES_NORMALIZED,
       reason:
-        "start + end distance shares exceed 1; runtime uses an even 50/50 acceleration/deceleration split with no cruise zone",
+        "Acceleration and deceleration shares must total 1 or less. Normalized to internal 50/50 fallback with no cruise segment",
     });
   }
 
@@ -132,7 +169,7 @@ export const resolveRepeatedClickSettings = () => {
       field: "REPEATED_CLICK_EPSILON",
       provided: REPEATED_CLICK_EPSILON,
       message: getInternalConstantNoticeMessage(
-        "expected a finite positive value",
+        "Expected a finite positive value",
       ),
     });
   }
