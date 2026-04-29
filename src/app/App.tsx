@@ -137,7 +137,7 @@ function App() {
             // isInstantMotion={true}
             isInteractive={isInteractive}
             durationAutoplay={5000}
-            durationStep={3700}
+            durationStep={2700}
             durationJump={450}
             intervalAutoplay={3000}
             isPagePaddingOn={true}
