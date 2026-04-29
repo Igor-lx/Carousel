@@ -18,7 +18,7 @@ const clampRepeatedClickVirtualIndex = (
   const minVirtualIndex = 0;
   const maxVirtualIndex = getPageStart(
     layout.pageCount - 1,
-    layout.clampedVisible,
+    layout.visibleSlidesCount,
   );
 
   return clamp(virtualIndex, minVirtualIndex, maxVirtualIndex);
@@ -37,7 +37,7 @@ export const resolveRepeatedClickPlan = ({
 }) => {
   const { currentLayout: layout } = state;
   const direction = Math.sign(step);
-  const stepSize = layout.clampedVisible;
+  const stepSize = layout.visibleSlidesCount;
   const epsilon = repeatedClickSettings.epsilon;
 
   if (direction === 0 || stepSize <= epsilon) {
@@ -46,7 +46,7 @@ export const resolveRepeatedClickPlan = ({
 
   const currentDirection = Math.sign(state.virtualIndex - state.fromVirtualIndex);
   const isRepeatedSameDirectionClick =
-    state.animMode !== "none" &&
+    state.animationMode !== "none" &&
     currentDirection !== 0 &&
     currentDirection === direction;
 
@@ -71,7 +71,7 @@ export const resolveRepeatedClickPlan = ({
   );
 
   const targetPageIndex = Math.round(nextTargetVirtualIndex / stepSize);
-  const nextTargetIndex = layout.isFinite
+  const nextTargetPageIndex = layout.isFinite
     ? clamp(targetPageIndex, 0, layout.pageCount - 1)
     : normalizePageIndex(targetPageIndex, layout.pageCount);
   const followUpVirtualIndex =
@@ -80,7 +80,7 @@ export const resolveRepeatedClickPlan = ({
       : null;
 
   return {
-    nextTargetIndex,
+    nextTargetPageIndex,
     nextAdvanceVirtualIndex,
     followUpVirtualIndex,
   };

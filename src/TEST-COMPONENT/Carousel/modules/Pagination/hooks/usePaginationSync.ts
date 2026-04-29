@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 
 interface UsePaginationSyncProps {
-  targetIndex: number;
-  duration: number;
-  isInstant: boolean;
+  targetPageIndex: number;
+  motionDuration: number;
+  shouldSyncInstantly: boolean;
   autoplayPaginationFactor: number;
 }
 
-const resolvePaginationDelay = (duration: number, factor: number) => {
-  if (!Number.isFinite(duration) || duration <= 0) {
+const resolvePaginationDelay = (motionDuration: number, factor: number) => {
+  if (!Number.isFinite(motionDuration) || motionDuration <= 0) {
     return 0;
   }
 
@@ -16,16 +16,17 @@ const resolvePaginationDelay = (duration: number, factor: number) => {
     return 0;
   }
 
-  return duration * factor;
+  return motionDuration * factor;
 };
 
 export const usePaginationSync = ({
-  targetIndex,
-  duration,
-  isInstant,
+  targetPageIndex,
+  motionDuration,
+  shouldSyncInstantly,
   autoplayPaginationFactor,
 }: UsePaginationSyncProps): number => {
-  const [visualIndex, setVisualIndex] = useState(targetIndex);
+  const [displayedPageIndex, setDisplayedPageIndex] =
+    useState(targetPageIndex);
   const timeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -34,18 +35,22 @@ export const usePaginationSync = ({
       timeoutRef.current = null;
     }
 
-    const delay = isInstant
+    const delay = shouldSyncInstantly
       ? 0
-      : resolvePaginationDelay(duration, autoplayPaginationFactor);
+      : resolvePaginationDelay(motionDuration, autoplayPaginationFactor);
 
     if (delay <= 0) {
-      setVisualIndex((prev) => (prev === targetIndex ? prev : targetIndex));
+      setDisplayedPageIndex((prev) =>
+        prev === targetPageIndex ? prev : targetPageIndex,
+      );
       return;
     }
 
     timeoutRef.current = window.setTimeout(() => {
       timeoutRef.current = null;
-      setVisualIndex((prev) => (prev === targetIndex ? prev : targetIndex));
+      setDisplayedPageIndex((prev) =>
+        prev === targetPageIndex ? prev : targetPageIndex,
+      );
     }, delay);
 
     return () => {
@@ -54,7 +59,12 @@ export const usePaginationSync = ({
         timeoutRef.current = null;
       }
     };
-  }, [targetIndex, duration, isInstant, autoplayPaginationFactor]);
+  }, [
+    targetPageIndex,
+    motionDuration,
+    shouldSyncInstantly,
+    autoplayPaginationFactor,
+  ]);
 
-  return visualIndex;
+  return displayedPageIndex;
 };

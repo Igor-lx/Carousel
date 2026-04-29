@@ -5,19 +5,19 @@ interface TrackPositionStyle {
 
 const getTrackTransform = (
   index: number,
-  visibleSlidesNr: number,
+  visibleSlidesCount: number,
 ): string =>
-  `translateX(calc(-${index} * (100% + var(--gap, 0px)) / ${visibleSlidesNr}))`;
+  `translateX(calc(-${index} * (100% + var(--gap, 0px)) / ${visibleSlidesCount}))`;
 
 export const getTrackPositionStyle = (
   position: number,
-  windowStart: number,
-  visibleSlidesNr: number,
+  renderWindowStart: number,
+  visibleSlidesCount: number,
 ): TrackPositionStyle => {
-  const relativeIndex = position - windowStart;
+  const relativeIndex = position - renderWindowStart;
 
   return {
-    transform: `${getTrackTransform(relativeIndex, visibleSlidesNr)} translateX(0px)`,
+    transform: `${getTrackTransform(relativeIndex, visibleSlidesCount)} translateX(0px)`,
     transition: "none",
   };
 };

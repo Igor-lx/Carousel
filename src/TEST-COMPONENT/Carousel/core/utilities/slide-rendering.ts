@@ -4,18 +4,18 @@ export const getSlideVisibility = (
   virtualIndex: number,
   currentVirtualIndex: number,
   previousVirtualIndex: number,
-  clampedVisible: number,
+  visibleSlidesCount: number,
   isAnimating: boolean,
 ) => {
   const isActual =
     virtualIndex >= currentVirtualIndex &&
-    virtualIndex < currentVirtualIndex + clampedVisible;
+    virtualIndex < currentVirtualIndex + visibleSlidesCount;
 
   if (isAnimating) {
     const startIndex = Math.floor(previousVirtualIndex);
     const wasVisible =
       virtualIndex >= startIndex &&
-      virtualIndex < Math.ceil(previousVirtualIndex + clampedVisible);
+      virtualIndex < Math.ceil(previousVirtualIndex + visibleSlidesCount);
 
     return { isActual, isActive: isActual || wasVisible };
   }

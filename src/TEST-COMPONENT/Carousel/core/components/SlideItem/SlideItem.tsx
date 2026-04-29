@@ -15,7 +15,7 @@ export const SlideItem = memo(
     className,
     ...a11yProps
   }: SlideItemProps) => {
-    const [isBroken, setIsBroken] = useState(false);
+    const [hasImageError, setHasImageError] = useState(false);
     const wasActualRef = useRef(Boolean(isActual));
     const imageSource =
       isContentImg && typeof slideData?.content === "string"
@@ -23,7 +23,7 @@ export const SlideItem = memo(
         : null;
 
     useEffect(() => {
-      setIsBroken(false);
+      setHasImageError(false);
     }, [imageSource]);
 
     useEffect(() => {
@@ -31,7 +31,7 @@ export const SlideItem = memo(
 
       wasActualRef.current = Boolean(isActual);
 
-      if (!didBecomeActual || !isBroken || !imageSource) {
+      if (!didBecomeActual || !hasImageError || !imageSource) {
         return;
       }
 
@@ -40,13 +40,13 @@ export const SlideItem = memo(
 
       probe.onload = () => {
         if (!isDisposed) {
-          setIsBroken(false);
+          setHasImageError(false);
         }
       };
 
       probe.onerror = () => {
         if (!isDisposed) {
-          setIsBroken(true);
+          setHasImageError(true);
         }
       };
 
@@ -57,11 +57,11 @@ export const SlideItem = memo(
         probe.onload = null;
         probe.onerror = null;
       };
-    }, [imageSource, isActual, isBroken]);
+    }, [imageSource, isActual, hasImageError]);
 
     if (!slideData) return null;
 
-    const isClickable = !!onSlideClick && isInteractive && !isBroken;
+    const isClickable = !!onSlideClick && isInteractive && !hasImageError;
     const Tag = isClickable ? "button" : "div";
 
     return (
@@ -72,7 +72,7 @@ export const SlideItem = memo(
         data-active-zone={isActual}
         className={clsx(
           className.slide,
-          isBroken && className.slideError,
+          hasImageError && className.slideError,
           !isContentImg && className.slideText,
           isClickable && className.slideInteractive,
         )}
@@ -80,13 +80,13 @@ export const SlideItem = memo(
         onClick={isClickable ? () => onSlideClick?.(slideData) : undefined}
       >
         {isContentImg && typeof slideData.content === "string" ? (
-          !isBroken ? (
+          !hasImageError ? (
             <img
               src={slideData.content}
               alt={slideData.alt || ""}
               draggable={false}
-              onLoad={() => setIsBroken(false)}
-              onError={() => setIsBroken(true)}
+              onLoad={() => setHasImageError(false)}
+              onError={() => setHasImageError(true)}
             />
           ) : (
             slideData.alt || errAltPlaceholder

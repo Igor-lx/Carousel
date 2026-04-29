@@ -1,10 +1,10 @@
 import { memo } from "react";
 import clsx from "clsx";
-import type { NavZoneProps } from "../types";
+import type { NavigationZoneProps } from "../types";
 import { ChevronIcon } from "../../../../../shared";
 
-export const NavZone = memo(
-  ({ direction, onClick, classNames }: NavZoneProps) => {
+export const NavigationZone = memo(
+  ({ direction, onClick, classNames }: NavigationZoneProps) => {
     const directionClassName =
       direction === "left" ? classNames.navZoneL : classNames.navZoneR;
 

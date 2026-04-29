@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { CarouselRepeatedClickSettings } from "../../model/diagnostic";
 
-interface ResponsiveRepeatedClickSettingsInput {
+interface UseResponsiveRepeatedClickSettingsProps {
   repeatedClickSettings: CarouselRepeatedClickSettings;
   isTouch: boolean;
 }
@@ -9,7 +9,7 @@ interface ResponsiveRepeatedClickSettingsInput {
 export function useResponsiveRepeatedClickSettings({
   repeatedClickSettings,
   isTouch,
-}: ResponsiveRepeatedClickSettingsInput): CarouselRepeatedClickSettings {
+}: UseResponsiveRepeatedClickSettingsProps): CarouselRepeatedClickSettings {
   return useMemo(() => {
     if (!isTouch) {
       return repeatedClickSettings;

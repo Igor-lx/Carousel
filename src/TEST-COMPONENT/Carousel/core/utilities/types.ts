@@ -2,7 +2,7 @@ import type { Slide } from "../types";
 
 export interface CarouselLayout {
   length: number;
-  clampedVisible: number;
+  visibleSlidesCount: number;
   virtualLength: number;
   totalVirtual: number;
   pageCount: number;

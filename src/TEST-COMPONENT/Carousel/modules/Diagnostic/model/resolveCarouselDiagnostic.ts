@@ -2,7 +2,7 @@ import type {
   CarouselDiagnosticPayload,
   CarouselDiagnosticPropsInput,
 } from "../../../core/model/diagnostic";
-import { MIN_VISIBLE_SLIDES } from "./contracts";
+import { MIN_VISIBLE_SLIDES } from "./constraints";
 import { resolveInteractionSettings } from "./interaction-settings";
 import { resolveLayoutSettings } from "./layout-settings";
 import {

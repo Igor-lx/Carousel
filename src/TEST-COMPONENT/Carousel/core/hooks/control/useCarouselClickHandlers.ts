@@ -4,14 +4,14 @@ import type { Slide } from "../../types";
 
 interface UseCarouselClickHandlersProps {
   onMove: (step: number, reason: MoveReason) => void;
-  onGoTo: (target: number, reason: MoveReason) => void;
+  onGoTo: (targetPageIndex: number, reason: MoveReason) => void;
   onClick?: (slideData: Slide) => void;
 }
 
 interface UseCarouselClickHandlersResult {
   handlePrev: () => void;
   handleNext: () => void;
-  handlePageSelect: (index: number) => void;
+  handlePageSelect: (pageIndex: number) => void;
   handleSlideClick: (slideData: Slide) => void;
 }
 
@@ -36,8 +36,8 @@ export function useCarouselClickHandlers({
   }, [handleMove]);
 
   const handlePageSelect = useCallback(
-    (index: number) => {
-      onGoTo(index, "click");
+    (pageIndex: number) => {
+      onGoTo(pageIndex, "click");
     },
     [onGoTo],
   );

@@ -22,8 +22,8 @@ interface UseCarouselMotionPlanProps {
   stepSize: number;
   stepDuration: number;
   releaseMotionConfig: ReleaseMotionConfig;
-  reason: MoveReason;
-  animMode: AnimationMode;
+  moveReason: MoveReason;
+  animationMode: AnimationMode;
   isDragging: boolean;
   isInstant: boolean;
   isRepeatedClickAdvance: boolean;
@@ -45,8 +45,8 @@ export function useCarouselMotionPlan({
   stepSize,
   stepDuration,
   releaseMotionConfig,
-  reason,
-  animMode,
+  moveReason,
+  animationMode,
   isDragging,
   isInstant,
   isRepeatedClickAdvance,
@@ -82,8 +82,8 @@ export function useCarouselMotionPlan({
     () =>
       resolveCarouselMotionDuration({
         gestureReleaseDuration: releaseMotion.duration,
-        reason,
-        animMode,
+        moveReason,
+        animationMode,
         isDragging,
         isInstant,
         isRepeatedClickAdvance,
@@ -97,14 +97,14 @@ export function useCarouselMotionPlan({
         jumpDuration,
       }),
     [
-      animMode,
+      animationMode,
       autoplayDuration,
       isDragging,
       isInstant,
       isRepeatedClickAdvance,
       jumpDuration,
       motionSettings.snapBackDuration,
-      reason,
+      moveReason,
       releaseMotion.duration,
       repeatedClickSettings.speedMultiplier,
       segmentStartVirtualIndex,

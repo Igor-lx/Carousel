@@ -1,5 +1,5 @@
 export const getSlideFlexStyle = (
-  visibleSlidesNr: number,
+  visibleSlidesCount: number,
 ): { flex: string } => ({
-  flex: `0 0 calc((100% - (var(--gap, 0px) * ${visibleSlidesNr - 1})) / ${visibleSlidesNr})`,
+  flex: `0 0 calc((100% - (var(--gap, 0px) * ${visibleSlidesCount - 1})) / ${visibleSlidesCount})`,
 });

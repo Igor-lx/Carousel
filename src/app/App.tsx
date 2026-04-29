@@ -42,7 +42,7 @@ import {
 import Carousel, { type Slide } from "../TEST-COMPONENT/Carousel";
 import { Controls } from "../TEST-COMPONENT/Carousel/modules/Controls/Controls";
 import { Pagination } from "../TEST-COMPONENT/Carousel/modules/Pagination/Pagination";
-import Diagnostic from "../TEST-COMPONENT/Carousel/modules/Diagnostic";
+import Diagnostic from "../TEST-COMPONENT/Carousel/modules/Diagnostic/CarouselDiagnostic";
 
 //=====================================================================================================================================
 

@@ -4,64 +4,68 @@ import { useIsomorphicLayoutEffect } from "../../../../shared";
 import { getShortestCyclicDistance } from "../utilities";
 import type { CarouselExternalControlHandle } from "./types";
 
-interface ExternalControlSyncProps {
+interface UseCarouselExternalControlSyncProps {
   externalControlRef: RefObject<CarouselExternalControlHandle | null>;
   motionDuration: number;
-  targetIndex: number;
+  targetPageIndex: number;
   pageCount: number;
   isFinite: boolean;
   shouldSyncMotion: boolean;
 }
 
 const getExternalControlStepDirection = ({
-  previousTargetIndex,
-  nextTargetIndex,
+  previousTargetPageIndex,
+  nextTargetPageIndex,
   pageCount,
   isFinite,
 }: {
-  previousTargetIndex: number;
-  nextTargetIndex: number;
+  previousTargetPageIndex: number;
+  nextTargetPageIndex: number;
   pageCount: number;
   isFinite: boolean;
 }) => {
-  if (previousTargetIndex === nextTargetIndex || pageCount <= 1) {
+  if (previousTargetPageIndex === nextTargetPageIndex || pageCount <= 1) {
     return 0;
   }
 
   if (isFinite) {
-    return Math.sign(nextTargetIndex - previousTargetIndex);
+    return Math.sign(nextTargetPageIndex - previousTargetPageIndex);
   }
 
   return Math.sign(
-    getShortestCyclicDistance(previousTargetIndex, nextTargetIndex, pageCount),
+    getShortestCyclicDistance(
+      previousTargetPageIndex,
+      nextTargetPageIndex,
+      pageCount,
+    ),
   );
 };
 
 export function useCarouselExternalControlSync({
   externalControlRef,
   motionDuration,
-  targetIndex,
+  targetPageIndex,
   pageCount,
   isFinite,
   shouldSyncMotion,
-}: ExternalControlSyncProps): void {
-  const previousTargetIndexRef = useRef<number | null>(null);
+}: UseCarouselExternalControlSyncProps): void {
+  const previousTargetPageIndexRef = useRef<number | null>(null);
 
   useIsomorphicLayoutEffect(() => {
     externalControlRef.current?.setDuration(motionDuration);
   }, [motionDuration, externalControlRef]);
 
   useIsomorphicLayoutEffect(() => {
-    const previousTargetIndex = previousTargetIndexRef.current;
-    previousTargetIndexRef.current = targetIndex;
+    const previousTargetPageIndex = previousTargetPageIndexRef.current;
+    previousTargetPageIndexRef.current = targetPageIndex;
 
-    if (previousTargetIndex === null || !shouldSyncMotion) {
+    if (previousTargetPageIndex === null || !shouldSyncMotion) {
       return;
     }
 
     const direction = getExternalControlStepDirection({
-      previousTargetIndex,
-      nextTargetIndex: targetIndex,
+      previousTargetPageIndex,
+      nextTargetPageIndex: targetPageIndex,
       pageCount,
       isFinite,
     });
@@ -79,6 +83,6 @@ export function useCarouselExternalControlSync({
     isFinite,
     pageCount,
     shouldSyncMotion,
-    targetIndex,
+    targetPageIndex,
   ]);
 }

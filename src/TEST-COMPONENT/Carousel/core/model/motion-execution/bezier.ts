@@ -18,13 +18,13 @@ const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, value));
 
 export const getCarouselMotionBezier = (
-  animMode: AnimationMode,
-  reason: MoveReason,
+  animationMode: AnimationMode,
+  moveReason: MoveReason,
 ) => {
-  if (animMode === "jump") return JUMP_BEZIER;
-  if (animMode === "snap") return SNAP_BACK_BEZIER;
+  if (animationMode === "jump") return JUMP_BEZIER;
+  if (animationMode === "snap") return SNAP_BACK_BEZIER;
 
-  switch (reason) {
+  switch (moveReason) {
     case "autoplay":
       return AUTO_BEZIER;
     case "gesture":

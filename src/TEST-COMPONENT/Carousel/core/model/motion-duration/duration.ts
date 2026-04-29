@@ -21,8 +21,8 @@ export const getDurationByVirtualSpan = ({
 };
 
 interface ResolveCarouselMotionDurationInput {
-  reason: MoveReason;
-  animMode: AnimationMode;
+  moveReason: MoveReason;
+  animationMode: AnimationMode;
   isDragging: boolean;
   isInstant: boolean;
   gestureReleaseDuration: number;
@@ -38,8 +38,8 @@ interface ResolveCarouselMotionDurationInput {
 }
 
 export const resolveCarouselMotionDuration = ({
-  reason,
-  animMode,
+  moveReason,
+  animationMode,
   isDragging,
   isInstant,
   gestureReleaseDuration,
@@ -64,11 +64,11 @@ export const resolveCarouselMotionDuration = ({
     Math.max(1, repeatedClickSpeedMultiplier);
 
   const baseDuration = (() => {
-    if (animMode === "snap") return snapBackDuration;
+    if (animationMode === "snap") return snapBackDuration;
 
-    if (isInstant || animMode === "jump") return jumpDuration;
+    if (isInstant || animationMode === "jump") return jumpDuration;
 
-    switch (reason) {
+    switch (moveReason) {
       case "click":
         if (isRepeatedClickAdvance) {
           return repeatedClickAdvanceDuration;
@@ -85,9 +85,9 @@ export const resolveCarouselMotionDuration = ({
 
   if (isDragging) return 0;
 
-  if (animMode === "snap") return baseDuration;
+  if (animationMode === "snap") return baseDuration;
 
-  if (isInstant || animMode === "jump") return jumpDuration;
+  if (isInstant || animationMode === "jump") return jumpDuration;
 
   return baseDuration;
 };

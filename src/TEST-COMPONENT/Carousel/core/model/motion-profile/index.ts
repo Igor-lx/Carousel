@@ -1,6 +1,6 @@
 export {
   createProfileSegment,
-} from "./engine";
+} from "./profile-segment";
 export {
   createMotionProfile,
   sampleMotionProfile,
@@ -13,4 +13,4 @@ export type {
 export type {
   ProfileSegment,
   ProfileSegmentInput,
-} from "./engine";
+} from "./profile-segment";

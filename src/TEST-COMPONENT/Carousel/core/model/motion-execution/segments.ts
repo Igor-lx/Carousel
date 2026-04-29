@@ -103,8 +103,8 @@ export const sampleCarouselMotionSegment = (
 };
 
 interface CreateCarouselMotionSegmentInput {
-  animMode: AnimationMode;
-  reason: MoveReason;
+  animationMode: AnimationMode;
+  moveReason: MoveReason;
   nowState: CarouselMotionSample;
   targetVirtualIndex: number;
   startedAt: number;
@@ -121,8 +121,8 @@ interface CreateCarouselMotionSegmentInput {
 }
 
 export const createCarouselMotionSegment = ({
-  animMode,
-  reason,
+  animationMode,
+  moveReason,
   nowState,
   targetVirtualIndex,
   startedAt,
@@ -174,8 +174,8 @@ export const createCarouselMotionSegment = ({
   }
 
   if (
-    reason === "gesture" &&
-    animMode !== "snap" &&
+    moveReason === "gesture" &&
+    animationMode !== "snap" &&
     releaseMotion.isInertialRelease
   ) {
     return createProfileSegment({
@@ -193,7 +193,7 @@ export const createCarouselMotionSegment = ({
     });
   }
 
-  if (reason === "gesture" && animMode !== "snap") {
+  if (moveReason === "gesture" && animationMode !== "snap") {
     return {
       strategy: "gesture-easing",
       from: nowState.position,
@@ -220,8 +220,8 @@ export const createCarouselMotionSegment = ({
   }
 
   if (
-    reason === "click" &&
-    animMode !== "jump" &&
+    moveReason === "click" &&
+    animationMode !== "jump" &&
     getSameDirectionSpeed(nowState.velocity, distance) > epsilon
   ) {
     return createProfileSegment({
@@ -244,6 +244,8 @@ export const createCarouselMotionSegment = ({
     to: targetVirtualIndex,
     duration,
     startedAt,
-    easing: parseMotionBezier(getCarouselMotionBezier(animMode, reason)),
+    easing: parseMotionBezier(
+      getCarouselMotionBezier(animationMode, moveReason),
+    ),
   };
 };

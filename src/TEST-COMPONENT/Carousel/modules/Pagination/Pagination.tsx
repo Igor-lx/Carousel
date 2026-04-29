@@ -29,10 +29,10 @@ const PaginationBase = memo(({ className }: PaginationProps) => {
   const shouldSyncInstantly =
     moveReason !== "autoplay" || isJumping || isReducedMotion;
 
-  const visualIndex = usePaginationSync({
-    targetIndex: activePageIndex,
-    isInstant: shouldSyncInstantly,
-    duration: motionDuration,
+  const displayedPageIndex = usePaginationSync({
+    targetPageIndex: activePageIndex,
+    shouldSyncInstantly,
+    motionDuration,
     autoplayPaginationFactor,
   });
 
@@ -41,7 +41,7 @@ const PaginationBase = memo(({ className }: PaginationProps) => {
   return (
     <PaginationView
       pageCount={pageCount}
-      visualIndex={visualIndex}
+      displayedPageIndex={displayedPageIndex}
       onPageSelect={handlePageSelect}
       classNames={classNames}
     />

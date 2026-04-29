@@ -11,14 +11,14 @@ export interface PaginationProps {
 
 export interface PaginationViewProps {
   pageCount: number;
-  visualIndex: number;
-  onPageSelect: (index: number) => void;
+  displayedPageIndex: number;
+  onPageSelect: (pageIndex: number) => void;
   classNames: PaginationClassMap;
 }
 
 export interface PaginationDotProps {
-  index: number;
-  visualIndex: number;
-  onPageSelect: (index: number) => void;
+  pageIndex: number;
+  displayedPageIndex: number;
+  onPageSelect: (pageIndex: number) => void;
   classNames: PaginationClassMap;
 }

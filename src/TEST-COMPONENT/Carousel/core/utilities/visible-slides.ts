@@ -1,4 +1,4 @@
 export const getClampedVisibleSlidesCount = (
   slidesLength: number,
-  visibleSlidesNr: number,
-) => Math.min(visibleSlidesNr, slidesLength);
+  visibleSlidesCount: number,
+) => Math.min(visibleSlidesCount, slidesLength);

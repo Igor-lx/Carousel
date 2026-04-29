@@ -11,7 +11,7 @@ interface UseCarouselModuleContextValueProps {
   moveReason: MoveReason;
   motionDuration: number;
   autoplayPaginationFactor: number;
-  handlePageSelect: (index: number) => void;
+  handlePageSelect: (pageIndex: number) => void;
   handlePrev: () => void;
   handleNext: () => void;
   isAtStart: boolean;

@@ -14,16 +14,16 @@ import {
   MIN_REPEATED_CLICK_DESTINATION_POSITION,
   MIN_REPEATED_CLICK_PROFILE_SHARE,
   MIN_REPEATED_CLICK_SPEED_MULTIPLIER,
-} from "./contracts";
+} from "./constraints";
 import {
   getInternalConstantNoticeMessage,
   isFiniteNumber,
   isPositiveFiniteNumber,
-} from "./diagnostic-common";
+} from "./diagnostic-validation";
 import {
   normalizeRepeatedClickDestination,
   normalizeRepeatedClickProfileShare,
-} from "./helpers";
+} from "./normalization";
 
 const OVERFLOW_PROFILE_DISTANCE_SHARES_NORMALIZED = {
   accelerationDistanceShare: 0.5,

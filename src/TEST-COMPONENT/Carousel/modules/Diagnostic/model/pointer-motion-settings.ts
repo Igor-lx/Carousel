@@ -15,7 +15,7 @@ import {
   MIN_DRAG_EMA_ALPHA,
   MIN_DRAG_INERTIA_BOOST,
   MIN_REPEATED_CLICK_PROFILE_SHARE,
-} from "./contracts";
+} from "./constraints";
 import {
   DURATION_UNIT,
   getInternalConstantNoticeMessage,
@@ -25,13 +25,13 @@ import {
   isFiniteNumberInRange,
   isNonNegativeFiniteNumber,
   isPositiveFiniteNumber,
-} from "./diagnostic-common";
+} from "./diagnostic-validation";
 import {
   normalizeNonNegativeNumber,
   normalizePositiveDuration,
   normalizePositiveNumber,
   normalizeRepeatedClickProfileShare,
-} from "./helpers";
+} from "./normalization";
 
 export const resolveDragConfig = () => {
   const cooldownMs = normalizeNonNegativeNumber(

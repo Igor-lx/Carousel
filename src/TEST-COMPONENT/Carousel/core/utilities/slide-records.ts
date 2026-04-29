@@ -23,34 +23,34 @@ export const buildSlideRecords = (
 
 export const hasPartialPageLayout = (
   slidesLength: number,
-  visibleSlidesNr: number,
+  visibleSlidesCount: number,
 ): boolean => {
   if (slidesLength === 0) return false;
 
-  const clampedVisibleCount = getClampedVisibleSlidesCount(
+  const layoutVisibleSlidesCount = getClampedVisibleSlidesCount(
     slidesLength,
-    visibleSlidesNr,
+    visibleSlidesCount,
   );
 
-  return slidesLength % clampedVisibleCount !== 0;
+  return slidesLength % layoutVisibleSlidesCount !== 0;
 };
 
 export const extendSlideRecordsToFullPages = (
   slideRecords: CarouselSlideRecord[],
-  visibleSlidesNr: number,
+  visibleSlidesCount: number,
 ): CarouselSlideRecord[] => {
   const length = slideRecords.length;
 
-  if (!hasPartialPageLayout(length, visibleSlidesNr)) {
+  if (!hasPartialPageLayout(length, visibleSlidesCount)) {
     return slideRecords;
   }
 
-  const clampedVisibleCount = getClampedVisibleSlidesCount(
+  const layoutVisibleSlidesCount = getClampedVisibleSlidesCount(
     length,
-    visibleSlidesNr,
+    visibleSlidesCount,
   );
   const extendedLength =
-    Math.ceil(length / clampedVisibleCount) * clampedVisibleCount;
+    Math.ceil(length / layoutVisibleSlidesCount) * layoutVisibleSlidesCount;
   const appendedSlides = Array.from({ length: extendedLength - length }).map(
     (_, offset) => {
       const sourceIndex = offset % length;

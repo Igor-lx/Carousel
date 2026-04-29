@@ -6,7 +6,7 @@ export interface ControlsClassMap {
   navButton?: string;
 }
 
-export interface NavZoneProps {
+export interface NavigationZoneProps {
   direction: "left" | "right";
   onClick: () => void;
   classNames: ControlsClassMap;

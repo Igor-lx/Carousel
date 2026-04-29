@@ -15,7 +15,7 @@ import {
   MIN_REPEATED_CLICK_PROFILE_SHARE,
   MIN_VISIBLE_SLIDES,
   MIN_VISIBILITY_THRESHOLD,
-} from "./contracts";
+} from "./constraints";
 
 export const isValueProvided = (value: unknown) => typeof value !== "undefined";
 

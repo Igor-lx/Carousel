@@ -9,7 +9,7 @@ import { getTrackPositionStyle } from "../../utilities";
 
 interface UseCarouselTrackPositionBridgeProps {
   trackRef: RefObject<HTMLDivElement | null>;
-  windowStart: number;
+  renderWindowStart: number;
   visibleSlidesCount: number;
 }
 
@@ -22,7 +22,7 @@ interface UseCarouselTrackPositionBridgeResult {
 
 export function useCarouselTrackPositionBridge({
   trackRef,
-  windowStart,
+  renderWindowStart,
   visibleSlidesCount,
 }: UseCarouselTrackPositionBridgeProps): UseCarouselTrackPositionBridgeResult {
   const currentPositionRef = useRef(0);
@@ -39,14 +39,14 @@ export function useCarouselTrackPositionBridge({
 
       const trackStyle = getTrackPositionStyle(
         position,
-        windowStart,
+        renderWindowStart,
         visibleSlidesCount,
       );
 
       track.style.transform = trackStyle.transform;
       track.style.transition = trackStyle.transition;
     },
-    [currentPositionRef, trackRef, visibleSlidesCount, windowStart],
+    [currentPositionRef, trackRef, renderWindowStart, visibleSlidesCount],
   );
 
   const readCurrentPosition = useCallback(() => {

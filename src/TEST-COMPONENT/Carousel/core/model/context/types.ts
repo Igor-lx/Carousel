@@ -14,7 +14,7 @@ export interface CarouselModuleContextValue {
   motionDuration: number;
   handlePrev: () => void;
   handleNext: () => void;
-  handlePageSelect: (index: number) => void;
+  handlePageSelect: (pageIndex: number) => void;
   canMovePrev: boolean;
   canMoveNext: boolean;
   isTouch: boolean;

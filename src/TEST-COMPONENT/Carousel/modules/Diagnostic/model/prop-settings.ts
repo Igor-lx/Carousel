@@ -10,7 +10,7 @@ import {
   MIN_AUTOPLAY_INTERVAL,
   MIN_VISIBLE_SLIDES,
   SAFE_DURATION,
-} from "./contracts";
+} from "./constraints";
 import {
   DURATION_UNIT,
   getNonEmptyStringReason,
@@ -18,16 +18,16 @@ import {
   getPositiveIntegerReason,
   isFiniteNumber,
   joinReasons,
-} from "./diagnostic-common";
+} from "./diagnostic-validation";
 import {
   isValueProvided,
   normalizeAutoplayInterval,
   normalizeErrorAltPlaceholder,
   normalizePositiveDuration,
   normalizeVisibleSlidesCount,
-} from "./helpers";
+} from "./normalization";
 
-interface RuntimePropFieldNames {
+interface RuntimePropDiagnosticFieldNames {
   visibleSlidesNr: string;
   durationAutoplay: string;
   durationStep: string;
@@ -123,7 +123,7 @@ export const resolveRuntimePropSettings = (
     errAltPlaceholder,
   }: CarouselDiagnosticPropsInput,
   fallbackSettings: CarouselRuntimePropSettings,
-  fieldNames: RuntimePropFieldNames,
+  fieldNames: RuntimePropDiagnosticFieldNames,
   minVisibleSlides: number,
 ) => {
   const corrections: DevNoticeEntry[] = [];

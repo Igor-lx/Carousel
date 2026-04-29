@@ -32,9 +32,9 @@ import {
   usePickStyles,
 } from "../../../shared";
 
-import { SlideItem } from "./components";
+import { SlideItem } from "./components/SlideItem/SlideItem";
 import {
-  getAnimStatus,
+  getAnimationStatus,
   initialState,
   reconcileStateToLayout,
   reducer,
@@ -127,49 +127,53 @@ const Carousel = memo((props: CarouselProps) => {
       isPagePaddingOn,
     });
 
-  const nextLayout = useMemo<CarouselLayout>(
+  const layout = useMemo<CarouselLayout>(
     () => getCarouselLayout(resolvedSlideRecords, visibleSlidesCount, isFinite),
     [resolvedSlideRecords, visibleSlidesCount, isFinite],
   );
 
-  const [state, baseDispatch] = useReducer(reducer, nextLayout, initialState);
+  const [state, baseDispatch] = useReducer(reducer, layout, initialState);
 
   const syncedState = useMemo(
-    () => reconcileStateToLayout(state, nextLayout),
-    [state, nextLayout],
+    () => reconcileStateToLayout(state, layout),
+    [state, layout],
   );
 
   const {
-    targetIndex,
+    targetPageIndex,
     virtualIndex,
     fromVirtualIndex,
     followUpVirtualIndex,
     isRepeatedClickAdvance,
-    animMode,
+    animationMode,
     moveReason,
     gesturePointerReleaseVelocity,
     gestureUiReleaseVelocity,
   } = syncedState;
 
-  const { canSlide, pageCount, clampedVisible } = nextLayout;
+  const {
+    canSlide,
+    pageCount,
+    visibleSlidesCount: layoutVisibleSlidesCount,
+  } = layout;
 
   const { isMoving, isJumping, isInstant, isIdle } = useMemo(
-    () => getAnimStatus(animMode),
-    [animMode],
+    () => getAnimationStatus(animationMode),
+    [animationMode],
   );
 
   const { isAtStart, isAtEnd } = useMemo(
-    () => getCarouselBoundaryState(targetIndex, nextLayout),
-    [nextLayout, targetIndex],
+    () => getCarouselBoundaryState(targetPageIndex, layout),
+    [layout, targetPageIndex],
   );
 
-  const { slides: virtualSlides, windowStart } = useCarouselSlides({
+  const { slides: virtualSlides, renderWindowStart } = useCarouselSlides({
     current: virtualIndex,
     prev: fromVirtualIndex,
     isMoving,
     renderWindowBufferMultiplier: layoutSettings.renderWindowBufferMultiplier,
-    layout: nextLayout,
-    slidesData: resolvedSlideRecords,
+    layout,
+    slideRecords: resolvedSlideRecords,
   });
 
   const { dispatchAction, finalizeStep: finalizeEngineStep } =
@@ -177,7 +181,7 @@ const Carousel = memo((props: CarouselProps) => {
       dispatch: baseDispatch,
       isInstantMode: isReducedMotion,
       isMoving,
-      layout: nextLayout,
+      layout,
       dragReleaseEpsilon,
       repeatedClickSettings: responsiveRepeatedClickSettings,
     });
@@ -189,8 +193,8 @@ const Carousel = memo((props: CarouselProps) => {
     readCurrentPosition,
   } = useCarouselTrackPositionBridge({
     trackRef: movingRef,
-    windowStart,
-    visibleSlidesCount: clampedVisible,
+    renderWindowStart,
+    visibleSlidesCount: layoutVisibleSlidesCount,
   });
 
   const { move, goTo } = useCarouselNavigationController({
@@ -204,9 +208,8 @@ const Carousel = memo((props: CarouselProps) => {
       dispatchAction,
       enabled: canSlide,
       measureRef: containerRef,
-      layout: nextLayout,
+      layout,
       baseVirtualIndex: virtualIndex,
-      dragReleaseEpsilon,
       readCurrentPosition,
       applyDragPosition: applyTrackPosition,
     });
@@ -225,10 +228,10 @@ const Carousel = memo((props: CarouselProps) => {
       onMove: move,
       onGoTo: goTo,
       onClick: onSlideClick,
-    });
+  });
 
   const isAutoplayPaused = !isVisible || isInteracting || isMoving;
-  const { onHover } = useCarouselAutoPlay({
+  const { handleHoverChange } = useCarouselAutoPlay({
     enabled: isAuto && canSlide,
     ignoreHover: isTouch,
     autoplayInterval,
@@ -241,14 +244,14 @@ const Carousel = memo((props: CarouselProps) => {
 
   const { releaseMotion, motionDuration } = useCarouselMotionPlan({
     gesturePointerReleaseVelocity,
-    reason: moveReason,
-    animMode,
+    moveReason,
+    animationMode,
     isDragging,
     isInstant,
     isRepeatedClickAdvance,
     segmentStartVirtualIndex: fromVirtualIndex,
     targetVirtualIndex: virtualIndex,
-    stepSize: clampedVisible,
+    stepSize: layoutVisibleSlidesCount,
     motionSettings,
     repeatedClickSettings: responsiveRepeatedClickSettings,
     autoplayDuration,
@@ -263,16 +266,16 @@ const Carousel = memo((props: CarouselProps) => {
     applyPosition: applyTrackPosition,
     enabled: canSlide,
     startVirtualIndex: fromVirtualIndex,
-    currentVirtualIndex: virtualIndex,
-    size: clampedVisible,
+    targetVirtualIndex: virtualIndex,
+    stepSize: layoutVisibleSlidesCount,
     stepDuration,
     motionSettings,
     repeatedClickSettings: responsiveRepeatedClickSettings,
     releaseMotionConfig,
     isMoving,
-    animMode,
-    reason: moveReason,
-    duration: motionDuration,
+    animationMode,
+    moveReason,
+    motionDuration,
     releaseMotion,
     gestureUiReleaseVelocity,
     isRepeatedClickAdvance,
@@ -284,22 +287,22 @@ const Carousel = memo((props: CarouselProps) => {
   useCarouselExternalControlSync({
     externalControlRef,
     motionDuration,
-    targetIndex,
+    targetPageIndex,
     pageCount,
-    isFinite: nextLayout.isFinite,
+    isFinite: layout.isFinite,
     shouldSyncMotion: shouldSyncExternalControlMotion,
   });
 
   const slideStyle = useMemo(
-    () => getSlideFlexStyle(clampedVisible),
-    [clampedVisible],
+    () => getSlideFlexStyle(layoutVisibleSlidesCount),
+    [layoutVisibleSlidesCount],
   );
 
   useIsomorphicLayoutEffect(() => {
     if (isIdle) {
       manageFocusShift(containerRef.current);
     }
-  }, [isIdle, targetIndex]);
+  }, [isIdle, targetPageIndex]);
 
   const classNames = useMemo(
     () => (className ? mergeStyles(styles, className) : styles),
@@ -323,7 +326,7 @@ const Carousel = memo((props: CarouselProps) => {
 
   const moduleContextValue = useCarouselModuleContextValue({
     pageCount,
-    activePageIndex: targetIndex,
+    activePageIndex: targetPageIndex,
     isMoving,
     isJumping,
     moveReason,
@@ -341,7 +344,7 @@ const Carousel = memo((props: CarouselProps) => {
   const diagnosticContextValue = useCarouselDiagnosticContextValue({
     diagnosticPayload,
     perfectPageLayoutInfo,
-    visibleSlidesCount: clampedVisible,
+    visibleSlidesCount: layoutVisibleSlidesCount,
     isControlsOn,
     hasControlsSlot,
     isPaginationOn,
@@ -364,8 +367,8 @@ const Carousel = memo((props: CarouselProps) => {
             tabIndex={-1}
             className={classNames.innerContainer}
             data-carousel-viewport=""
-            onMouseEnter={() => onHover(true)}
-            onMouseLeave={() => onHover(false)}
+            onMouseEnter={() => handleHoverChange(true)}
+            onMouseLeave={() => handleHoverChange(false)}
             {...dragListeners}
           >
             <div

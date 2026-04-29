@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { NavZone } from "./NavZone";
+import { NavigationZone } from "./NavigationZone";
 import type { ControlsViewProps } from "../types";
 
 export const ControlsView = memo(
@@ -13,10 +13,18 @@ export const ControlsView = memo(
     return (
       <>
         {canMovePrev && (
-          <NavZone direction="left" onClick={onPrev} classNames={classNames} />
+          <NavigationZone
+            direction="left"
+            onClick={onPrev}
+            classNames={classNames}
+          />
         )}
         {canMoveNext && (
-          <NavZone direction="right" onClick={onNext} classNames={classNames} />
+          <NavigationZone
+            direction="right"
+            onClick={onNext}
+            classNames={classNames}
+          />
         )}
       </>
     );

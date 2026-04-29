@@ -5,7 +5,7 @@ const parseLengthValue = (rawValue: string) => {
 
 export const getTrackSlotSize = (
   viewport: HTMLElement,
-  visibleSlidesNr: number,
+  visibleSlidesCount: number,
 ) => {
   const viewportWidth = viewport.offsetWidth;
   const styles = window.getComputedStyle(viewport);
@@ -15,7 +15,7 @@ export const getTrackSlotSize = (
     styles.getPropertyValue("column-gap");
   const gap = parseLengthValue(gapValue);
 
-  return (viewportWidth + gap) / visibleSlidesNr;
+  return (viewportWidth + gap) / visibleSlidesCount;
 };
 
 export const getVirtualVelocityFromPointerVelocity = (
@@ -29,11 +29,11 @@ export const getVirtualVelocityFromPointerVelocity = (
   return -(pointerVelocity / slotSize);
 };
 
-interface VirtualIndexFromDragOffsetParams {
+interface GetVirtualIndexFromDragOffsetInput {
   baseVirtualIndex: number;
   dragOffset: number;
   viewport: HTMLElement | null;
-  visibleSlidesNr: number;
+  visibleSlidesCount: number;
   fallback: number;
 }
 
@@ -41,12 +41,12 @@ export const getVirtualIndexFromDragOffset = ({
   baseVirtualIndex,
   dragOffset,
   viewport,
-  visibleSlidesNr,
+  visibleSlidesCount,
   fallback,
-}: VirtualIndexFromDragOffsetParams) => {
+}: GetVirtualIndexFromDragOffsetInput) => {
   if (!viewport) return fallback;
 
-  const slotSize = getTrackSlotSize(viewport, visibleSlidesNr);
+  const slotSize = getTrackSlotSize(viewport, visibleSlidesCount);
 
   return baseVirtualIndex - dragOffset / slotSize;
 };

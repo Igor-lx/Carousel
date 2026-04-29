@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { type DevNoticeEntry, useGroupedDevNotice } from "../../../../shared";
-import type { CarouselPerfectPageLayoutNoticeInput } from "../../core/model/diagnostic";
+import { type DevNoticeEntry, useGroupedDevNotice } from "../../../../../shared";
+import type { CarouselPerfectPageLayoutNoticeInput } from "../../../core/model/diagnostic";
 
 export const PERFECT_PAGE_LAYOUT_NOTICE_SCOPE = "usePerfectPageLayoutNotice";
 export const PERFECT_PAGE_LAYOUT_NOTICE_SUMMARY =

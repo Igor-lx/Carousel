@@ -10,7 +10,7 @@ interface UseCarouselNavigationControllerProps {
 
 interface UseCarouselNavigationControllerResult {
   move: (step: number, moveReason?: MoveReason) => void;
-  goTo: (index: number, moveReason?: MoveReason) => void;
+  goTo: (pageIndex: number, moveReason?: MoveReason) => void;
 }
 
 export function useCarouselNavigationController({
@@ -33,12 +33,12 @@ export function useCarouselNavigationController({
   );
 
   const goTo = useCallback(
-    (index: number, moveReason: MoveReason = "unknown") => {
+    (pageIndex: number, moveReason: MoveReason = "unknown") => {
       if (!enabled) return;
 
       dispatchAction({
         type: "GO_TO",
-        target: index,
+        targetPageIndex: pageIndex,
         moveReason,
         fromVirtualIndex: readCurrentPosition(),
       });

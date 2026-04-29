@@ -4,7 +4,7 @@ import {
   type CarouselLayout,
 } from "../../../utilities";
 import type { State } from "../types";
-import { CLEARED_TRANSIENT_MOTION_STATE, initialState } from "./state";
+import { CLEARED_TRANSIENT_MOTION_STATE, initialState } from "../state";
 
 const hasSameLayout = (
   prevLayout: CarouselLayout,
@@ -12,7 +12,7 @@ const hasSameLayout = (
 ) =>
   prevLayout.dataKey === nextLayout.dataKey &&
   prevLayout.totalVirtual === nextLayout.totalVirtual &&
-  prevLayout.clampedVisible === nextLayout.clampedVisible &&
+  prevLayout.visibleSlidesCount === nextLayout.visibleSlidesCount &&
   prevLayout.isFinite === nextLayout.isFinite &&
   prevLayout.pageCount === nextLayout.pageCount;
 
@@ -39,31 +39,31 @@ export const reconcileStateToLayout = (
     return initialState(nextLayout);
   }
 
-  const nextActiveIndex = getReconciledPageIndex(
-    state.activeIndex,
+  const nextActivePageIndex = getReconciledPageIndex(
+    state.activePageIndex,
     currentLayout,
     nextLayout,
   );
 
-  const nextTargetIndex = getReconciledPageIndex(
-    state.targetIndex,
+  const nextTargetPageIndex = getReconciledPageIndex(
+    state.targetPageIndex,
     currentLayout,
     nextLayout,
   );
 
   const nextVirtualIndex = getPageStart(
-    nextTargetIndex,
-    nextLayout.clampedVisible,
+    nextTargetPageIndex,
+    nextLayout.visibleSlidesCount,
   );
 
   return {
     ...state,
     currentLayout: nextLayout,
-    activeIndex: nextActiveIndex,
-    targetIndex: nextTargetIndex,
+    activePageIndex: nextActivePageIndex,
+    targetPageIndex: nextTargetPageIndex,
     fromVirtualIndex: nextVirtualIndex,
     virtualIndex: nextVirtualIndex,
     ...CLEARED_TRANSIENT_MOTION_STATE,
-    animMode: "instant",
+    animationMode: "instant",
   };
 };

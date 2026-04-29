@@ -2,14 +2,19 @@ import clsx from "clsx";
 import { memo, useCallback } from "react";
 import type { PaginationDotProps } from "../types";
 
-export const Dot = memo(
-  ({ index, visualIndex, onPageSelect, classNames }: PaginationDotProps) => {
+export const PaginationDot = memo(
+  ({
+    pageIndex,
+    displayedPageIndex,
+    onPageSelect,
+    classNames,
+  }: PaginationDotProps) => {
     const handleClick = useCallback(
-      () => onPageSelect(index),
-      [index, onPageSelect],
+      () => onPageSelect(pageIndex),
+      [pageIndex, onPageSelect],
     );
     const handleMouseDown = useCallback(
-      (e: React.MouseEvent) => e.preventDefault(),
+      (event: React.MouseEvent) => event.preventDefault(),
       [],
     );
 
@@ -18,11 +23,11 @@ export const Dot = memo(
         type="button"
         className={clsx(
           classNames.dot,
-          index === visualIndex && classNames.dotActive,
+          pageIndex === displayedPageIndex && classNames.dotActive,
         )}
         onMouseDown={handleMouseDown}
         onClick={handleClick}
-        disabled={index === visualIndex}
+        disabled={pageIndex === displayedPageIndex}
         tabIndex={-1}
       />
     );

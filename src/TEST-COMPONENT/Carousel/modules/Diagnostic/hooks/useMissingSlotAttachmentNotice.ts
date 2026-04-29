@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { type DevNoticeEntry, useGroupedDevNotice } from "../../../../shared";
-import type { CarouselSlotAttachmentNoticeInput } from "../../core/model/diagnostic";
+import { type DevNoticeEntry, useGroupedDevNotice } from "../../../../../shared";
+import type { CarouselSlotAttachmentNoticeInput } from "../../../core/model/diagnostic";
 
 const MISSING_SLOT_ATTACHMENT_NOTICE_SCOPE = "useMissingSlotAttachmentNotice";
 const MISSING_SLOT_ATTACHMENT_NOTICE_SUMMARY =

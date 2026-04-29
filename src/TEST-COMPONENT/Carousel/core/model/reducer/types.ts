@@ -21,20 +21,20 @@ export type MoveAction = StepActionBase & {
 
 export type GoToAction = StepActionBase & {
   type: "GO_TO";
-  target: number;
+  targetPageIndex: number;
 };
 
 export type StepAction = MoveAction | GoToAction;
 
 export type StartDragAction = VirtualIndexSource & {
   type: "START_DRAG";
-  targetIndex?: number;
+  targetPageIndex?: number;
 };
 
 export type EndDragAction = VirtualIndexSource & {
   type: "END_DRAG";
   isInstant?: boolean;
-  targetIndex: number;
+  targetPageIndex: number;
   targetVirtualIndex: number;
   isSnap: boolean;
   pointerReleaseVelocity: number;
@@ -94,13 +94,13 @@ export type ReducerAction =
 
 export interface State {
   currentLayout: CarouselLayout;
-  activeIndex: number;
-  targetIndex: number;
+  activePageIndex: number;
+  targetPageIndex: number;
   fromVirtualIndex: number;
   virtualIndex: number;
   followUpVirtualIndex: number | null;
   isRepeatedClickAdvance: boolean;
-  animMode: AnimationMode;
+  animationMode: AnimationMode;
   moveReason: MoveReason;
   gesturePointerReleaseVelocity: number;
   gestureUiReleaseVelocity: number;

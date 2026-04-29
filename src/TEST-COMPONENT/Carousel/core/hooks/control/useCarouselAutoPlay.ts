@@ -8,12 +8,12 @@ interface UseCarouselAutoPlayProps {
   isPaused: boolean;
   ignoreHover: boolean;
   isAtEnd: boolean;
-  onGoTo: (target: number, reason: MoveReason) => void;
+  onGoTo: (targetPageIndex: number, reason: MoveReason) => void;
   onMove: (step: number, reason: MoveReason) => void;
 }
 
 interface UseCarouselAutoPlayResult {
-  onHover: (active: boolean) => void;
+  handleHoverChange: (active: boolean) => void;
 }
 
 export function useCarouselAutoPlay({
@@ -52,7 +52,7 @@ export function useCarouselAutoPlay({
     [clearHoverTimer, hoverPauseDelay],
   );
 
-  const onHover = useCallback(
+  const handleHoverChange = useCallback(
     (active: boolean) => {
       if (!enabled || ignoreHover) return;
       toggleInternalPause(active, active);
@@ -96,6 +96,6 @@ export function useCarouselAutoPlay({
   );
 
   return {
-    onHover,
+    handleHoverChange,
   };
 }

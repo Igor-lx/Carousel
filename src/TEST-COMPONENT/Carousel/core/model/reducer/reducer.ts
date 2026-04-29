@@ -2,34 +2,36 @@ import type { ReducerAction, State } from "./types";
 import { clamp, normalizePageIndex } from "../../utilities";
 import {
   CLEARED_TRANSIENT_MOTION_STATE,
+  getAnimationStatus,
+} from "./state";
+import {
   getDragReleaseAnimationMode,
-  getAnimStatus,
   hasReachedDragTarget,
   reconcileStateToLayout,
   resolveRepeatedClickPlan,
   resolveStepTransition,
-} from "./helpers";
+} from "./transitions";
 
 export function reducer(state: State, action: ReducerAction): State {
   const syncedState = reconcileStateToLayout(state, action.layout);
-  const { currentLayout, animMode } = syncedState;
-  const status = getAnimStatus(animMode);
+  const { currentLayout, animationMode } = syncedState;
+  const status = getAnimationStatus(animationMode);
 
   switch (action.type) {
     case "START_DRAG": {
-      const dragTargetIndex =
-        action.targetIndex ?? syncedState.targetIndex;
+      const dragTargetPageIndex =
+        action.targetPageIndex ?? syncedState.targetPageIndex;
       const dragOrigin =
         action.fromVirtualIndex ?? syncedState.virtualIndex;
 
       return {
         ...syncedState,
-        activeIndex: dragTargetIndex,
-        targetIndex: dragTargetIndex,
+        activePageIndex: dragTargetPageIndex,
+        targetPageIndex: dragTargetPageIndex,
         fromVirtualIndex: dragOrigin,
         virtualIndex: dragOrigin,
         ...CLEARED_TRANSIENT_MOTION_STATE,
-        animMode: "none",
+        animationMode: "none",
         moveReason: "gesture",
       };
     }
@@ -37,9 +39,9 @@ export function reducer(state: State, action: ReducerAction): State {
     case "END_DRAG": {
       const dragReleaseOrigin =
         action.fromVirtualIndex ?? syncedState.virtualIndex;
-      const nextTargetIndex = currentLayout.isFinite
-        ? clamp(action.targetIndex, 0, currentLayout.pageCount - 1)
-        : normalizePageIndex(action.targetIndex, currentLayout.pageCount);
+      const nextTargetPageIndex = currentLayout.isFinite
+        ? clamp(action.targetPageIndex, 0, currentLayout.pageCount - 1)
+        : normalizePageIndex(action.targetPageIndex, currentLayout.pageCount);
 
       if (
         hasReachedDragTarget(
@@ -50,23 +52,23 @@ export function reducer(state: State, action: ReducerAction): State {
       ) {
         return {
           ...syncedState,
-          activeIndex: nextTargetIndex,
-          targetIndex: nextTargetIndex,
+          activePageIndex: nextTargetPageIndex,
+          targetPageIndex: nextTargetPageIndex,
           fromVirtualIndex: action.targetVirtualIndex,
           virtualIndex: action.targetVirtualIndex,
           ...CLEARED_TRANSIENT_MOTION_STATE,
-          animMode: "none",
+          animationMode: "none",
           moveReason: "gesture",
         };
       }
 
       return {
         ...syncedState,
-        targetIndex: nextTargetIndex,
+        targetPageIndex: nextTargetPageIndex,
         fromVirtualIndex: dragReleaseOrigin,
         virtualIndex: action.targetVirtualIndex,
         ...CLEARED_TRANSIENT_MOTION_STATE,
-        animMode: getDragReleaseAnimationMode(action),
+        animationMode: getDragReleaseAnimationMode(action),
         moveReason: "gesture",
         gesturePointerReleaseVelocity: action.isInstant
           ? 0
@@ -81,7 +83,7 @@ export function reducer(state: State, action: ReducerAction): State {
     case "GO_TO": {
       const {
         nextFromVirtualIndex,
-        nextTargetIndex,
+        nextTargetPageIndex,
         nextVirtualIndex,
         animationMode,
       } = resolveStepTransition(syncedState, action);
@@ -97,15 +99,15 @@ export function reducer(state: State, action: ReducerAction): State {
               repeatedClickSettings: action.repeatedClickSettings,
             })
           : null;
-      const plannedTargetIndex =
-        repeatedClickPlan?.nextTargetIndex ?? nextTargetIndex;
+      const plannedTargetPageIndex =
+        repeatedClickPlan?.nextTargetPageIndex ?? nextTargetPageIndex;
       const followUpVirtualIndex = repeatedClickPlan?.followUpVirtualIndex ?? null;
       const plannedVirtualIndex =
         repeatedClickPlan?.nextAdvanceVirtualIndex ?? nextVirtualIndex;
 
       if (
         repeatedClickPlan === null &&
-        plannedTargetIndex === syncedState.targetIndex &&
+        plannedTargetPageIndex === syncedState.targetPageIndex &&
         plannedVirtualIndex === syncedState.virtualIndex &&
         followUpVirtualIndex === null
       ) {
@@ -114,7 +116,7 @@ export function reducer(state: State, action: ReducerAction): State {
             ...syncedState,
             fromVirtualIndex: nextFromVirtualIndex,
             ...CLEARED_TRANSIENT_MOTION_STATE,
-            animMode: "snap",
+            animationMode: "snap",
             moveReason: "gesture",
           };
         }
@@ -123,20 +125,22 @@ export function reducer(state: State, action: ReducerAction): State {
           fromVirtualIndex: nextFromVirtualIndex,
           virtualIndex: plannedVirtualIndex,
           ...CLEARED_TRANSIENT_MOTION_STATE,
-          animMode: action.isInstant ? "instant" : syncedState.animMode,
+          animationMode: action.isInstant
+            ? "instant"
+            : syncedState.animationMode,
           moveReason: action.moveReason,
         };
       }
 
       return {
         ...syncedState,
-        targetIndex: plannedTargetIndex,
+        targetPageIndex: plannedTargetPageIndex,
         fromVirtualIndex: nextFromVirtualIndex,
         virtualIndex: plannedVirtualIndex,
         ...CLEARED_TRANSIENT_MOTION_STATE,
         followUpVirtualIndex,
         isRepeatedClickAdvance: repeatedClickPlan !== null,
-        animMode: animationMode,
+        animationMode,
         moveReason: action.moveReason,
       };
     }
@@ -150,17 +154,17 @@ export function reducer(state: State, action: ReducerAction): State {
           fromVirtualIndex: syncedState.virtualIndex,
           virtualIndex: syncedState.followUpVirtualIndex,
           ...CLEARED_TRANSIENT_MOTION_STATE,
-          animMode: "normal",
+          animationMode: "normal",
           moveReason: "click",
         };
       }
 
       return {
         ...syncedState,
-        activeIndex: syncedState.targetIndex,
+        activePageIndex: syncedState.targetPageIndex,
         fromVirtualIndex: syncedState.virtualIndex,
         ...CLEARED_TRANSIENT_MOTION_STATE,
-        animMode: "none",
+        animationMode: "none",
       };
     }
 

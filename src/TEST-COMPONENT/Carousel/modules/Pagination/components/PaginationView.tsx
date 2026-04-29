@@ -1,11 +1,11 @@
 import { memo, useMemo } from "react";
 import type { PaginationViewProps } from "../types";
-import { Dot } from "./Dot";
+import { PaginationDot } from "./PaginationDot";
 
 export const PaginationView = memo(
   ({
     pageCount,
-    visualIndex,
+    displayedPageIndex,
     onPageSelect,
     classNames,
   }: PaginationViewProps) => {
@@ -16,12 +16,12 @@ export const PaginationView = memo(
 
     return (
       <div className={classNames.paginationWrapper} aria-hidden="true">
-        {pageIndexes.map((index) => (
-          <Dot
-            key={index}
-            index={index}
+        {pageIndexes.map((pageIndex) => (
+          <PaginationDot
+            key={pageIndex}
+            pageIndex={pageIndex}
             classNames={classNames}
-            visualIndex={visualIndex}
+            displayedPageIndex={displayedPageIndex}
             onPageSelect={onPageSelect}
           />
         ))}

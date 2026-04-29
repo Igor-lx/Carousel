@@ -4,11 +4,11 @@ import {
 } from "../../../core/model/config";
 import {
   MIN_RENDER_WINDOW_BUFFER_MULTIPLIER,
-} from "./contracts";
+} from "./constraints";
 import {
   getInternalConstantNoticeMessage,
   isPositiveIntegerAtLeast,
-} from "./diagnostic-common";
+} from "./diagnostic-validation";
 
 export const resolveLayoutSettings = () => {
   const renderWindowBufferMultiplier = RENDER_WINDOW_BUFFER_MULTIPLIER;

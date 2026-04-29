@@ -13,11 +13,10 @@ interface ResolveCarouselDragReleaseTargetInput {
   releasePosition: number;
   dragOriginPageIndex: number;
   layout: CarouselLayout;
-  dragReleaseEpsilon: number;
 }
 
 interface CarouselDragReleaseTarget {
-  targetIndex: number;
+  targetPageIndex: number;
   targetVirtualIndex: number;
   isSnap: boolean;
 }
@@ -27,33 +26,30 @@ export const resolveCarouselDragReleaseTarget = ({
   releasePosition,
   dragOriginPageIndex,
   layout,
-  dragReleaseEpsilon,
 }: ResolveCarouselDragReleaseTargetInput): CarouselDragReleaseTarget => {
-  const snapTargetIndex = getNearestPageIndex(releasePosition, layout);
-  let targetIndex = snapTargetIndex;
+  const snapTargetPageIndex = getNearestPageIndex(releasePosition, layout);
+  let targetPageIndex = snapTargetPageIndex;
   let isSnap = true;
 
   if (releaseDirection === "LEFT") {
-    targetIndex = layout.isFinite
+    targetPageIndex = layout.isFinite
       ? clamp(dragOriginPageIndex + 1, 0, layout.pageCount - 1)
       : normalizePageIndex(dragOriginPageIndex + 1, layout.pageCount);
-    isSnap = targetIndex === dragOriginPageIndex;
+    isSnap = targetPageIndex === dragOriginPageIndex;
   } else if (releaseDirection === "RIGHT") {
-    targetIndex = layout.isFinite
+    targetPageIndex = layout.isFinite
       ? clamp(dragOriginPageIndex - 1, 0, layout.pageCount - 1)
       : normalizePageIndex(dragOriginPageIndex - 1, layout.pageCount);
-    isSnap = targetIndex === dragOriginPageIndex;
+    isSnap = targetPageIndex === dragOriginPageIndex;
   }
 
   const targetVirtualIndex = layout.isFinite
-    ? getPageStart(targetIndex, layout.clampedVisible)
-    : getAlignedVirtualIndex(targetIndex, releasePosition, layout);
+    ? getPageStart(targetPageIndex, layout.visibleSlidesCount)
+    : getAlignedVirtualIndex(targetPageIndex, releasePosition, layout);
 
   return {
-    targetIndex,
+    targetPageIndex,
     targetVirtualIndex,
-    isSnap:
-      isSnap ||
-      Math.abs(targetVirtualIndex - releasePosition) < dragReleaseEpsilon,
+    isSnap,
   };
 };

@@ -1,6 +1,6 @@
+import { getSameDirectionSpeed } from "../motion-speed";
 import { createMotionProfile } from "./math";
 import type { MotionProfile } from "./types";
-import { getSameDirectionSpeed } from "../motion-speed";
 
 const MIN_PROFILE_SPEED = 0.000001;
 

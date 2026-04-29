@@ -19,12 +19,12 @@ interface UseCarouselSlidesProps {
   isMoving: boolean;
   renderWindowBufferMultiplier: number;
   layout: CarouselLayout;
-  slidesData: CarouselSlideRecord[];
+  slideRecords: CarouselSlideRecord[];
 }
 
 interface UseCarouselSlidesResult {
   slides: VirtualSlide[];
-  windowStart: number;
+  renderWindowStart: number;
 }
 
 export function useCarouselSlides({
@@ -33,7 +33,7 @@ export function useCarouselSlides({
   isMoving,
   renderWindowBufferMultiplier,
   layout,
-  slidesData,
+  slideRecords,
 }: UseCarouselSlidesProps): UseCarouselSlidesResult {
   const renderWindowRef = useRef(
     getRenderWindow(prev, current, layout, renderWindowBufferMultiplier),
@@ -66,7 +66,7 @@ export function useCarouselSlides({
   }, [prev, current, layout, isMoving, renderWindowBufferMultiplier]);
 
   const virtualData = useMemo((): VirtualSlide[] => {
-    const totalSlides = slidesData.length;
+    const totalSlides = slideRecords.length;
     if (totalSlides === 0) return [];
 
     const length = Math.max(0, renderWindow.end - renderWindow.start + 1);
@@ -74,7 +74,7 @@ export function useCarouselSlides({
     return Array.from({ length }).map((_, offset) => {
       const virtualIndex = renderWindow.start + offset;
       const slideRecord =
-        slidesData[getLoopedSlideIndex(virtualIndex, totalSlides)]!;
+        slideRecords[getLoopedSlideIndex(virtualIndex, totalSlides)]!;
       const usesCloneKey =
         layout.canSlide &&
         !layout.isFinite &&
@@ -84,7 +84,7 @@ export function useCarouselSlides({
         virtualIndex,
         current,
         prev,
-        layout.clampedVisible,
+        layout.visibleSlidesCount,
         isMoving,
       );
 
@@ -104,10 +104,10 @@ export function useCarouselSlides({
         a11yProps,
       };
     });
-  }, [layout, current, prev, isMoving, slidesData, renderWindow]);
+  }, [layout, current, prev, isMoving, slideRecords, renderWindow]);
 
   return {
     slides: virtualData,
-    windowStart: renderWindow.start,
+    renderWindowStart: renderWindow.start,
   };
 }

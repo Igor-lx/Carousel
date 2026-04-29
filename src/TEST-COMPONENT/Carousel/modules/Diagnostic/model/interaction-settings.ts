@@ -8,17 +8,17 @@ import {
   DIAGNOSTIC_FALLBACK_INTERACTION_SETTINGS,
   MAX_VISIBILITY_THRESHOLD,
   MIN_VISIBILITY_THRESHOLD,
-} from "./contracts";
+} from "./constraints";
 import {
   DURATION_UNIT,
   getNonNegativeDurationReason,
   isFiniteNumber,
-} from "./diagnostic-common";
+} from "./diagnostic-validation";
 import {
   normalizeAutoplayPaginationFactor,
   normalizeNonNegativeNumber,
   normalizeVisibilityThreshold,
-} from "./helpers";
+} from "./normalization";
 
 export const resolveInteractionSettings = () => {
   const hoverPauseDelay = normalizeNonNegativeNumber(

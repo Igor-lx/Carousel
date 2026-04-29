@@ -4,8 +4,8 @@ import { type CarouselDiagnosticResolver } from "../../core/model/diagnostic";
 import { useCarouselDiagnosticContext } from "../../core/model/context";
 import type { CarouselSlotComponent } from "../../core/model/slots";
 import { resolveCarouselDiagnostic } from "./model/resolveCarouselDiagnostic";
-import { useMissingSlotAttachmentNotice } from "./useMissingSlotAttachmentNotice";
-import { usePerfectPageLayoutNotice } from "./usePerfectPageLayoutNotice";
+import { useMissingSlotAttachmentNotice } from "./hooks/useMissingSlotAttachmentNotice";
+import { usePerfectPageLayoutNotice } from "./hooks/usePerfectPageLayoutNotice";
 
 const DIAGNOSTIC_NOTICE_SCOPE = "CarouselDiagnostic";
 const DIAGNOSTIC_NOTICE_SUMMARY =

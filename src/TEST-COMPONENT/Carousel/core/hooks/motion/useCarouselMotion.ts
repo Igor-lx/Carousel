@@ -24,16 +24,16 @@ interface UseCarouselMotionProps {
   applyPosition: (position: number) => void;
   enabled: boolean;
   startVirtualIndex: number;
-  currentVirtualIndex: number;
-  size: number;
+  targetVirtualIndex: number;
+  stepSize: number;
   stepDuration: number;
   motionSettings: CarouselMotionSettings;
   repeatedClickSettings: CarouselRepeatedClickSettings;
   releaseMotionConfig: ReleaseMotionConfig;
   isMoving: boolean;
-  animMode: AnimationMode;
-  reason: MoveReason;
-  duration: number;
+  animationMode: AnimationMode;
+  moveReason: MoveReason;
+  motionDuration: number;
   releaseMotion: ReleaseMotionResult;
   gestureUiReleaseVelocity: number;
   isRepeatedClickAdvance: boolean;
@@ -47,16 +47,16 @@ export function useCarouselMotion({
   applyPosition,
   enabled,
   startVirtualIndex,
-  currentVirtualIndex,
-  size,
+  targetVirtualIndex,
+  stepSize,
   stepDuration,
   motionSettings,
   repeatedClickSettings,
   releaseMotionConfig,
   isMoving,
-  animMode,
-  reason,
-  duration,
+  animationMode,
+  moveReason,
+  motionDuration,
   releaseMotion,
   gestureUiReleaseVelocity,
   isRepeatedClickAdvance,
@@ -136,7 +136,7 @@ export function useCarouselMotion({
       cancelAnimation();
       const segment = activeSegmentRef.current;
       activeSegmentRef.current = null;
-      applyPosition(currentVirtualIndex);
+      applyPosition(targetVirtualIndex);
       cancelCompletion();
 
       if (handoffToFollowUp) {
@@ -147,10 +147,10 @@ export function useCarouselMotion({
                 timestamp: performance.now(),
               }
             : {
-                position: currentVirtualIndex,
+                position: targetVirtualIndex,
                 velocity: velocityRef.current,
                 timestamp: performance.now(),
-                target: currentVirtualIndex,
+                target: targetVirtualIndex,
                 strategy: "easing",
               });
 
@@ -171,8 +171,8 @@ export function useCarouselMotion({
       applyPosition,
       cancelAnimation,
       cancelCompletion,
-      currentVirtualIndex,
       onComplete,
+      targetVirtualIndex,
     ],
   );
 
@@ -212,14 +212,14 @@ export function useCarouselMotion({
     const planKey = [
       enabled,
       isMoving,
-      animMode,
-      reason,
-      duration,
+      animationMode,
+      moveReason,
+      motionDuration,
       releaseMotion.effectiveReleaseSpeed,
       releaseMotion.isInertialRelease,
       gestureUiReleaseVelocity,
       startVirtualIndex,
-      currentVirtualIndex,
+      targetVirtualIndex,
       isRepeatedClickAdvance,
       followUpVirtualIndex,
       stepDuration,
@@ -244,7 +244,7 @@ export function useCarouselMotion({
       activeSegmentRef.current = null;
       handoffSnapshotRef.current = null;
       velocityRef.current = 0;
-      applyPosition(currentVirtualIndex);
+      applyPosition(targetVirtualIndex);
       return;
     }
 
@@ -253,11 +253,11 @@ export function useCarouselMotion({
       activeSegmentRef.current = null;
       handoffSnapshotRef.current = null;
       velocityRef.current = 0;
-      applyPosition(currentVirtualIndex);
+      applyPosition(targetVirtualIndex);
       return;
     }
 
-    if (animMode === "instant" || duration <= 0) {
+    if (animationMode === "instant" || motionDuration <= 0) {
       finalizeMotion(hasFollowUpStep);
       return;
     }
@@ -279,22 +279,22 @@ export function useCarouselMotion({
             target: handoffSnapshot.target,
             strategy: handoffSnapshot.strategy,
           }
-        : reason === "gesture"
+        : moveReason === "gesture"
           ? {
               progress: 0,
               position: currentPositionRef.current,
               velocity: gestureUiReleaseVelocity,
-              target: currentVirtualIndex,
+              target: targetVirtualIndex,
               strategy: "gesture",
             }
           : {
               progress: 0,
               position: currentPositionRef.current,
               velocity: velocityRef.current,
-              target: currentVirtualIndex,
+              target: targetVirtualIndex,
               strategy: "easing",
             };
-    const distance = currentVirtualIndex - nowState.position;
+    const distance = targetVirtualIndex - nowState.position;
 
     if (Math.abs(distance) < epsilon) {
       finalizeMotion(hasFollowUpStep);
@@ -306,14 +306,14 @@ export function useCarouselMotion({
       canReuseHandoffSnapshot && handoffSnapshot?.strategy === "repeated";
 
     activeSegmentRef.current = createCarouselMotionSegment({
-      animMode,
-      reason,
+      animationMode,
+      moveReason,
       nowState,
-      targetVirtualIndex: currentVirtualIndex,
+      targetVirtualIndex,
       startedAt,
-      stepSize: size,
+      stepSize,
       stepDuration,
-      duration,
+      duration: motionDuration,
       releaseMotion,
       repeatedClickSettings,
       releaseMotionConfig,
@@ -339,13 +339,11 @@ export function useCarouselMotion({
     animate();
   }, [
     animate,
-    animMode,
+    animationMode,
     applyPosition,
     cancelAnimation,
     cancelCompletion,
-    currentVirtualIndex,
     currentPositionRef,
-    duration,
     enabled,
     epsilon,
     finalizeMotion,
@@ -356,14 +354,16 @@ export function useCarouselMotion({
     hasFollowUpStep,
     isRepeatedClickAdvance,
     isMoving,
+    motionDuration,
+    moveReason,
     readCurrentState,
-    reason,
     repeatedClickSettings.decelerationDistanceShare,
     repeatedClickSettings.speedMultiplier,
     repeatedClickSettings.accelerationDistanceShare,
-    size,
     startVirtualIndex,
     stepDuration,
+    stepSize,
+    targetVirtualIndex,
   ]);
 
   useEffect(
