@@ -1,5 +1,5 @@
 import {
-  DOTS_POOL_BUFFER,
+  DOTS_OUTSIDE_BUFFER,
   EDGE_DOT_DRIFT_FACTOR,
 } from "../model/paginationWidgetConstants";
 import type {
@@ -42,7 +42,8 @@ export const computePool = (
   baseStep: number,
   actualCount: number,
 ): number[] => {
-  const side = Math.max(actualCount, DOTS_POOL_BUFFER);
+  const side = Math.floor(actualCount / 2) + DOTS_OUTSIDE_BUFFER;
+
   return Array.from({ length: side * 2 + 1 }, (_, i) => baseStep - side + i);
 };
 

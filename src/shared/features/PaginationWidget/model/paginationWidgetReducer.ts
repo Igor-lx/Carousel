@@ -10,6 +10,9 @@ export const initialPaginationWidgetState: PaginationWidgetState = {
   lastDirection: null,
 };
 
+const getDirectionOffset = (direction: "next" | "prev") =>
+  direction === "next" ? 1 : -1;
+
 export function paginationWidgetReducer(
   state: PaginationWidgetState,
   action: PaginationWidgetAction,
@@ -17,14 +20,14 @@ export function paginationWidgetReducer(
   switch (action.type) {
     case "CLICK": {
       const isMoving = state.mode === "MOVING";
+      const directionOffset = getDirectionOffset(action.direction);
+
       return {
         ...state,
         requestId: state.requestId + 1,
         mode: isMoving ? "MOVING" : "WAITING",
         lastDirection: action.direction,
-        step: isMoving
-          ? state.step + (action.direction === "next" ? 1 : -1)
-          : state.step,
+        step: isMoving ? state.step + directionOffset : state.step,
       };
     }
     case "START_ANIMATION": {
@@ -32,7 +35,7 @@ export function paginationWidgetReducer(
       return {
         ...state,
         mode: "MOVING",
-        step: state.step + (state.lastDirection === "next" ? 1 : -1),
+        step: state.step + getDirectionOffset(state.lastDirection),
       };
     }
     case "END_STEP":
@@ -40,11 +43,14 @@ export function paginationWidgetReducer(
         ...initialPaginationWidgetState,
         step: Math.round(state.step),
       };
-    case "RESET":
+    case "RESET": {
+      const resetStep = Math.round(state.step);
+
       return {
         ...initialPaginationWidgetState,
-        step: Math.round(state.step),
+        step: resetStep,
       };
+    }
     default:
       return state;
   }

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { PAGINATION_WIDGET_LIMITS } from "../model/paginationWidgetConstants";
 
 interface WidgetNoticeProps {
   requestedVisibleDots: number;
@@ -24,10 +25,19 @@ export function usePaginationWidgetLayoutNotice({
       return;
     }
 
-    if (requestedVisibleDots < 3) {
+    if (requestedVisibleDots < PAGINATION_WIDGET_LIMITS.minVisibleDots) {
       console.warn(
         `[PaginationWidget]: Input "visibleDots" (${requestedVisibleDots}) is too low. ` +
-          `Minimum 3 dots are required for the animation engine to function. ` +
+          `Minimum ${PAGINATION_WIDGET_LIMITS.minVisibleDots} dots are required for the animation engine to function. ` +
+          `Value was normalized to ${normalizedVisibleDots}.`,
+      );
+      return;
+    }
+
+    if (requestedVisibleDots > PAGINATION_WIDGET_LIMITS.maxVisibleDots) {
+      console.warn(
+        `[PaginationWidget]: Input "visibleDots" (${requestedVisibleDots}) is too high. ` +
+          `Maximum ${PAGINATION_WIDGET_LIMITS.maxVisibleDots} dots are allowed to keep layout work bounded. ` +
           `Value was normalized to ${normalizedVisibleDots}.`,
       );
       return;

@@ -10,6 +10,10 @@ import {
   precomputeScales,
   projectDot,
 } from "../utils/paginationWidgetMath";
+import {
+  normalizePaginationWidgetSpatialConfig,
+  normalizePaginationWidgetVisibleDots,
+} from "../model/paginationWidgetConfig";
 
 export function usePaginationWidgetSpatialField({
   visibleDots,
@@ -20,27 +24,16 @@ export function usePaginationWidgetSpatialField({
   config: PaginationWidgetSpatialConfig;
   step: number;
 }) {
+  const { size, gap, scaleFactor } = config;
   const safeConfig = useMemo(
-    () => ({
-      size: Math.max(config.size, 1),
-      gap: Math.max(config.gap, 0),
-      scaleFactor: Math.max(config.scaleFactor, 0.01),
-    }),
-    [config.size, config.gap, config.scaleFactor],
+    () => normalizePaginationWidgetSpatialConfig({ size, gap, scaleFactor }),
+    [gap, scaleFactor, size],
   );
 
-  const safeVisibleDots = useMemo(() => {
-    const fallback = 3;
-    const finiteVisibleDots =
-      typeof visibleDots === "number" && Number.isFinite(visibleDots)
-        ? visibleDots
-        : fallback;
-    const integerVisibleDots = Math.max(Math.floor(finiteVisibleDots), fallback);
-
-    return integerVisibleDots % 2 === 0
-      ? integerVisibleDots + 1
-      : integerVisibleDots;
-  }, [visibleDots]);
+  const safeVisibleDots = useMemo(
+    () => normalizePaginationWidgetVisibleDots(visibleDots),
+    [visibleDots],
+  );
 
   const layoutModel = useMemo((): PaginationWidgetLayoutModel => {
     const actualCount = safeVisibleDots;
