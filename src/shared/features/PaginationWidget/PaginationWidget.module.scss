@@ -30,6 +30,7 @@
   overflow: hidden;
   transition: width 0.3s ease;
   contain: paint;
+  box-sizing: border-box;
 }
 
 .dot_PW {
@@ -75,4 +76,27 @@
 .stopped .dot_PW::after,
 .stopped.container_PW {
   transition: none !important;
+}
+
+@media (max-width: 767px) {
+  .container_PW {
+    --widget-padding-inline: 16px;
+    --widget-padding-block: 10px;
+
+    max-width: calc(100vw - 24px);
+  }
+}
+
+@media (max-width: 767px) and (orientation: landscape) {
+  .container_PW {
+    --widget-padding-inline: 14px;
+    --widget-padding-block: 8px;
+  }
+}
+
+@media (max-width: 380px) {
+  .container_PW {
+    --widget-padding-inline: 12px;
+    --widget-padding-block: 8px;
+  }
 }

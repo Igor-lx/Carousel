@@ -38,9 +38,21 @@
   }
 
   [data-touch="true"] .dot {
-    width: 45px;
-    height: 15px;
+    width: 34px;
+    height: 11px;
     border-radius: 6px;
+  }
+
+  @media (max-width: 767px) {
+    .paginationWrapper {
+      padding: 12px 10px 0;
+      gap: 8px 18px;
+    }
+
+    [data-touch="true"] .dot {
+      width: 28px;
+      height: 9px;
+    }
   }
 
   [data-reduced-motion="true"] .dot {

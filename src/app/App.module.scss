@@ -4,9 +4,11 @@
   align-items: stretch;
   width: 100%;
   min-width: 0;
-  height: 100vh;
+  min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--bg-global);
   transition: background-color var(--transition-bg);
+  overflow-x: hidden;
 }
 
 .page {
@@ -15,7 +17,9 @@
   align-items: stretch;
   padding: 40px 20px 0;
   min-height: 100vh;
+  min-height: 100dvh;
   gap: 90px;
+  box-sizing: border-box;
 }
 
 .header {
@@ -44,6 +48,7 @@
   align-items: center;
   justify-content: center;
   width: 100%;
+  min-width: 0;
 }
 
 @media (max-width: 1023px) {
@@ -59,7 +64,25 @@
 }
 
 @media (max-width: 767px) {
+  .page {
+    padding: 12px 8px;
+    gap: 18px;
+  }
+
+  .header {
+    padding: 0;
+    gap: 8px;
+  }
+
   .button {
     min-width: 50px;
+    min-height: 28px;
+  }
+}
+
+@media (max-width: 767px) and (orientation: landscape) {
+  .page {
+    padding: 8px;
+    gap: 10px;
   }
 }

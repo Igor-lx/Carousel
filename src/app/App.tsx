@@ -73,6 +73,13 @@ const VIS_CONFIG = {
   DEFAULT: 3,
 };
 
+const PAGINATION_WIDGET_CONFIG = {
+  DESKTOP: { dotSize: 22, dotGap: 24 },
+  TABLET: { dotSize: 20, dotGap: 20 },
+  MOBILE: { dotSize: 18, dotGap: 16 },
+  DEFAULT: { dotSize: 20, dotGap: 20 },
+};
+
 export const CarouselPaginationWidget = injectSlot(
   PaginationWidget,
   "pagination",
@@ -93,6 +100,7 @@ function App() {
   }) as keyof typeof VIS_CONFIG;
 
   const visibleSlidesNr = VIS_CONFIG[device];
+  const paginationWidgetConfig = PAGINATION_WIDGET_CONFIG[device];
 
   const slidesData = useMemo(
     () =>
@@ -144,7 +152,11 @@ function App() {
             isTouchDevice={isTouch}
             onSlideClick={handleSlideClick}
           >
-            {isTouch ? <CarouselPaginationWidget /> : <Pagination />}
+            {isTouch ? (
+              <CarouselPaginationWidget {...paginationWidgetConfig} />
+            ) : (
+              <Pagination />
+            )}
             <Controls />
             <Diagnostic />
           </Carousel>
