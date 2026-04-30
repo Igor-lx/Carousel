@@ -1,6 +1,6 @@
 // Render-window buffer in slide steps, >= 1.
 // Larger value keeps more neighboring slides mounted around the viewport.
-export const RENDER_WINDOW_BUFFER_MULTIPLIER = 2;
+export const RENDER_WINDOW_BUFFER_MULTIPLIER = 3;
 
 // Repeated-click position comparison tolerance, > 0.
 export const REPEATED_CLICK_EPSILON = 0.0001;
