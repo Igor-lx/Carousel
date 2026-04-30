@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import type { NumericMotionValueSource } from "../../../motion";
 
 export type PaginationWidgetAnimationMode = "IDLE" | "WAITING" | "MOVING";
 export type PaginationWidgetMoveDirection = "right" | "left";
@@ -21,6 +22,7 @@ export interface PaginationWidgetDotState {
   x: number;
   scale: number;
   opacity: number;
+  activeStrength: number;
   isActive: boolean;
 }
 
@@ -53,6 +55,7 @@ export interface PaginationWidgetDotCSSVars extends CSSProperties {
   "--dot-x": string;
   "--dot-scale": number;
   "--dot-opacity": number;
+  "--dot-active-strength": number;
 }
 
 export interface PaginationWidgetHandler {
@@ -60,6 +63,7 @@ export interface PaginationWidgetHandler {
   moveLeft: () => void;
   setStopped: (isStopped: boolean) => void;
   setDuration: (val: number | null) => void;
+  bindMotionSource: (source: NumericMotionValueSource | null) => void;
 }
 
 export type PaginationWidgetClassMap = {

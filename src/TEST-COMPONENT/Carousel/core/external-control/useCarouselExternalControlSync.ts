@@ -1,16 +1,27 @@
-import { useCallback, useRef, type RefObject } from "react";
+import { useCallback, useMemo, useRef, type RefObject } from "react";
 
-import { useIsomorphicLayoutEffect } from "../../../../shared";
+import {
+  motionEngine,
+  useIsomorphicLayoutEffect,
+  type NumericMotionController,
+} from "../../../../shared";
+import type { CarouselMotionStrategy } from "../model/motion-execution";
 import { getShortestCyclicDistance } from "../utilities";
-import { isCarouselExternalControlHandle } from "./types";
+import {
+  canBindCarouselMotionSource,
+  isCarouselExternalControlHandle,
+} from "./types";
 
 interface UseCarouselExternalControlSyncProps {
   externalControlRef: RefObject<unknown | null>;
+  motionController: NumericMotionController<CarouselMotionStrategy>;
   motionDuration: number;
   targetPageIndex: number;
   pageCount: number;
   isFinite: boolean;
+  visualOffsetStepSize: number;
   shouldSyncMotion: boolean;
+  shouldBindMotionSource: boolean;
   shouldReportInvalidHandle: boolean;
 }
 
@@ -48,11 +59,14 @@ const getExternalControlStepDirection = ({
 
 export function useCarouselExternalControlSync({
   externalControlRef,
+  motionController,
   motionDuration,
   targetPageIndex,
   pageCount,
   isFinite,
+  visualOffsetStepSize,
   shouldSyncMotion,
+  shouldBindMotionSource,
   shouldReportInvalidHandle,
 }: UseCarouselExternalControlSyncProps): void {
   const previousTargetPageIndexRef = useRef<number | null>(null);
@@ -83,15 +97,65 @@ export function useCarouselExternalControlSync({
     return null;
   }, [externalControlRef, shouldReportInvalidHandle]);
 
+  const motionValueSource = useMemo(
+    () =>
+      motionEngine.createMappedNumericMotionValueSource(
+        motionController,
+        (sample) => {
+          if (!(visualOffsetStepSize > 0)) {
+            return 0;
+          }
+
+          return sample.value / visualOffsetStepSize;
+        },
+      ),
+    [motionController, visualOffsetStepSize],
+  );
+
   useIsomorphicLayoutEffect(() => {
-    getExternalControlHandle()?.setDuration(motionDuration);
+    const handle = getExternalControlHandle();
+
+    if (!canBindCarouselMotionSource(handle) || !handle?.bindMotionSource) {
+      return;
+    }
+
+    if (!shouldBindMotionSource) {
+      handle.bindMotionSource(null);
+      handle.setStopped?.(true);
+
+      return () => {
+        handle.setStopped?.(false);
+      };
+    }
+
+    handle.setStopped?.(false);
+    handle.bindMotionSource(motionValueSource);
+
+    return () => {
+      handle.bindMotionSource?.(null);
+    };
+  }, [getExternalControlHandle, motionValueSource, shouldBindMotionSource]);
+
+  useIsomorphicLayoutEffect(() => {
+    const handle = getExternalControlHandle();
+
+    if (canBindCarouselMotionSource(handle)) {
+      return;
+    }
+
+    handle?.setDuration(motionDuration);
   }, [getExternalControlHandle, motionDuration]);
 
   useIsomorphicLayoutEffect(() => {
     const previousTargetPageIndex = previousTargetPageIndexRef.current;
     previousTargetPageIndexRef.current = targetPageIndex;
+    const handle = getExternalControlHandle();
 
-    if (previousTargetPageIndex === null || !shouldSyncMotion) {
+    if (
+      previousTargetPageIndex === null ||
+      !shouldSyncMotion ||
+      canBindCarouselMotionSource(handle)
+    ) {
       return;
     }
 
@@ -103,12 +167,12 @@ export function useCarouselExternalControlSync({
     });
 
     if (direction > 0) {
-      getExternalControlHandle()?.moveRight();
+      handle?.moveRight();
       return;
     }
 
     if (direction < 0) {
-      getExternalControlHandle()?.moveLeft();
+      handle?.moveLeft();
     }
   }, [
     getExternalControlHandle,

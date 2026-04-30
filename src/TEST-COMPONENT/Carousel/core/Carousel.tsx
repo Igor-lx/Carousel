@@ -29,6 +29,7 @@ import {
   useIsomorphicLayoutEffect,
   useIsReducedMotion,
   useIsTouchDevice,
+  useNumericMotionController,
   usePickStyles,
 } from "../../../shared";
 
@@ -39,6 +40,7 @@ import {
   reconcileStateToLayout,
   reducer,
 } from "./model/reducer";
+import type { CarouselMotionStrategy } from "./model/motion-execution";
 import { DEFAULT_SETTINGS } from "./model/config";
 import {
   CarouselDiagnosticContext,
@@ -78,6 +80,8 @@ const Carousel = memo((props: CarouselProps) => {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const movingRef = useRef<HTMLDivElement>(null);
+  const motionController =
+    useNumericMotionController<CarouselMotionStrategy>(0, "easing");
 
   const prefersReducedMotion = useIsReducedMotion();
   const detectedTouchDevice = useIsTouchDevice();
@@ -195,6 +199,7 @@ const Carousel = memo((props: CarouselProps) => {
     trackRef: movingRef,
     renderWindowStart,
     visibleSlidesCount: layoutVisibleSlidesCount,
+    motionController,
   });
 
   const { move, goTo } = useCarouselNavigationController({
@@ -260,9 +265,9 @@ const Carousel = memo((props: CarouselProps) => {
   });
 
   useCarouselMotion({
+    motionController,
     currentPositionRef: motionPositionRef,
     positionReaderRef: motionPositionReaderRef,
-    applyPosition: applyTrackPosition,
     enabled: canSlide,
     startVirtualIndex: fromVirtualIndex,
     targetVirtualIndex: virtualIndex,
@@ -285,11 +290,14 @@ const Carousel = memo((props: CarouselProps) => {
   const shouldSyncExternalControlMotion = isMoving && !isReducedMotion;
   useCarouselExternalControlSync({
     externalControlRef,
+    motionController,
     motionDuration,
     targetPageIndex,
     pageCount,
     isFinite: layout.isFinite,
+    visualOffsetStepSize: layoutVisibleSlidesCount,
     shouldSyncMotion: shouldSyncExternalControlMotion,
+    shouldBindMotionSource: !isReducedMotion,
     shouldReportInvalidHandle: Boolean(slots.diagnostic),
   });
 

@@ -5,6 +5,8 @@ import type {
   PaginationWidgetSpatialConfig,
 } from "../model/paginationWidgetTypes";
 
+const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
+
 export const precomputeScales = (
   actualCount: number,
   centerIndex: number,
@@ -75,7 +77,7 @@ export const projectDot = (
     t = slot - f;
   const sF = scales[f] ?? 0,
     sC = scales[c] ?? 0;
-  const scale = slot < 0 || slot > actualCount - 1 ? 0 : sF + (sC - sF) * t;
+  const scale = sF + (sC - sF) * t;
 
   const absDist = Math.abs(dist);
   return {
@@ -86,6 +88,7 @@ export const projectDot = (
       absDist > centerIndex - 0.5
         ? Math.max(0, 1 - (absDist - (centerIndex - 0.5)))
         : 1,
+    activeStrength: clamp01(1 - absDist),
     isActive: id === Math.round(visualOffset),
   };
 };

@@ -8,7 +8,7 @@ export const PAGINATION_WIDGET_DEFAULTS = {
   isStopped: false,
 } as const;
 
-export const EDGE_DOT_DRIFT_FACTOR = 0.9;
+export const EDGE_DOT_DRIFT_FACTOR = 0.6;
 
 export const PAGINATION_WIDGET_LIMITS = {
   minVisibleDots: 3,

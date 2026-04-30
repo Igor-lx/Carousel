@@ -2,7 +2,7 @@
   .outerContainer {
     --color: var(--color-component, var(--color-global));
     --bg: var(--bg-component, var(--bg-global));
-    --gap: 50px;
+    --gap: 55px;
 
     position: relative;
     display: flex;
@@ -10,7 +10,7 @@
     align-items: center;
     justify-content: flex-start;
     width: 100%;
-    height: 600px;
+    height: 750px;
     background-color: var(--bg);
     transition:
       background-color var(--transition-bg),

@@ -11,17 +11,20 @@ import {
   type CarouselMotionHandoffSnapshot,
   type CarouselMotionSample,
   type CarouselMotionSegment,
+  type CarouselMotionStrategy,
 } from "../../model/motion-execution";
 import type { AnimationMode, MoveReason } from "../../model/reducer";
 import {
   useIsomorphicLayoutEffect,
+  type NumericMotionController,
+  type NumericMotionSample,
   type ReleaseMotionResult,
 } from "../../../../../shared";
 
 interface UseCarouselMotionProps {
+  motionController: NumericMotionController<CarouselMotionStrategy>;
   currentPositionRef: React.MutableRefObject<number>;
   positionReaderRef: React.MutableRefObject<() => number>;
-  applyPosition: (position: number) => void;
   enabled: boolean;
   startVirtualIndex: number;
   targetVirtualIndex: number;
@@ -41,10 +44,30 @@ interface UseCarouselMotionProps {
   onComplete: () => void;
 }
 
+const toCarouselMotionSample = (
+  sample: NumericMotionSample<CarouselMotionStrategy>,
+): CarouselMotionSample => ({
+  progress: sample.progress,
+  position: sample.value,
+  velocity: sample.velocity,
+  target: sample.target,
+  strategy: sample.strategy,
+});
+
+const toHandoffSnapshot = (
+  sample: NumericMotionSample<CarouselMotionStrategy>,
+): CarouselMotionHandoffSnapshot => ({
+  position: sample.value,
+  velocity: sample.velocity,
+  timestamp: sample.timestamp,
+  target: sample.target,
+  strategy: sample.strategy,
+});
+
 export function useCarouselMotion({
+  motionController,
   currentPositionRef,
   positionReaderRef,
-  applyPosition,
   enabled,
   startVirtualIndex,
   targetVirtualIndex,
@@ -65,148 +88,57 @@ export function useCarouselMotion({
 }: UseCarouselMotionProps): void {
   const hasFollowUpStep = followUpVirtualIndex !== null;
   const epsilon = motionSettings.epsilon;
-  const frameRef = useRef<number | null>(null);
-  const completionFrameRef = useRef<number | null>(null);
-  const activeSegmentRef = useRef<CarouselMotionSegment | null>(null);
   const handoffSnapshotRef =
     useRef<CarouselMotionHandoffSnapshot | null>(null);
   const velocityRef = useRef(0);
   const lastPlanRef = useRef<string>("");
 
-  const cancelAnimation = useCallback(() => {
-    if (frameRef.current !== null) {
-      window.cancelAnimationFrame(frameRef.current);
-      frameRef.current = null;
-    }
-  }, []);
+  const sampleMotionSegment = useCallback(
+    (segment: CarouselMotionSegment, timestamp: number) => {
+      const sample = sampleCarouselMotionSegment(segment, timestamp);
 
-  const cancelCompletion = useCallback(() => {
-    if (completionFrameRef.current !== null) {
-      window.cancelAnimationFrame(completionFrameRef.current);
-      completionFrameRef.current = null;
-    }
-  }, []);
-
-  const sampleCurrentState = useCallback(
-    (timestamp: number): CarouselMotionSample => {
-      const segment = activeSegmentRef.current;
-      if (!segment) {
-        return {
-          progress: 1,
-          position: currentPositionRef.current,
-          velocity: velocityRef.current,
-          target: currentPositionRef.current,
-          strategy: "easing",
-        };
-      }
-
-      return sampleCarouselMotionSegment(segment, timestamp);
+      return {
+        progress: sample.progress,
+        value: sample.position,
+        velocity: sample.velocity,
+        target: sample.target,
+        strategy: sample.strategy,
+      };
     },
-    [currentPositionRef],
+    [],
   );
 
-  const readCurrentPosition = useCallback(() => {
-    const sampled = sampleCurrentState(performance.now());
+  const completeMotion = useCallback(
+    (sample: NumericMotionSample<CarouselMotionStrategy>) => {
+      currentPositionRef.current = sample.value;
 
-    currentPositionRef.current = sampled.position;
-    velocityRef.current = sampled.velocity;
-
-    return sampled.position;
-  }, [currentPositionRef, sampleCurrentState]);
-
-  const readCurrentState = useCallback(() => {
-    const sampled = sampleCurrentState(performance.now());
-    currentPositionRef.current = sampled.position;
-    velocityRef.current = sampled.velocity;
-
-    if (sampled.progress >= 1) {
-      activeSegmentRef.current = null;
-    }
-
-    return sampled;
-  }, [currentPositionRef, sampleCurrentState]);
-
-  positionReaderRef.current = readCurrentPosition;
-
-  const finalizeMotion = useCallback(
-    (
-      handoffToFollowUp: boolean,
-      handoffSnapshot?: CarouselMotionHandoffSnapshot,
-    ) => {
-      cancelAnimation();
-      const segment = activeSegmentRef.current;
-      activeSegmentRef.current = null;
-      applyPosition(targetVirtualIndex);
-      cancelCompletion();
-
-      if (handoffToFollowUp) {
-        const sampled = handoffSnapshot ??
-          (segment
-            ? {
-                ...sampleCarouselMotionSegment(segment, performance.now()),
-                timestamp: performance.now(),
-              }
-            : {
-                position: targetVirtualIndex,
-                velocity: velocityRef.current,
-                timestamp: performance.now(),
-                target: targetVirtualIndex,
-                strategy: "easing",
-              });
-
-        handoffSnapshotRef.current = sampled;
-        velocityRef.current = sampled.velocity;
+      if (hasFollowUpStep) {
+        handoffSnapshotRef.current = toHandoffSnapshot(sample);
+        velocityRef.current = sample.velocity;
         onComplete();
         return;
       }
 
       handoffSnapshotRef.current = null;
       velocityRef.current = 0;
-      completionFrameRef.current = window.requestAnimationFrame(() => {
-        completionFrameRef.current = null;
-        onComplete();
-      });
+      onComplete();
     },
-    [
-      applyPosition,
-      cancelAnimation,
-      cancelCompletion,
-      onComplete,
-      targetVirtualIndex,
-    ],
+    [currentPositionRef, hasFollowUpStep, onComplete],
   );
 
-  const animate = useCallback(() => {
-    cancelAnimation();
+  positionReaderRef.current = () => motionController.read().value;
 
-    const step = (timestamp: number) => {
-      const segment = activeSegmentRef.current;
-      if (!segment) {
-        frameRef.current = null;
-        return;
-      }
-
-      const sampled = sampleCarouselMotionSegment(segment, timestamp);
-      velocityRef.current = sampled.velocity;
-      applyPosition(sampled.position);
-
-      if (sampled.progress >= 1) {
-        frameRef.current = null;
-        finalizeMotion(hasFollowUpStep, {
-          position: sampled.position,
-          velocity: sampled.velocity,
-          timestamp,
-          target: sampled.target,
-          strategy: sampled.strategy,
-        });
-        return;
-      }
-
-      frameRef.current = window.requestAnimationFrame(step);
-    };
-
-    frameRef.current = window.requestAnimationFrame(step);
-  }, [applyPosition, cancelAnimation, finalizeMotion, hasFollowUpStep]);
+  useIsomorphicLayoutEffect(
+    () =>
+      motionController.subscribe(
+        (sample) => {
+          currentPositionRef.current = sample.value;
+          velocityRef.current = sample.velocity;
+        },
+        { emitCurrent: true },
+      ),
+    [currentPositionRef, motionController],
+  );
 
   useIsomorphicLayoutEffect(() => {
     const planKey = [
@@ -230,47 +162,50 @@ export function useCarouselMotion({
     ].join(":");
 
     if (lastPlanRef.current === planKey) {
-      if (!isMoving) {
-        applyPosition(currentPositionRef.current);
-      }
       return;
     }
 
     lastPlanRef.current = planKey;
-    cancelCompletion();
+
+    const completion = hasFollowUpStep ? "immediate" : "next-frame";
 
     if (!enabled) {
-      cancelAnimation();
-      activeSegmentRef.current = null;
+      motionController.snap(targetVirtualIndex, {
+        strategy: "easing",
+      });
       handoffSnapshotRef.current = null;
       velocityRef.current = 0;
-      applyPosition(targetVirtualIndex);
       return;
     }
 
     if (!isMoving) {
-      cancelAnimation();
-      activeSegmentRef.current = null;
+      motionController.snap(targetVirtualIndex, {
+        strategy: "easing",
+      });
       handoffSnapshotRef.current = null;
       velocityRef.current = 0;
-      applyPosition(targetVirtualIndex);
       return;
     }
 
     if (animationMode === "instant" || motionDuration <= 0) {
-      finalizeMotion(hasFollowUpStep);
+      motionController.snap(targetVirtualIndex, {
+        strategy: "easing",
+        onComplete: completeMotion,
+        completion,
+      });
       return;
     }
 
-    const previousSegment = activeSegmentRef.current;
+    const hasActiveSegment = motionController.isActive();
     const handoffSnapshot = handoffSnapshotRef.current;
     const canReuseHandoffSnapshot =
-      previousSegment === null &&
+      !hasActiveSegment &&
       handoffSnapshot !== null &&
       Math.abs(handoffSnapshot.position - startVirtualIndex) < epsilon;
     const now = performance.now();
-    const nowState: CarouselMotionSample = previousSegment
-      ? readCurrentState()
+    const currentControllerSample = motionController.read();
+    const nowState: CarouselMotionSample = hasActiveSegment
+      ? toCarouselMotionSample(currentControllerSample)
       : canReuseHandoffSnapshot
         ? {
             progress: 0,
@@ -297,7 +232,12 @@ export function useCarouselMotion({
     const distance = targetVirtualIndex - nowState.position;
 
     if (Math.abs(distance) < epsilon) {
-      finalizeMotion(hasFollowUpStep);
+      motionController.snap(targetVirtualIndex, {
+        strategy: nowState.strategy,
+        velocity: nowState.velocity,
+        onComplete: completeMotion,
+        completion,
+      });
       return;
     }
 
@@ -305,7 +245,7 @@ export function useCarouselMotion({
     const isRepeatedFollowUp =
       canReuseHandoffSnapshot && handoffSnapshot?.strategy === "repeated";
 
-    activeSegmentRef.current = createCarouselMotionSegment({
+    const segment = createCarouselMotionSegment({
       animationMode,
       moveReason,
       nowState,
@@ -325,28 +265,20 @@ export function useCarouselMotion({
 
     if (canReuseHandoffSnapshot) {
       handoffSnapshotRef.current = null;
-      const currentSegment = activeSegmentRef.current;
-
-      if (currentSegment) {
-        const sampled = sampleCarouselMotionSegment(currentSegment, now);
-        velocityRef.current = sampled.velocity;
-        applyPosition(sampled.position);
-      }
-    } else {
-      applyPosition(nowState.position);
     }
 
-    animate();
+    motionController.start({
+      segment,
+      sampler: sampleMotionSegment,
+      onComplete: completeMotion,
+      completion,
+    });
   }, [
-    animate,
     animationMode,
-    applyPosition,
-    cancelAnimation,
-    cancelCompletion,
+    completeMotion,
     currentPositionRef,
     enabled,
     epsilon,
-    finalizeMotion,
     followUpVirtualIndex,
     releaseMotion.effectiveReleaseSpeed,
     releaseMotion.isInertialRelease,
@@ -354,12 +286,13 @@ export function useCarouselMotion({
     hasFollowUpStep,
     isRepeatedClickAdvance,
     isMoving,
+    motionController,
     motionDuration,
     moveReason,
-    readCurrentState,
-    repeatedClickSettings.decelerationDistanceShare,
-    repeatedClickSettings.speedMultiplier,
-    repeatedClickSettings.accelerationDistanceShare,
+    releaseMotion,
+    releaseMotionConfig,
+    repeatedClickSettings,
+    sampleMotionSegment,
     startVirtualIndex,
     stepDuration,
     stepSize,
@@ -368,9 +301,8 @@ export function useCarouselMotion({
 
   useEffect(
     () => () => {
-      cancelAnimation();
-      cancelCompletion();
+      motionController.cancel();
     },
-    [cancelAnimation, cancelCompletion],
+    [motionController],
   );
 }

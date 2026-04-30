@@ -1,5 +1,6 @@
 export * from "./features/ChevronIcon/ChevronIcon";
 export * from "./features/PaginationWidget/PaginationWidget";
+export * from "./motion";
 export * from "./touch-input";
 export * from "./hooks/useComponentVisibility";
 export * from "./hooks/useIsReducedMotion";

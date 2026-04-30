@@ -6,6 +6,8 @@ import {
   useMemo,
   useCallback,
   useRef,
+  useEffect,
+  useState,
 } from "react";
 import clsx from "clsx";
 import { PAGINATION_WIDGET_DEFAULTS } from "./model/paginationWidgetConstants";
@@ -30,6 +32,7 @@ import {
   usePaginationWidgetLayoutNotice,
   usePaginationWidgetSpatialField,
 } from "./hooks";
+import type { NumericMotionValueSource } from "../../motion";
 
 export const PaginationWidget = memo(
   forwardRef<PaginationWidgetHandler, PaginationWidgetProps>((props, ref) => {
@@ -64,6 +67,10 @@ export const PaginationWidget = memo(
     const localIsStoppedRef = useRef<boolean>(
       PAGINATION_WIDGET_DEFAULTS.isStopped,
     );
+    const [motionSource, setMotionSource] =
+      useState<NumericMotionValueSource | null>(null);
+    const [boundVisualOffset, setBoundVisualOffset] = useState(0);
+    const isMotionBound = motionSource !== null;
     const [localIsStopped, setLocalIsStopped] = useReducer(
       (_: boolean, next: boolean) => next,
       PAGINATION_WIDGET_DEFAULTS.isStopped,
@@ -74,6 +81,26 @@ export const PaginationWidget = memo(
       localIsStoppedRef.current = normalizedIsStopped;
       setLocalIsStopped(normalizedIsStopped);
     }, []);
+    const bindMotionSource = useCallback<
+      PaginationWidgetHandler["bindMotionSource"]
+    >((source) => {
+      setMotionSource(source);
+      setBoundVisualOffset(source?.getSnapshot() ?? 0);
+    }, []);
+
+    useEffect(() => {
+      if (!motionSource || localIsStopped) {
+        return;
+      }
+
+      setBoundVisualOffset(motionSource.getSnapshot());
+
+      return motionSource.subscribe((nextVisualOffset) => {
+        setBoundVisualOffset((prev) =>
+          Object.is(prev, nextVisualOffset) ? prev : nextVisualOffset,
+        );
+      });
+    }, [localIsStopped, motionSource]);
 
     const mergedStyles = useMemo(
       () => mergeStyles(styles, className),
@@ -85,10 +112,13 @@ export const PaginationWidget = memo(
       initialPaginationWidgetState,
     );
 
+    const visualOffset = isMotionBound
+      ? boundVisualOffset
+      : widgetState.visualOffset;
     const { dotsData, actualVisibleDots } = usePaginationWidgetSpatialField({
       visibleDots: normalizedVisibleDots,
       config: widgetSpatialConfig,
-      visualOffset: widgetState.visualOffset,
+      visualOffset,
     });
 
     usePaginationWidgetLayoutNotice({
@@ -100,7 +130,7 @@ export const PaginationWidget = memo(
       usePaginationWidgetEngine(widgetState, dispatchWidgetAction, {
         delay: normalizedDelay,
         duration: normalizedDuration,
-        isStopped: localIsStopped,
+        isStopped: localIsStopped || isMotionBound,
         isStoppedRef: localIsStoppedRef,
       });
 
@@ -111,13 +141,14 @@ export const PaginationWidget = memo(
         moveLeft: () => requestMovement("left"),
         setStopped: updateLocalIsStopped,
         setDuration,
+        bindMotionSource,
       }),
-      [requestMovement, setDuration, updateLocalIsStopped],
+      [bindMotionSource, requestMovement, setDuration, updateLocalIsStopped],
     );
 
     const containerStyle = useMemo<PaginationWidgetContainerCSSVars>(() => {
       const isAnimating =
-        widgetState.mode === "MOVING" && !localIsStopped;
+        widgetState.mode === "MOVING" && !localIsStopped && !isMotionBound;
       return {
         "--duration": `${isAnimating ? activeDuration : 0}ms`,
         "--visible-dots-count": String(actualVisibleDots),
@@ -131,13 +162,14 @@ export const PaginationWidget = memo(
       widgetSpatialConfig.size,
       widgetSpatialConfig.gap,
       localIsStopped,
+      isMotionBound,
     ]);
 
     return (
       <div
         className={clsx(
           mergedStyles.container_PW,
-          localIsStopped && mergedStyles.stopped,
+          (localIsStopped || isMotionBound) && mergedStyles.stopped,
         )}
         style={containerStyle}
       >
@@ -154,6 +186,7 @@ const Dot = memo(({ state, className }: PaginationWidgetDotProps) => {
     "--dot-x": `${state.x}px`,
     "--dot-scale": state.scale,
     "--dot-opacity": state.opacity,
+    "--dot-active-strength": state.activeStrength,
   };
 
   return (

@@ -1,7 +1,11 @@
+import type { NumericMotionValueSource } from "../../../../shared";
+
 export interface CarouselExternalControlHandle {
   moveRight: () => void;
   moveLeft: () => void;
   setDuration: (duration: number | null) => void;
+  setStopped?: (isStopped: boolean) => void;
+  bindMotionSource?: (source: NumericMotionValueSource | null) => void;
 }
 
 export const isCarouselExternalControlHandle = (
@@ -19,3 +23,7 @@ export const isCarouselExternalControlHandle = (
     typeof candidate.setDuration === "function"
   );
 };
+
+export const canBindCarouselMotionSource = (
+  value: CarouselExternalControlHandle | null,
+) => typeof value?.bindMotionSource === "function";

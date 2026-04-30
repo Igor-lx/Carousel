@@ -5,12 +5,18 @@ import {
   type RefObject,
 } from "react";
 
+import {
+  type NumericMotionController,
+  useIsomorphicLayoutEffect,
+} from "../../../../../shared";
 import { getTrackPositionStyle } from "../../utilities";
+import type { CarouselMotionStrategy } from "../../model/motion-execution";
 
 interface UseCarouselTrackPositionBridgeProps {
   trackRef: RefObject<HTMLDivElement | null>;
   renderWindowStart: number;
   visibleSlidesCount: number;
+  motionController: NumericMotionController<CarouselMotionStrategy>;
 }
 
 interface UseCarouselTrackPositionBridgeResult {
@@ -24,13 +30,14 @@ export function useCarouselTrackPositionBridge({
   trackRef,
   renderWindowStart,
   visibleSlidesCount,
+  motionController,
 }: UseCarouselTrackPositionBridgeProps): UseCarouselTrackPositionBridgeResult {
   const currentPositionRef = useRef(0);
   const positionReaderRef = useRef<() => number>(
     () => currentPositionRef.current,
   );
 
-  const applyPosition = useCallback(
+  const writeTrackPosition = useCallback(
     (position: number) => {
       currentPositionRef.current = position;
 
@@ -47,6 +54,32 @@ export function useCarouselTrackPositionBridge({
       track.style.transition = trackStyle.transition;
     },
     [currentPositionRef, trackRef, renderWindowStart, visibleSlidesCount],
+  );
+
+  useIsomorphicLayoutEffect(
+    () =>
+      motionController.subscribe(
+        (sample) => {
+          writeTrackPosition(sample.value);
+        },
+        { emitCurrent: true },
+      ),
+    [motionController, writeTrackPosition],
+  );
+
+  useIsomorphicLayoutEffect(() => {
+    writeTrackPosition(currentPositionRef.current);
+  }, [writeTrackPosition]);
+
+  const applyPosition = useCallback(
+    (position: number) => {
+      motionController.set(position, {
+        target: position,
+        velocity: 0,
+        strategy: "handoff",
+      });
+    },
+    [motionController],
   );
 
   const readCurrentPosition = useCallback(() => {
