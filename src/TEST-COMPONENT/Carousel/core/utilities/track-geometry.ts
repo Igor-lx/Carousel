@@ -7,7 +7,7 @@ export const getTrackSlotSize = (
   viewport: HTMLElement,
   visibleSlidesCount: number,
 ) => {
-  const viewportWidth = viewport.offsetWidth;
+  const viewportWidth = viewport.getBoundingClientRect().width;
   const styles = window.getComputedStyle(viewport);
   const gapValue =
     styles.getPropertyValue("--slides-gap") ||

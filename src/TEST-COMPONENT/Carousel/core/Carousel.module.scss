@@ -35,6 +35,7 @@
     overflow: hidden;
     user-select: none;
     box-sizing: border-box;
+    transform: translate3d(0, 0, 0);
 
     &:focus-visible {
       outline: none;
@@ -48,6 +49,7 @@
     height: 100%;
     gap: var(--slides-gap);
     will-change: transform;
+    backface-visibility: hidden;
     min-width: 0;
   }
 
@@ -67,6 +69,7 @@
     overflow: hidden;
     box-sizing: border-box;
     cursor: default;
+    backface-visibility: hidden;
 
     &:focus-visible {
       outline: 1px solid #9cc4f0;

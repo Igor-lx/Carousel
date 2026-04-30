@@ -10,9 +10,10 @@ export const getTrackPositionStyle = (
 ): TrackPositionStyle => {
   const relativeIndex = position - renderWindowStart;
   const offsetPx = -relativeIndex * slotSize;
+  const roundedOffsetPx = Math.round(offsetPx * 10000) / 10000;
 
   return {
-    transform: `translateX(${offsetPx}px) translateZ(0)`,
+    transform: `translate3d(${roundedOffsetPx}px, 0, 0)`,
     transition: "none",
   };
 };

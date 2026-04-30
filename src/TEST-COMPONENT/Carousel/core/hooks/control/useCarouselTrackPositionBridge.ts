@@ -60,6 +60,7 @@ export function useCarouselTrackPositionBridge({
       if (!track) return;
 
       const slotSize = slotSizeRef.current || refreshSlotSize();
+      if (!(slotSize > 0)) return;
 
       const trackStyle = getTrackPositionStyle(
         position,
@@ -67,8 +68,13 @@ export function useCarouselTrackPositionBridge({
         slotSize,
       );
 
-      track.style.transform = trackStyle.transform;
-      track.style.transition = trackStyle.transition;
+      if (track.style.transform !== trackStyle.transform) {
+        track.style.transform = trackStyle.transform;
+      }
+
+      if (track.style.transition !== trackStyle.transition) {
+        track.style.transition = trackStyle.transition;
+      }
     },
     [currentPositionRef, trackRef, renderWindowStart, refreshSlotSize],
   );
