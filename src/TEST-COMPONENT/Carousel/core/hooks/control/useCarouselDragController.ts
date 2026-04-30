@@ -38,6 +38,7 @@ export function useCarouselDragController({
 }: UseCarouselDragControllerProps): UseCarouselDragControllerResult {
   const dragOriginPageIndexRef = useRef(0);
   const dragOriginPositionRef = useRef<number | null>(null);
+  const cachedSlotSizeRef = useRef<number>(0);
 
   const resolveDragPosition = useCallback(
     (dragOffset: number) => {
@@ -51,6 +52,7 @@ export function useCarouselDragController({
         viewport: measureRef.current,
         visibleSlidesCount: layout.visibleSlidesCount,
         fallback: gestureBaseVirtualIndex,
+        slotSize: cachedSlotSizeRef.current,
       });
     },
     [baseVirtualIndex, layout.visibleSlidesCount, measureRef],
@@ -58,10 +60,13 @@ export function useCarouselDragController({
 
   const resolveVirtualPointerVelocity = useCallback(
     (pointerVelocity: number) => {
-      const viewport = measureRef.current;
-      if (!viewport) return 0;
+      const slotSize =
+        cachedSlotSizeRef.current ||
+        (measureRef.current
+          ? getTrackSlotSize(measureRef.current, layout.visibleSlidesCount)
+          : 0);
 
-      const slotSize = getTrackSlotSize(viewport, layout.visibleSlidesCount);
+      if (!(slotSize > 0)) return 0;
 
       return getVirtualVelocityFromPointerVelocity(pointerVelocity, slotSize);
     },
@@ -69,6 +74,14 @@ export function useCarouselDragController({
   );
 
   const startDrag = useCallback(() => {
+    const viewport = measureRef.current;
+    if (viewport) {
+      cachedSlotSizeRef.current = getTrackSlotSize(
+        viewport,
+        layout.visibleSlidesCount,
+      );
+    }
+
     const dragOriginPosition = readCurrentPosition();
     const dragOriginPageIndex = getNearestPageIndex(dragOriginPosition, layout);
 
@@ -79,7 +92,7 @@ export function useCarouselDragController({
       fromVirtualIndex: dragOriginPosition,
       targetPageIndex: dragOriginPageIndex,
     });
-  }, [dispatchAction, layout, readCurrentPosition]);
+  }, [dispatchAction, layout, measureRef, readCurrentPosition]);
 
   const updateDrag = useCallback(
     (dragOffset: number) => {
@@ -96,10 +109,10 @@ export function useCarouselDragController({
       const releasePosition = resolveDragPosition(payload.uiOffset);
       const dragOriginPageIndex = dragOriginPageIndexRef.current;
       const releaseTarget = resolveCarouselDragReleaseTarget({
-        releaseDirection: payload.result,
         releasePosition,
         dragOriginPageIndex,
         layout,
+        releaseDirection: payload.result,
       });
 
       applyDragPosition(releasePosition);
@@ -119,6 +132,7 @@ export function useCarouselDragController({
       });
 
       dragOriginPositionRef.current = null;
+      cachedSlotSizeRef.current = 0;
     },
     [
       applyDragPosition,

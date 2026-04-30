@@ -9,7 +9,7 @@ import {
   type NumericMotionController,
   useIsomorphicLayoutEffect,
 } from "../../../../../shared";
-import { getTrackPositionStyle } from "../../utilities";
+import { getTrackPositionStyle, getTrackSlotSize } from "../../utilities";
 import type { CarouselMotionStrategy } from "../../model/motion-execution";
 
 interface UseCarouselTrackPositionBridgeProps {
@@ -36,6 +36,21 @@ export function useCarouselTrackPositionBridge({
   const positionReaderRef = useRef<() => number>(
     () => currentPositionRef.current,
   );
+  const slotSizeRef = useRef(0);
+
+  const refreshSlotSize = useCallback(() => {
+    const track = trackRef.current;
+    const viewport = track?.parentElement;
+    if (!viewport) return 0;
+
+    const size = getTrackSlotSize(viewport, visibleSlidesCount);
+    slotSizeRef.current = size;
+    return size;
+  }, [trackRef, visibleSlidesCount]);
+
+  useIsomorphicLayoutEffect(() => {
+    refreshSlotSize();
+  }, [refreshSlotSize]);
 
   const writeTrackPosition = useCallback(
     (position: number) => {
@@ -44,16 +59,18 @@ export function useCarouselTrackPositionBridge({
       const track = trackRef.current;
       if (!track) return;
 
+      const slotSize = slotSizeRef.current || refreshSlotSize();
+
       const trackStyle = getTrackPositionStyle(
         position,
         renderWindowStart,
-        visibleSlidesCount,
+        slotSize,
       );
 
       track.style.transform = trackStyle.transform;
       track.style.transition = trackStyle.transition;
     },
-    [currentPositionRef, trackRef, renderWindowStart, visibleSlidesCount],
+    [currentPositionRef, trackRef, renderWindowStart, refreshSlotSize],
   );
 
   useIsomorphicLayoutEffect(

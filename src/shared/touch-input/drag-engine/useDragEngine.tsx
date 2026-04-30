@@ -74,6 +74,8 @@ export function useDragEngine({
     isDragActivated: false,
   });
 
+  const cachedWidthRef = useRef<number>(0);
+
   const setPhase = useCallback((phase: DragEnginePhase) => {
     phaseRef.current = phase;
     dispatch({ type: "SET_PHASE", phase });
@@ -145,8 +147,7 @@ export function useDragEngine({
         ),
         settingsSnapshot.MAX_VELOCITY,
       );
-      const width =
-        measureRef.current?.offsetWidth ?? dragSampleRef.current.width;
+      const width = cachedWidthRef.current;
 
       currentGesture.lastX = currentX;
       currentGesture.lastTime = timestamp;
@@ -161,7 +162,7 @@ export function useDragEngine({
         timestamp,
       };
     },
-    [measureRef],
+    [],
   );
 
   const finishInteraction = useCallback(
@@ -192,7 +193,7 @@ export function useDragEngine({
       if (!currentGesture.isDragActivated) {
         allowedClickTargetRef.current = null;
         setPhase("IDLE");
-        dragSampleRef.current = createIdleSample(target?.offsetWidth ?? 0, now);
+        dragSampleRef.current = createIdleSample(cachedWidthRef.current, now);
         currentGesture.lastOffset = 0;
         currentGesture.pointerId = null;
         currentGesture.hasPointerCapture = false;
@@ -216,7 +217,7 @@ export function useDragEngine({
               settingsRef.current.EMA_ALPHA,
               now - dragSampleRef.current.timestamp,
             ),
-            width: target?.offsetWidth ?? dragSampleRef.current.width,
+            width: cachedWidthRef.current,
             timestamp: now,
           };
       dragSampleRef.current = sample;
@@ -256,7 +257,7 @@ export function useDragEngine({
         setPhase("IDLE");
       }
 
-      dragSampleRef.current = createIdleSample(target?.offsetWidth ?? 0, now);
+      dragSampleRef.current = createIdleSample(cachedWidthRef.current, now);
       currentGesture.lastOffset = 0;
       currentGesture.pointerId = null;
       currentGesture.hasPointerCapture = false;
@@ -290,6 +291,9 @@ export function useDragEngine({
         return;
       }
 
+      const width = target.offsetWidth;
+      cachedWidthRef.current = width;
+
       gesture.current = {
         startX: e.clientX,
         startY: e.clientY,
@@ -300,7 +304,7 @@ export function useDragEngine({
         hasPointerCapture: false,
         isDragActivated: false,
       };
-      dragSampleRef.current = createIdleSample(target.offsetWidth, now);
+      dragSampleRef.current = createIdleSample(width, now);
       setPhase("PRESS");
 
       if (interactiveTarget) {

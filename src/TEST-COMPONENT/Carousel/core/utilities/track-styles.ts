@@ -3,21 +3,16 @@ interface TrackPositionStyle {
   transition: string;
 }
 
-const getTrackTransform = (
-  index: number,
-  visibleSlidesCount: number,
-): string =>
-  `translateX(calc(-${index} * (100% + var(--slides-gap, 0px)) / ${visibleSlidesCount}))`;
-
 export const getTrackPositionStyle = (
   position: number,
   renderWindowStart: number,
-  visibleSlidesCount: number,
+  slotSize: number,
 ): TrackPositionStyle => {
   const relativeIndex = position - renderWindowStart;
+  const offsetPx = -relativeIndex * slotSize;
 
   return {
-    transform: `${getTrackTransform(relativeIndex, visibleSlidesCount)} translateX(0px)`,
+    transform: `translateX(${offsetPx}px) translateZ(0)`,
     transition: "none",
   };
 };

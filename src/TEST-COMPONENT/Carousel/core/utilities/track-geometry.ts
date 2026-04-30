@@ -36,6 +36,7 @@ interface GetVirtualIndexFromDragOffsetInput {
   viewport: HTMLElement | null;
   visibleSlidesCount: number;
   fallback: number;
+  slotSize?: number;
 }
 
 export const getVirtualIndexFromDragOffset = ({
@@ -44,10 +45,13 @@ export const getVirtualIndexFromDragOffset = ({
   viewport,
   visibleSlidesCount,
   fallback,
+  slotSize: providedSlotSize,
 }: GetVirtualIndexFromDragOffsetInput) => {
-  if (!viewport) return fallback;
+  const slotSize =
+    providedSlotSize ??
+    (viewport ? getTrackSlotSize(viewport, visibleSlidesCount) : 0);
 
-  const slotSize = getTrackSlotSize(viewport, visibleSlidesCount);
+  if (!(slotSize > 0)) return fallback;
 
   return baseVirtualIndex - dragOffset / slotSize;
 };
