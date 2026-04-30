@@ -7,7 +7,7 @@ export const REPEATED_CLICK_TOUCH_DESTINATION_POSITION = 0.99;
 
 // Средняя скорость repeated-click пролета относительно обычного MOVE.
 // 2 примерно вдвое быстрее обычного MOVE, 3 примерно втрое, большие значения становятся очень резкими.
-export const REPEATED_CLICK_SPEED_MULTIPLIER = 6;
+export const REPEATED_CLICK_SPEED_MULTIPLIER = 5;
 
 // Доля расстояния repeated-click пролета для разгона от текущей скорости к repeated-speed.
 // Это доля пути, а не времени: 0.2 означает первые 20% repeated-сегмента.
