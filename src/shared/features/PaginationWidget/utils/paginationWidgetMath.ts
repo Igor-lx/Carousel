@@ -1,7 +1,4 @@
-import {
-  DOTS_OUTSIDE_BUFFER,
-  EDGE_DOT_DRIFT_FACTOR,
-} from "../model/paginationWidgetConstants";
+import { EDGE_DOT_DRIFT_FACTOR } from "../model/paginationWidgetConstants";
 import type {
   PaginationWidgetDotState,
   PaginationWidgetLayoutModel,
@@ -42,17 +39,16 @@ export const computePool = (
   baseStep: number,
   actualCount: number,
 ): number[] => {
-  const side = Math.floor(actualCount / 2) + DOTS_OUTSIDE_BUFFER;
-
+  const side = Math.max(actualCount, 1);
   return Array.from({ length: side * 2 + 1 }, (_, i) => baseStep - side + i);
 };
 
 export const projectDot = (
   id: number,
-  step: number,
+  visualOffset: number,
   model: PaginationWidgetLayoutModel,
 ): PaginationWidgetDotState => {
-  const dist = id - step;
+  const dist = id - visualOffset;
   const { geometry, scales } = model;
   const { centerIndex, strip, actualCount, unit } = geometry;
   const slot = dist + centerIndex;
@@ -90,6 +86,6 @@ export const projectDot = (
       absDist > centerIndex - 0.5
         ? Math.max(0, 1 - (absDist - (centerIndex - 0.5)))
         : 1,
-    isActive: id === Math.round(step),
+    isActive: id === Math.round(visualOffset),
   };
 };

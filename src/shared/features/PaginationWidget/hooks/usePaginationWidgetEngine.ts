@@ -1,26 +1,20 @@
-import { useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, type Dispatch } from "react";
+import { useTimer } from "../../../../shared";
+import { normalizePaginationWidgetDurationOverride } from "../model/paginationWidgetConfig";
 import type {
   PaginationWidgetAction,
+  PaginationWidgetMoveDirection,
   PaginationWidgetState,
 } from "../model/paginationWidgetTypes";
-import { paginationWidgetReducer } from "../model/paginationWidgetReducer";
-import { normalizePaginationWidgetDurationOverride } from "../model/paginationWidgetConfig";
-import { useTimer } from "../../../../shared";
-
-import {
-  ANIMATION_END_BUFFER,
-  MIN_DURATION,
-  VELOCITY_COEFFICIENT,
-} from "../model/paginationWidgetConstants";
 
 export function usePaginationWidgetEngine(
   state: PaginationWidgetState,
-  dispatch: React.Dispatch<PaginationWidgetAction>,
+  dispatch: Dispatch<PaginationWidgetAction>,
   config: {
     delay: number;
     duration: number;
-    isFreezed: boolean;
-    isFreezedRef: { current: boolean };
+    isStopped: boolean;
+    isStoppedRef: { current: boolean };
   },
 ) {
   const { set: setWaitTimer, clear: clearWaitTimer } = useTimer();
@@ -31,67 +25,69 @@ export function usePaginationWidgetEngine(
   const activeDurationRef = useRef(config.duration);
 
   stateRef.current = state;
-  config.isFreezedRef.current = config.isFreezed;
+  config.isStoppedRef.current = config.isStopped;
 
-  const dispatchSynced = useCallback(
-    (action: PaginationWidgetAction) => {
-      stateRef.current = paginationWidgetReducer(stateRef.current, action);
+  const getResolvedDuration = useCallback(
+    () => configuredDurationRef.current ?? defaultDurationRef.current,
+    [],
+  );
+
+  const dispatchIfActive = useCallback(
+    (
+      action: PaginationWidgetAction,
+      canDispatch: (currentState: PaginationWidgetState) => boolean,
+    ) => {
+      if (config.isStoppedRef.current || !canDispatch(stateRef.current)) {
+        return;
+      }
+
       dispatch(action);
     },
-    [dispatch],
+    [config.isStoppedRef, dispatch],
   );
 
   useEffect(() => {
     defaultDurationRef.current = config.duration;
 
-    if (state.mode !== "IDLE") {
-      return;
+    if (state.mode !== "MOVING") {
+      activeDurationRef.current = getResolvedDuration();
     }
-
-    activeDurationRef.current =
-      configuredDurationRef.current ?? defaultDurationRef.current;
-  }, [state.mode, config.duration]);
+  }, [config.duration, getResolvedDuration, state.mode]);
 
   useEffect(() => {
-    if (!config.isFreezed) {
+    if (!config.isStopped) {
       return;
     }
 
     clearWaitTimer();
     clearMoveTimer();
 
-    if (stateRef.current.mode !== "IDLE") {
-      dispatchSynced({ type: "RESET" });
+    if (state.mode !== "IDLE") {
+      dispatch({ type: "STOP" });
     }
   }, [
     clearMoveTimer,
     clearWaitTimer,
-    config.isFreezed,
-    dispatchSynced,
+    config.isStopped,
+    dispatch,
     state.mode,
   ]);
 
   useEffect(() => {
-    if (config.isFreezed) {
+    if (config.isStopped) {
       clearWaitTimer();
       return;
     }
 
     if (state.mode === "WAITING") {
       const scheduledRequestId = state.requestId;
-      const run = () => {
-        const currentState = stateRef.current;
-
-        if (
-          config.isFreezedRef.current ||
-          currentState.mode !== "WAITING" ||
-          currentState.requestId !== scheduledRequestId
-        ) {
-          return;
-        }
-
-        dispatchSynced({ type: "START_ANIMATION" });
-      };
+      const run = () =>
+        dispatchIfActive(
+          { type: "BEGIN_MOVE" },
+          (currentState) =>
+            currentState.mode === "WAITING" &&
+            currentState.requestId === scheduledRequestId,
+        );
 
       if (config.delay > 0) {
         setWaitTimer(run, config.delay);
@@ -99,79 +95,62 @@ export function usePaginationWidgetEngine(
         run();
       }
     }
+
     return clearWaitTimer;
   }, [
     clearWaitTimer,
     config.delay,
-    config.isFreezed,
-    config.isFreezedRef,
-    dispatchSynced,
+    config.isStopped,
+    dispatchIfActive,
     setWaitTimer,
     state.mode,
     state.requestId,
   ]);
 
   useEffect(() => {
-    if (config.isFreezed) {
+    if (config.isStopped) {
       clearMoveTimer();
       return;
     }
 
     if (state.mode === "MOVING") {
       const scheduledRequestId = state.requestId;
-      const scheduledStep = state.step;
+      const scheduledVisualOffset = state.visualOffset;
 
       setMoveTimer(
-        () => {
-          const currentState = stateRef.current;
-
-          if (
-            config.isFreezedRef.current ||
-            currentState.mode !== "MOVING" ||
-            currentState.requestId !== scheduledRequestId ||
-            currentState.step !== scheduledStep
-          ) {
-            return;
-          }
-
-          dispatchSynced({ type: "END_STEP" });
-        },
-        activeDurationRef.current + ANIMATION_END_BUFFER,
+        () =>
+          dispatchIfActive(
+            { type: "COMPLETE_MOVE" },
+            (currentState) =>
+              currentState.mode === "MOVING" &&
+              currentState.requestId === scheduledRequestId &&
+              currentState.visualOffset === scheduledVisualOffset,
+          ),
+        activeDurationRef.current,
       );
     }
+
     return clearMoveTimer;
   }, [
     clearMoveTimer,
-    config.isFreezed,
-    config.isFreezedRef,
-    dispatchSynced,
+    config.isStopped,
+    dispatchIfActive,
     setMoveTimer,
     state.mode,
     state.requestId,
-    state.step,
+    state.visualOffset,
   ]);
 
-  const rotateWidget = useCallback(
-    (direction: "next" | "prev") => {
-      if (config.isFreezedRef.current) {
+  const requestMovement = useCallback(
+    (direction: PaginationWidgetMoveDirection) => {
+      if (config.isStoppedRef.current) {
         return;
       }
 
-      const currentState = stateRef.current;
-      const configuredDuration = configuredDurationRef.current;
-      const baseDuration = configuredDuration ?? defaultDurationRef.current;
-
-      if (currentState.mode === "MOVING") {
-        activeDurationRef.current = Math.max(
-          activeDurationRef.current * VELOCITY_COEFFICIENT,
-          MIN_DURATION,
-        );
-      } else {
-        activeDurationRef.current = baseDuration;
-      }
-      dispatchSynced({ type: "CLICK", direction });
+      activeDurationRef.current = getResolvedDuration();
+      dispatch({ type: "REQUEST_MOVE", direction });
     },
-    [config.isFreezedRef, dispatchSynced],
+    [config.isStoppedRef, dispatch, getResolvedDuration],
   );
 
   const setDuration = useCallback(
@@ -179,16 +158,15 @@ export function usePaginationWidgetEngine(
       configuredDurationRef.current =
         normalizePaginationWidgetDurationOverride(duration);
 
-      if (stateRef.current.mode === "IDLE") {
-        activeDurationRef.current =
-          configuredDurationRef.current ?? defaultDurationRef.current;
+      if (stateRef.current.mode !== "MOVING") {
+        activeDurationRef.current = getResolvedDuration();
       }
     },
-    [],
+    [getResolvedDuration],
   );
 
   return {
-    rotateWidget,
+    requestMovement,
     activeDuration: activeDurationRef.current,
     setDuration,
   };

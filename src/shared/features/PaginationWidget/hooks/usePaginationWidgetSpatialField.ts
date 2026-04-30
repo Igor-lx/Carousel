@@ -5,24 +5,24 @@ import type {
   PaginationWidgetSpatialConfig,
 } from "../model/paginationWidgetTypes";
 import {
+  normalizePaginationWidgetSpatialConfig,
+  normalizePaginationWidgetVisibleDots,
+} from "../model/paginationWidgetConfig";
+import {
   computePool,
   computeStrip,
   precomputeScales,
   projectDot,
 } from "../utils/paginationWidgetMath";
-import {
-  normalizePaginationWidgetSpatialConfig,
-  normalizePaginationWidgetVisibleDots,
-} from "../model/paginationWidgetConfig";
 
 export function usePaginationWidgetSpatialField({
   visibleDots,
   config,
-  step,
+  visualOffset,
 }: {
   visibleDots: number;
   config: PaginationWidgetSpatialConfig;
-  step: number;
+  visualOffset: number;
 }) {
   const { size, gap, scaleFactor } = config;
   const safeConfig = useMemo(
@@ -56,14 +56,14 @@ export function usePaginationWidgetSpatialField({
     };
   }, [safeConfig, safeVisibleDots]);
 
-  const baseStep = Math.round(step);
+  const baseVisualOffset = Math.round(visualOffset);
   const pool = useMemo(() => {
-    return computePool(baseStep, layoutModel.geometry.actualCount);
-  }, [baseStep, layoutModel.geometry.actualCount]);
+    return computePool(baseVisualOffset, layoutModel.geometry.actualCount);
+  }, [baseVisualOffset, layoutModel.geometry.actualCount]);
 
   const dotsData = useMemo((): PaginationWidgetDotState[] => {
-    return pool.map((id) => projectDot(id, step, layoutModel));
-  }, [pool, step, layoutModel]);
+    return pool.map((id) => projectDot(id, visualOffset, layoutModel));
+  }, [pool, visualOffset, layoutModel]);
 
   return {
     dotsData,

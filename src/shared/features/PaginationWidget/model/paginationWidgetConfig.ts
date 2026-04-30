@@ -36,19 +36,7 @@ const normalizeOddIntegerInRange = (
   return integerValue;
 };
 
-const normalizePositiveNumberInRange = (
-  value: number | undefined,
-  fallback: number,
-  min: number,
-  max: number,
-) => {
-  const finiteValue = finiteOrFallback(value, fallback);
-  const valueOrFallback = finiteValue >= min ? finiteValue : fallback;
-
-  return clamp(valueOrFallback, min, max);
-};
-
-const normalizeNonNegativeNumberInRange = (
+const normalizeNumberInRange = (
   value: number | undefined,
   fallback: number,
   min: number,
@@ -75,19 +63,19 @@ export const normalizePaginationWidgetSpatialConfig = ({
   gap,
   scaleFactor,
 }: PaginationWidgetSpatialConfig): PaginationWidgetSpatialConfig => ({
-  size: normalizePositiveNumberInRange(
+  size: normalizeNumberInRange(
     size,
     PAGINATION_WIDGET_DEFAULTS.dotSize,
     PAGINATION_WIDGET_LIMITS.minDotSize,
     PAGINATION_WIDGET_LIMITS.maxDotSize,
   ),
-  gap: normalizeNonNegativeNumberInRange(
+  gap: normalizeNumberInRange(
     gap,
     PAGINATION_WIDGET_DEFAULTS.dotGap,
     PAGINATION_WIDGET_LIMITS.minDotGap,
     PAGINATION_WIDGET_LIMITS.maxDotGap,
   ),
-  scaleFactor: normalizePositiveNumberInRange(
+  scaleFactor: normalizeNumberInRange(
     scaleFactor,
     PAGINATION_WIDGET_DEFAULTS.scaleFactor,
     PAGINATION_WIDGET_LIMITS.minScaleFactor,
@@ -98,7 +86,7 @@ export const normalizePaginationWidgetSpatialConfig = ({
 export const normalizePaginationWidgetDuration = (
   duration: number | undefined,
 ) =>
-  normalizePositiveNumberInRange(
+  normalizeNumberInRange(
     duration,
     PAGINATION_WIDGET_DEFAULTS.duration,
     PAGINATION_WIDGET_LIMITS.minDuration,
@@ -111,7 +99,7 @@ export const normalizePaginationWidgetDurationOverride = (
   if (
     typeof duration !== "number" ||
     !Number.isFinite(duration) ||
-    duration <= 0
+    duration < PAGINATION_WIDGET_LIMITS.minDuration
   ) {
     return null;
   }
@@ -140,7 +128,7 @@ export const normalizePaginationWidgetConfig = ({
     gap: dotGap ?? PAGINATION_WIDGET_DEFAULTS.dotGap,
     scaleFactor: scaleFactor ?? PAGINATION_WIDGET_DEFAULTS.scaleFactor,
   }),
-  delay: normalizeNonNegativeNumberInRange(
+  delay: normalizeNumberInRange(
     delay,
     PAGINATION_WIDGET_DEFAULTS.delay,
     PAGINATION_WIDGET_LIMITS.minDelay,

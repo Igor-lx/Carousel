@@ -1,19 +1,20 @@
 import type { CSSProperties } from "react";
 
 export type PaginationWidgetAnimationMode = "IDLE" | "WAITING" | "MOVING";
+export type PaginationWidgetMoveDirection = "right" | "left";
 
 export interface PaginationWidgetState {
-  step: number;
+  visualOffset: number;
   requestId: number;
   mode: PaginationWidgetAnimationMode;
-  lastDirection: "next" | "prev" | null;
+  direction: PaginationWidgetMoveDirection | null;
 }
 
 export type PaginationWidgetAction =
-  | { type: "CLICK"; direction: "next" | "prev" }
-  | { type: "START_ANIMATION" }
-  | { type: "END_STEP" }
-  | { type: "RESET" };
+  | { type: "REQUEST_MOVE"; direction: PaginationWidgetMoveDirection }
+  | { type: "BEGIN_MOVE" }
+  | { type: "COMPLETE_MOVE" }
+  | { type: "STOP" };
 
 export interface PaginationWidgetDotState {
   id: number;
@@ -43,7 +44,6 @@ export interface PaginationWidgetSpatialConfig {
 
 export interface PaginationWidgetContainerCSSVars extends CSSProperties {
   "--duration": string;
-  "--delay": string;
   "--visible-dots-count": string;
   "--dot-size": string;
   "--dots-gap": string;
@@ -58,7 +58,7 @@ export interface PaginationWidgetDotCSSVars extends CSSProperties {
 export interface PaginationWidgetHandler {
   moveRight: () => void;
   moveLeft: () => void;
-  toggleFreezed: (isFreezed: boolean) => void;
+  setStopped: (isStopped: boolean) => void;
   setDuration: (val: number | null) => void;
 }
 
@@ -67,7 +67,7 @@ export type PaginationWidgetClassMap = {
   container_PW?: string;
   dot_PW?: string;
   dotActive_PW?: string;
-  freezed?: string;
+  stopped?: string;
 };
 
 export interface PaginationWidgetProps {

@@ -46,7 +46,6 @@
     opacity var(--duration-opacity) ease-out,
     background-color var(--duration-color) var(--anim-style),
     box-shadow var(--duration-color) var(--anim-style);
-  transition-delay: var(--delay, 0ms);
   translate: var(--dot-x, 0) 0;
   scale: var(--dot-scale, 1);
   opacity: var(--dot-opacity, 1);
@@ -60,7 +59,7 @@
   box-shadow: 0 0 8px 1px var(--dot-active-color);
 }
 
-.freezed .dot_PW,
-.freezed.container_PW {
+.stopped .dot_PW,
+.stopped.container_PW {
   transition: none !important;
 }

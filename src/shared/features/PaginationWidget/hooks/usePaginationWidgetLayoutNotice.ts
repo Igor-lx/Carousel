@@ -28,7 +28,7 @@ export function usePaginationWidgetLayoutNotice({
     if (requestedVisibleDots < PAGINATION_WIDGET_LIMITS.minVisibleDots) {
       console.warn(
         `[PaginationWidget]: Input "visibleDots" (${requestedVisibleDots}) is too low. ` +
-          `Minimum ${PAGINATION_WIDGET_LIMITS.minVisibleDots} dots are required for the animation engine to function. ` +
+          `Minimum ${PAGINATION_WIDGET_LIMITS.minVisibleDots} dots are required for the visual layout. ` +
           `Value was normalized to ${normalizedVisibleDots}.`,
       );
       return;
@@ -37,7 +37,7 @@ export function usePaginationWidgetLayoutNotice({
     if (requestedVisibleDots > PAGINATION_WIDGET_LIMITS.maxVisibleDots) {
       console.warn(
         `[PaginationWidget]: Input "visibleDots" (${requestedVisibleDots}) is too high. ` +
-          `Maximum ${PAGINATION_WIDGET_LIMITS.maxVisibleDots} dots are allowed to keep layout work bounded. ` +
+          `Maximum ${PAGINATION_WIDGET_LIMITS.maxVisibleDots} dots are supported. ` +
           `Value was normalized to ${normalizedVisibleDots}.`,
       );
       return;

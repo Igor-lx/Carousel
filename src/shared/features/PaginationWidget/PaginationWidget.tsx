@@ -42,6 +42,7 @@ export const PaginationWidget = memo(
       scaleFactor = PAGINATION_WIDGET_DEFAULTS.scaleFactor,
       className,
     } = props;
+
     const {
       visibleDots: normalizedVisibleDots,
       spatial: widgetSpatialConfig,
@@ -60,19 +61,18 @@ export const PaginationWidget = memo(
       [delay, dotGap, dotSize, duration, scaleFactor, visibleDots],
     );
 
-    const localIsFreezedRef = useRef<boolean>(
-      PAGINATION_WIDGET_DEFAULTS.isFreezed,
+    const localIsStoppedRef = useRef<boolean>(
+      PAGINATION_WIDGET_DEFAULTS.isStopped,
     );
-
-    const [localIsFreezed, setLocalIsFreezed] = useReducer(
+    const [localIsStopped, setLocalIsStopped] = useReducer(
       (_: boolean, next: boolean) => next,
-      PAGINATION_WIDGET_DEFAULTS.isFreezed,
+      PAGINATION_WIDGET_DEFAULTS.isStopped,
     );
-    const updateLocalIsFreezed = useCallback((val: boolean) => {
-      const nextIsFreezed = Boolean(val);
+    const updateLocalIsStopped = useCallback((nextIsStopped: boolean) => {
+      const normalizedIsStopped = Boolean(nextIsStopped);
 
-      localIsFreezedRef.current = nextIsFreezed;
-      setLocalIsFreezed(nextIsFreezed);
+      localIsStoppedRef.current = normalizedIsStopped;
+      setLocalIsStopped(normalizedIsStopped);
     }, []);
 
     const mergedStyles = useMemo(
@@ -88,7 +88,7 @@ export const PaginationWidget = memo(
     const { dotsData, actualVisibleDots } = usePaginationWidgetSpatialField({
       visibleDots: normalizedVisibleDots,
       config: widgetSpatialConfig,
-      step: widgetState.step,
+      visualOffset: widgetState.visualOffset,
     });
 
     usePaginationWidgetLayoutNotice({
@@ -96,31 +96,30 @@ export const PaginationWidget = memo(
       normalizedVisibleDots: actualVisibleDots,
     });
 
-    const { rotateWidget, activeDuration, setDuration } =
+    const { requestMovement, activeDuration, setDuration } =
       usePaginationWidgetEngine(widgetState, dispatchWidgetAction, {
         delay: normalizedDelay,
         duration: normalizedDuration,
-        isFreezed: localIsFreezed,
-        isFreezedRef: localIsFreezedRef,
+        isStopped: localIsStopped,
+        isStoppedRef: localIsStoppedRef,
       });
 
     useImperativeHandle(
       ref,
       () => ({
-        moveRight: () => rotateWidget("next"),
-        moveLeft: () => rotateWidget("prev"),
-        toggleFreezed: updateLocalIsFreezed,
+        moveRight: () => requestMovement("right"),
+        moveLeft: () => requestMovement("left"),
+        setStopped: updateLocalIsStopped,
         setDuration,
       }),
-      [rotateWidget, setDuration, updateLocalIsFreezed],
+      [requestMovement, setDuration, updateLocalIsStopped],
     );
 
     const containerStyle = useMemo<PaginationWidgetContainerCSSVars>(() => {
       const isAnimating =
-        widgetState.mode === "MOVING" && !localIsFreezed;
+        widgetState.mode === "MOVING" && !localIsStopped;
       return {
         "--duration": `${isAnimating ? activeDuration : 0}ms`,
-        "--delay": `${widgetState.mode === "WAITING" ? normalizedDelay : 0}ms`,
         "--visible-dots-count": String(actualVisibleDots),
         "--dot-size": `${widgetSpatialConfig.size}px`,
         "--dots-gap": `${widgetSpatialConfig.gap}px`,
@@ -128,18 +127,17 @@ export const PaginationWidget = memo(
     }, [
       widgetState.mode,
       activeDuration,
-      normalizedDelay,
       actualVisibleDots,
       widgetSpatialConfig.size,
       widgetSpatialConfig.gap,
-      localIsFreezed,
+      localIsStopped,
     ]);
 
     return (
       <div
         className={clsx(
           mergedStyles.container_PW,
-          localIsFreezed && mergedStyles.freezed,
+          localIsStopped && mergedStyles.stopped,
         )}
         style={containerStyle}
       >
