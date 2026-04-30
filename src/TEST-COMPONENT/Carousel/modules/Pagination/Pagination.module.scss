@@ -43,7 +43,7 @@
     border-radius: 6px;
   }
 
-  @media (max-width: 767px) {
+  @media (width <= 767px) {
     .paginationWrapper {
       padding: 12px 10px 0;
       gap: 8px 18px;

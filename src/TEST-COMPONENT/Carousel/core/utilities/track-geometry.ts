@@ -10,6 +10,7 @@ export const getTrackSlotSize = (
   const viewportWidth = viewport.offsetWidth;
   const styles = window.getComputedStyle(viewport);
   const gapValue =
+    styles.getPropertyValue("--slides-gap") ||
     styles.getPropertyValue("--gap") ||
     styles.getPropertyValue("gap") ||
     styles.getPropertyValue("column-gap");

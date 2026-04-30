@@ -7,7 +7,7 @@ const getTrackTransform = (
   index: number,
   visibleSlidesCount: number,
 ): string =>
-  `translateX(calc(-${index} * (100% + var(--gap, 0px)) / ${visibleSlidesCount}))`;
+  `translateX(calc(-${index} * (100% + var(--slides-gap, 0px)) / ${visibleSlidesCount}))`;
 
 export const getTrackPositionStyle = (
   position: number,

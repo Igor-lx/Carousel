@@ -10,7 +10,7 @@
     height: 100%;
     border: none;
     outline: none;
-    background-color: rgba(0, 0, 0, 0.15);
+    background-color: rgb(0 0 0 / 15%);
     opacity: 0;
     transition: opacity 0.6s ease;
     transform: none;
@@ -19,7 +19,7 @@
     pointer-events: none;
 
     &:focus-visible {
-      background-color: rgba(0, 0, 0, 0.5);
+      background-color: rgb(0 0 0 / 50%);
     }
   }
 
@@ -39,20 +39,14 @@
     height: 45px;
     border: none;
     border-radius: 50%;
-    color: rgba(245, 245, 245, 0.807);
-    background-color: rgba(0, 0, 0, 0.45);
+    color: rgb(245 245 245 / 80.7%);
+    background-color: rgb(0 0 0 / 45%);
     user-select: none;
     pointer-events: none;
 
     svg {
       opacity: 0.8;
     }
-  }
-
-  [data-touch="false"]:has([data-carousel-viewport]:hover) .navZone,
-  [data-touch="false"]:has(*:focus-visible) .navZone {
-    opacity: 1;
-    pointer-events: auto;
   }
 
   [data-touch="true"] .navZone {
@@ -74,10 +68,14 @@
   }
 
   [data-touch="true"] .navButton {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: rgb(0 0 0 / 20%);
   }
 
-  @media (max-width: 1024px) {
+  [data-reduced-motion="true"] .navZone {
+    transition: none;
+  }
+
+  @media (width <= 1024px) {
     .navZoneL {
       left: 4px;
     }
@@ -106,7 +104,7 @@
     }
   }
 
-  @media (max-width: 767px) {
+  @media (width <= 767px) {
     [data-touch="true"] .navZone {
       width: 38px;
       height: 72px;
@@ -127,15 +125,17 @@
     }
   }
 
-  @media (max-width: 767px) and (orientation: landscape) {
+  @media (orientation: landscape) and (height <= 520px) {
     [data-touch="true"] .navZone,
     .navButton {
       width: 34px;
-      height: 58px;
+      height: 52px;
     }
   }
 
-  [data-reduced-motion="true"] .navZone {
-    transition: none;
+  [data-touch="false"]:has(*:focus-visible) .navZone,
+  [data-touch="false"]:has([data-carousel-viewport]:hover) .navZone {
+    opacity: 1;
+    pointer-events: auto;
   }
 }

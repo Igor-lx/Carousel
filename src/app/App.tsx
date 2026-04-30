@@ -31,7 +31,7 @@ import d10 from "../images/Carousel/destktop/carousel10.webp";
 import d11 from "../images/Carousel/destktop/carousel11.webp";
 import d12 from "../images/Carousel/destktop/carousel12.webp";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   useMatchMedia,
   useIsTouchDevice,
@@ -75,9 +75,34 @@ const VIS_CONFIG = {
 
 const PAGINATION_WIDGET_CONFIG = {
   DESKTOP: { dotSize: 22, dotGap: 24 },
-  TABLET: { dotSize: 20, dotGap: 20 },
-  MOBILE: { dotSize: 18, dotGap: 16 },
+  TABLET: { dotSize: 18, dotGap: 16 },
+  MOBILE: { dotSize: 20, dotGap: 18 },
   DEFAULT: { dotSize: 20, dotGap: 20 },
+};
+
+const COMPACT_LANDSCAPE_WIDGET_CONFIG = { dotSize: 18, dotGap: 16 };
+const COMPACT_LANDSCAPE_VISIBLE_SLIDES = 2;
+const COMPACT_LANDSCAPE_QUERY =
+  "(orientation: landscape) and (max-height: 520px)";
+
+const useIsCompactLandscape = () => {
+  const [isCompactLandscape, setIsCompactLandscape] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const query = window.matchMedia(COMPACT_LANDSCAPE_QUERY);
+    const sync = () => setIsCompactLandscape(query.matches);
+
+    sync();
+    query.addEventListener("change", sync);
+
+    return () => query.removeEventListener("change", sync);
+  }, []);
+
+  return isCompactLandscape;
 };
 
 export const CarouselPaginationWidget = injectSlot(
@@ -89,6 +114,7 @@ function App() {
   const { toggleTheme, theme } = useTheme();
 
   const isTouch = useIsTouchDevice();
+  const isCompactLandscape = useIsCompactLandscape();
   const [isAutoOn, setIsAutoOn] = useState(false);
   const [isInteractive, setIsInteractive] = useState(true);
 
@@ -99,16 +125,23 @@ function App() {
     DEFAULT: "DEFAULT",
   }) as keyof typeof VIS_CONFIG;
 
-  const visibleSlidesNr = VIS_CONFIG[device];
-  const paginationWidgetConfig = PAGINATION_WIDGET_CONFIG[device];
+  const visibleSlidesNr =
+    isTouch && isCompactLandscape
+      ? COMPACT_LANDSCAPE_VISIBLE_SLIDES
+      : VIS_CONFIG[device];
+  const paginationWidgetConfig =
+    isTouch && isCompactLandscape
+      ? COMPACT_LANDSCAPE_WIDGET_CONFIG
+      : PAGINATION_WIDGET_CONFIG[device];
+  const shouldUseMobileImages = device === "MOBILE" && !isCompactLandscape;
 
   const slidesData = useMemo(
     () =>
       CAROUSEL_DATA.map((s) => ({
         id: s.id,
-        content: device === "MOBILE" ? s.MOBILE : s.DESKTOP,
+        content: shouldUseMobileImages ? s.MOBILE : s.DESKTOP,
       })),
-    [device],
+    [shouldUseMobileImages],
   );
 
   return (
@@ -144,8 +177,8 @@ function App() {
             isPaginationOn={true}
             // isInstantMotion={true}
             isInteractive={isInteractive}
-            durationAutoplay={5000}
-            durationStep={2700}
+            durationAutoplay={4000}
+            durationStep={2000}
             durationJump={450}
             intervalAutoplay={3000}
             isPagePaddingOn={true}
