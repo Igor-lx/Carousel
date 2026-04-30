@@ -143,9 +143,9 @@
 
   @media (orientation: landscape) and (height <= 520px) {
     .outerContainer {
-      --slides-gap: 12px;
-      --carousel-height: clamp(250px, calc(100dvh - 54px), 340px);
-      --pagination-gap: 8px;
+      --slides-gap: 26px;
+      --carousel-height: clamp(250px, calc(100dvh - 54px), 300px);
+      --pagination-gap: 6px;
       --slide-radius: 8px;
 
       min-height: 0;
