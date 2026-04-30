@@ -18,11 +18,11 @@ const CAROUSEL_DRAG_CONFIG_OVERRIDE: Partial<DragEngineConfig> = {
 
   // Насколько жестко лента сопротивляется перетягиванию за край.
   // Больше значение -> палец может уйти дальше, но лента заметнее упирается в границу.
-  RESISTANCE: 0.445,
+  RESISTANCE: 0.53,
 
   // Как быстро resistance усиливается по мере дальнейшего overdrag за край.
   // Больше значение -> "резина" быстрее становится жесткой на длинном протягивании.
-  RESISTANCE_CURVATURE: 0.0025,
+  RESISTANCE_CURVATURE: 0.0045,
 
   // Safety cap для измеренной скорости пальца/ленты в px/ms.
   // Это защита от шумных pointer-event spikes, а не настройка скорости анимации.
@@ -53,7 +53,7 @@ const CAROUSEL_RELEASE_MOTION_CONFIG_OVERRIDE: Partial<ReleaseMotionConfig> = {
   // Прямой множитель raw release-скорости пальца перед сравнением со штатной MOVE-speed.
   // 1 = честная скорость пальца; 2 = вдвое сильнее.
   // Значения ниже 1 ослабляют только fast-release: итоговое движение все равно не будет медленнее MOVE.
-  inertiaBoost: 2.25,
+  inertiaBoost: 2.15,
 
   // Доля оставшегося release-пути для плавного торможения к target.
   // 0.3 = первые 70% пути летим с release-speed, последние 30% тормозим в точную остановку.
