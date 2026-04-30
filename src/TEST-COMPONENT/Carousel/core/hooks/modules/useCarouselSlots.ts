@@ -13,12 +13,14 @@ type CarouselSlots = Record<CarouselSlotName, ReactNode>;
 
 interface UseCarouselSlotsResult {
   externalControlRef: RefObject<unknown | null>;
+  externalControlVersion: number;
   slots: CarouselSlots;
 }
 
 export function useCarouselSlots(children: ReactNode): UseCarouselSlotsResult {
   const {
     instanceRef: externalControlRef,
+    instanceVersion: externalControlVersion,
     connectedChildren: childrenWithExternalControlRef,
   } = useExternalRefBridge<unknown>(children);
 
@@ -29,6 +31,7 @@ export function useCarouselSlots(children: ReactNode): UseCarouselSlotsResult {
 
   return {
     externalControlRef,
+    externalControlVersion,
     slots,
   };
 }

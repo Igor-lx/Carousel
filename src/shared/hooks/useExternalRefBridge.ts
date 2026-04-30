@@ -6,6 +6,7 @@ import {
   useMemo,
   useCallback,
   Fragment,
+  useState,
   type ReactNode,
   type ReactElement,
   type Ref,
@@ -35,14 +36,20 @@ const canAcceptRef = (type: unknown): boolean => {
 
 interface BridgeResult<T> {
   instanceRef: RefObject<T | null>;
+  instanceVersion: number;
   connectedChildren: ReactNode;
 }
 
 export function useExternalRefBridge<T>(children: ReactNode): BridgeResult<T> {
   const instanceRef = useRef<T | null>(null);
+  const [instanceVersion, setInstanceVersion] = useState(0);
   const didWarnAboutAmbiguityRef = useRef(false);
 
   const setBridgeRef = useCallback((node: T | null, originalRef?: Ref<T>) => {
+    if (instanceRef.current !== node) {
+      setInstanceVersion((version) => version + 1);
+    }
+
     instanceRef.current = node;
 
     if (!originalRef) return;
@@ -106,6 +113,7 @@ export function useExternalRefBridge<T>(children: ReactNode): BridgeResult<T> {
 
   return {
     instanceRef,
+    instanceVersion,
     connectedChildren,
   };
 }

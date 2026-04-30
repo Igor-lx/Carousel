@@ -14,6 +14,7 @@ import {
 
 interface UseCarouselExternalControlSyncProps {
   externalControlRef: RefObject<unknown | null>;
+  externalControlVersion: number;
   motionController: NumericMotionController<CarouselMotionStrategy>;
   motionDuration: number;
   targetPageIndex: number;
@@ -59,6 +60,7 @@ const getExternalControlStepDirection = ({
 
 export function useCarouselExternalControlSync({
   externalControlRef,
+  externalControlVersion,
   motionController,
   motionDuration,
   targetPageIndex,
@@ -134,7 +136,12 @@ export function useCarouselExternalControlSync({
     return () => {
       handle.bindMotionSource?.(null);
     };
-  }, [getExternalControlHandle, motionValueSource, shouldBindMotionSource]);
+  }, [
+    externalControlVersion,
+    getExternalControlHandle,
+    motionValueSource,
+    shouldBindMotionSource,
+  ]);
 
   useIsomorphicLayoutEffect(() => {
     const handle = getExternalControlHandle();
@@ -144,7 +151,7 @@ export function useCarouselExternalControlSync({
     }
 
     handle?.setDuration(motionDuration);
-  }, [getExternalControlHandle, motionDuration]);
+  }, [externalControlVersion, getExternalControlHandle, motionDuration]);
 
   useIsomorphicLayoutEffect(() => {
     const previousTargetPageIndex = previousTargetPageIndexRef.current;
@@ -176,6 +183,7 @@ export function useCarouselExternalControlSync({
     }
   }, [
     getExternalControlHandle,
+    externalControlVersion,
     isFinite,
     pageCount,
     shouldSyncMotion,

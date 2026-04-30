@@ -87,7 +87,8 @@ const Carousel = memo((props: CarouselProps) => {
   const detectedTouchDevice = useIsTouchDevice();
   const isReducedMotion = isInstantMotion ?? prefersReducedMotion;
   const isTouch = isTouchDevice ?? detectedTouchDevice;
-  const { externalControlRef, slots } = useCarouselSlots(children);
+  const { externalControlRef, externalControlVersion, slots } =
+    useCarouselSlots(children);
 
   const { diagnosticPayload, runtimeSettings } = useCarouselRuntimeSettings({
     diagnosticSlot: slots.diagnostic,
@@ -290,6 +291,7 @@ const Carousel = memo((props: CarouselProps) => {
   const shouldSyncExternalControlMotion = isMoving && !isReducedMotion;
   useCarouselExternalControlSync({
     externalControlRef,
+    externalControlVersion,
     motionController,
     motionDuration,
     targetPageIndex,
